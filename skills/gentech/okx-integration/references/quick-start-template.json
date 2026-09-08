@@ -1,0 +1,14 @@
+{
+  "agent": {
+    "name": "Gentech <Service>",
+    "description": "Specialized <Service> Analysis & Automation",
+    "service": {
+      "serviceName": "<Service> Analyzer",
+      "serviceDescription": "① Core capability summary (≤200 CJK chars)\n② User input requirement (≤200 CJK chars)",
+      "serviceType": "A2MCP",
+      "fee": "0.5",
+      "endpoint": "https://api.gentechlabs.net/<service>"
+    },
+    "avatar": "https://static.okx.com/cdn/web3/wallet/marketplace/headimages/agent/avatar/<uuid>.png"
+  }
+}

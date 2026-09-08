@@ -1,0 +1,22 @@
+# Model Configuration Template
+# Copy and modify for new model configurations
+
+# Working configuration
+model:
+  default: z-ai/glm-4.7  # Must exist in provider catalog
+  provider: zai
+
+providers:
+  zai:
+    base_url: https://api.openrouter.ai/v1  # Use OpenRouter for Z.AI
+    api_key: ${ZAI_API_KEY}
+
+# Model verification checklist
+# [ ] Model exists in OpenRouter catalog: curl -s "https://openrouter.ai/api/v1/models" | jq '.data[].id' | grep "z-ai/glm-4.7"
+# [ ] Model has reasonable context length for use case
+# [ ] Model cost is acceptable for expected usage
+# [ ] Model provider is stable and reliable
+
+# Alternative models for fallback
+# z-ai/glm-4.7-flash  # Fast variant
+# z-ai/glm-5.2         # Max context

@@ -1,0 +1,62 @@
+# Hermes Configuration for Dual-Agent Setup
+# Add to ~/.hermes/profiles/<profile>/config.yaml
+
+providers:
+  # Desktop (Forge) - DeepSeek Flash
+  deepseek:
+    base_url: "https://api.deepseek.com/v1"
+    default_model: "deepseek-v4-flash"
+    name: DeepSeek
+    transport: openai_chat
+    
+  # Desktop (Forge) - Local Ollama
+  ollama:
+    base_url: "http://localhost:11434/v1"
+    default_model: "llama3.1:8b"
+    name: Ollama Local
+    transport: openai_chat
+    discover_models: false
+    models:
+      - llama3.1:8b
+
+  # VPS (Gentech) - Primary Z.AI
+  zai:
+    base_url: "https://open.bigmodel.cn/api/paas/v4"
+    default_model: "glm-4.7"
+    name: Z.AI
+    transport: openai_chat
+    
+  # VPS (Gentech) - Heavy tasks
+  zai_heavy:
+    base_url: "https://open.bigmodel.cn/api/paas/v4"
+    default_model: "glm-5.2"
+    name: Z.AI Heavy
+    transport: openai_chat
+
+# Fallback Chain (gentech-ops + dual-agent coordination)
+fallback_providers:
+  - provider: ollama          # FREE local (128K context)
+    model: llama3.1:8b
+  - provider: deepseek        # FREE desktop (5M tokens)
+    model: deepseek-v4-flash
+  - provider: zai             # Paid (when quota available)
+    model: glm-4.7
+
+# Default model for delegation
+default:
+  provider: zai
+  model: glm-4.7
+
+# Cron job routing examples
+cron_job_routing:
+  simple_automation:
+    provider: zai
+    model: glm-4.5-flash
+    
+  complex_analysis:
+    provider: zai_heavy
+    model: glm-5.2
+    
+  desktop_coding:
+    provider: deepseek
+    model: deepseek-v4-flash

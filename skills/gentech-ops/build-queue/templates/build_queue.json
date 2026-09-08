@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-01-01",
+  "items": [
+    {
+      "id": "example-project",
+      "name": "Example Project",
+      "path": "src/example-project",
+      "test_cmd": "python3 tests/test_all.py",
+      "status": "pending",
+      "tests": "0/0",
+      "revenue": "$0.01/query x402",
+      "cost": "$0 (uses existing infrastructure)",
+      "effort": "1 week"
+    }
+  ]
+}

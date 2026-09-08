@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stateful Alert Monitor — State File",
+  "description": "Canonical state schema for debounced monitoring scripts. Extend as needed.",
+  "type": "object",
+  "required": ["version", "last_run", "pending_breakout", "last_alert_sent", "counters"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "description": "Schema version for migration support",
+      "default": 1
+    },
+    "last_run": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO timestamp of last execution"
+    },
+    "pending_breakout": {
+      "type": "object",
+      "description": "Condition waiting for confirmation",
+      "properties": {
+        "condition": {
+          "type": "string",
+          "enum": ["out_of_range", "efficiency_low", "custom"],
+          "description": "What condition triggered pending"
+        },
+        "first_seen": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When condition was first detected"
+        },
+        "price": {
+          "type": ["number", "null"],
+          "description": "Price at detection (for context)"
+        },
+        "efficiency": {
+          "type": ["number", "null"],
+          "description": "Efficiency at detection"
+        },
+        "confirmed": {
+          "type": "boolean",
+          "description": "Has condition survived confirmation delay?",
+          "default": false
+        }
+      }
+    },
+    "last_alert_sent": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Timestamp of last Telegram alert (for rate-limiting)"
+    },
+    "alert_history": {
+      "type": "array",
+      "description": "Recent alerts (keeps last 24h)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": {"type": "string"},
+          "sent_at": {"type": "string", "format": "date-time"},
+          "tier": {"type": "string", "enum": ["IMMEDIATE", "WATCH", "CONFIRMED"]}
+        }
+      }
+    },
+    "counters": {
+      "type": "object",
+      "description": "Runtime metrics",
+      "properties": {
+        "total_runs": {"type": "integer", "minimum": 0},
+        "alerts_sent": {"type": "integer", "minimum": 0},
+        "false_positives_cancelled": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
