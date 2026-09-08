@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1920px;height:1080px;overflow:hidden;background:linear-gradient(135deg,#0a0a0f 0%,#1a1a2e 50%,#0a0a0f 100%);font-family:Liberation Sans, DejaVu Sans, Arial, sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.badge{background:#f7931a22;color:#f7931a;padding:12px 24px;border-radius:50px;font-size:22px;font-weight:600;letter-spacing:0.05em;margin-bottom:40px;border:1px solid #f7931a44}
+h1{font-size:82px;font-weight:800;color:#fff;letter-spacing:-0.03em;line-height:1.1;text-align:center;margin-bottom:24px}
+h1 span{color:#f7931a}
+p{font-size:28px;color:#888;font-weight:400;text-align:center;max-width:800px}
+</style></head><body>
+<div class="badge">HACKATHON_NAME</div>
+<h1>PROJECT <span>NAME</span></h1>
+<p>Tagline goes here</p>
+</body></html>
+
+<!-- 
+SLIDE DECK STRUCTURE (6 slides, 4 seconds each = 24 seconds):
+1. Title: Badge + H1 + subtitle
+2. Problem: .tag + h2 + 3x .card grid
+3. Solution: .tag + h2 + 3x .step flow
+4. Architecture: .tag + h2 + .arch pipeline
+5. Output: .tag + h2 + 2x2 .output-card grid with .code blocks
+6. CTA: .tag + h2 + .links buttons
+
+RENDER: chrome --headless --no-sandbox --disable-gpu --window-size=1920,1080 --screenshot=slide.png slide.html
+COMBINE: ffmpeg -f concat -i concat.txt -vf "fps=30,format=yuv420p" -c:v libx264 output.mp4
+
+SYSTEM FONTS ONLY for headless rendering (Liberation Sans, DejaVu Sans, Arial).
+Google Fonts FAIL silently in headless mode.
+-->

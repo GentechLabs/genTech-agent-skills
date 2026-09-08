@@ -1,0 +1,35 @@
+# Marketplace Listing Verification — x402 Directory Landscape
+
+Companion to the "Cross-marketplace listing verification" section in SKILL.md. Run the direct gateway probes first, then walk this matrix. Status vocabulary: **PASS** (listed + healthy), **FAIL** (listed but broken), **NOT-LISTED** (absent — check whether that's expected), **CANNOT-VERIFY** (paid/private index).
+
+## Directory matrix (verified Aug 2, 2026)
+
+| Marketplace | Type / access | How to check | Expected state for a listed-but-unsettled service | Aug 2 status (GenTech) |
+|---|---|---|---|---|
+| **x402-list.com** | Static SSR pages; monitor re-probes every ~16 min | `web_extract /services/<slug>` | Assessment chips: reliability %, **compliance letter N/N** with per-check list, price percentile, risk, traction ($/buyers — $0 until first settlement) | **PASS** — compliance A 14/14 (flipped from C 13/14 same day as the EIP-712 fix), uptime 100%, 402 payloads captured with `extra {name, version}` |
+| **x402scan.com** | Next.js SPA; activity-driven indexer (block-explorer style) | Browser search box; curl returns HTML shell | NOT-LISTED until real on-chain usage or manual "Add your API" | **NOT-LISTED (expected)** — search returns only unrelated servers (fallback list) |
+| **Agentic.Market** (agentic.market) | Next.js SPA; settlement/bazaar-driven auto-index | Browser global search (⌘K); "No matching results." = absent; `/validate` endpoint tests endpoints | NOT-LISTED until first settled payment | **NOT-LISTED (expected)** |
+| **gold-402** (24K Labs) | Curated GitHub directory | `curl -s https://raw.githubusercontent.com/Haustorium12/gold-402/main/directory/apis.md \| grep -i gentech` | Listed; descriptions drift stale (endpoint counts, chains) | **PASS** — listed; blurb says "15 endpoints / 5 chains" (stale vs current manifest) |
+| **agent-tools.cloud** (AgentTools-Cloud) | Free search API | `curl -s "https://agent-tools.cloud/api/v1/search?q=gentech" -H "Accept: application/json"` — fields: `health`, `x402_ok`, `http_status`, `well_known_url`, `payment` | Listed with health "ok", x402_ok 1 | **PASS** — health ok, x402_ok 1, http 200 |
+| **awesome-x402** (xpaysh) | GitHub README | `curl -s https://raw.githubusercontent.com/xpaysh/awesome-x402/main/README.md \| grep -i gentech` | Listed; **stale gateway URLs common** after a domain migration (old Cloudflare Worker domains) | **PASS with action** — entry points at old `gentech-x402-gateway.jordanjones0902.workers.dev`, should be `api.gentechlabs.net` |
+| **8004scan.io** | Next.js SPA; ERC-8004 agent registry (NOT an x402 gateway compliance checker) | Browser Agents search; agent detail shows X402 flag from registration metadata | Listed if registered; X402 flag = registration metadata, not live gateway state | **PASS** — agent #1770 (Avalanche), X402 ✓, Active; metadata last updated pre-fix → refresh registration |
+| **OpenDexter** (open.dexter.cash/mcp) | MCP server; **settlement-driven auto-discovery** — catalogs any API that receives a real x402 payment through Dexter's facilitator. No registration form | `x402_check` via MCP on your endpoint → `requiresPayment=True, authMode=paid` means Dexter recognizes it; then check marketplace search for your host | NOT-LISTED until a real (mainnet) settlement through Dexter — testnet does NOT trigger it | **NOT-LISTED (expected, verified Aug 3)** — endpoints recognized as x402-paid, zero settlements |
+| **x402search.xyz** / x402search MCP | x402-gated search ($0.01/search) | Needs payment — cannot verify free | N/A until settled | **CANNOT-VERIFY** |
+| **signal402** | No x402 directory found under this name (collides with an unrelated Solana hackathon project) | web_search | N/A | **N/A** |
+
+## Per-directory pitfalls
+
+- **SPA detection:** Next.js sites return an HTML shell (doctype + `/_next/static/...` chunks) to curl. Anything with `_next/static` in the response is a SPA — switch to the browser tool and use the on-page search box. Grep for `"No matching results."` / `"Showing X of Y agents"` in the snapshot, don't guess from the URL.
+- **Fallback lists masquerade as results:** x402scan's search returns a generic "recent servers" list when nothing matches (PayanAgent, 2s, gg402, hugen.tokyo, 402utils, etc.). An unrelated fallback list is the same as "no results" — don't report a false positive.
+- **Settlement-gated ≠ failure:** x402scan's "Most Used" ranking and Agentic.Market listings are both driven by on-chain usage. With zero settlements, NOT-LISTED is the correct, expected state; the action item is "first real settled payment" (or manual submit: x402scan "Add your API", Agentic.Market Seller Tools `/validate`).
+- **x402-list compliance grade is the canary:** the per-check list includes "EIP-712 domain parameters present on every EVM entry", "payTo address recoverable", "payTo at accepts[0].payTo (conformant shape)". Signability problems show as "route not signable" + grade capped at C. A fix shows up in the chips within ~1 hour (monitor re-probes every 16 min) — treat the grade flip as independent proof the fix landed.
+- **Stale README entries:** gold-402 / awesome-x402 blurbs lag the gateway (old endpoint counts, old chains, old URLs). That's a "fix the entry" action item (PR / Get Listed form), not a listing removal.
+- **8004scan metadata staleness:** 8004scan shows on-chain registration state. If the gateway was fixed but the registration metadata wasn't re-published (`agent_set_uri`), the listing shows the OLD description/URLs. Fix the registration, not the gateway.
+- **Version skew:** after an upgrade, `/.well-known/x402` and the wire envelope can lag the `x402-bazaar` manifest version (observed: well-known v7.0.0 / envelope v7.0.0 vs bazaar v8.0.0). **Fix properly (Aug 2, 2026):** the gateway's envelope builder had a hardcoded version string — replace with `MANIFEST.get("version", ...)` and regenerate the static discovery files from the manifest so all four surfaces derive from one source. Then verify all four (three discovery files + wire envelope) in one sweep.
+
+## Aug 2, 2026 verification transcript (GenTech gateway)
+
+- Direct: `/.well-known/x402` 200 (6 services), `/.well-known/x402-bazaar` 200 v8.0.0, unpaid `/v1/security/score/{addr}` → 402 with `payment-required` header, `accepts[0].extra = {"name":"USD Coin","version":"2"}`, bad proofs on `X-Payment` AND `Authorization: x402` → `{"error":"payment_proof_invalid"}` (not 500) → receive side verified.
+- x402-list: compliance A 14/14 ("updated 4h ago"), sub-score 100% on 08-02 vs 93% on 07-30→08-01; uptime 100% 24h–90d; traction $0/0 buyers (no settlement yet).
+- Result table: x402-list PASS · agent-tools.cloud PASS · gold-402 PASS (stale blurb) · awesome-x402 PASS (stale URL) · 8004scan PASS (stale metadata) · x402scan NOT-LISTED (expected) · Agentic.Market NOT-LISTED (expected) · x402search.xyz CANNOT-VERIFY (paid).
+- Overall: protocol-level fix universal (every compliance assessor passes); remaining gaps are settlement-gated and resolve on the first paid call.
