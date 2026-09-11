@@ -215,6 +215,7 @@ The arcade uses two audio systems:
 
 - **Background music:** ACE-Step UI (4.5K ⭐, MIT) — open-source Suno alternative. Generates per-cabinet soundtracks locally on Forge's desktop GPU. Free, unlimited, no API costs. See `references/ace-step-music-pipeline.md`.
 - **Voice narration:** HF Speech-to-Speech (6.5K ⭐, Apache 2.0) — voice agent pipeline for arcade announcer. OpenAI Realtime-compatible WebSocket. Toggle on/off per cabinet. See `/root/speech-to-speech/`.
+- **NPC host WITH a face (queue #72):** HeyGen LiveAvatar × GPT-Live (heygen-com/liveavatar-gpt-live-demos, MIT) — full-duplex S2S driving a realtime avatar whose tool calls render as animated overlays. The missing 'face + tool-call-to-visual' layer for the lobby greeter. Architecture: browser never holds keys (LiveKit token + ws only); live model holds no tools — delegates to a backend Responses model that calls e.g. `show_term_card` → orchestrator forwards `{type:'ui', widget, props}` → browser overlay. Persona = 2 markdown files. Fork + swap persona for arcade greeter.
 
 ## Verified Deployments
 
