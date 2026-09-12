@@ -42,6 +42,12 @@ Media builds run the same 5 phases: PLAN (storyboard + fact list w/ sources) →
 |-------|-------|----------|------|------|
 | **DEV** | DeepSeek V4 Flash (`deepseek-v4-flash:0731`) | Ollama Cloud | ~$0/M out | Draft code, make it functional, pass tests |
 | **AUDIT** | GLM-5.3-flash OR Kimi K2.7-code | Ollama Cloud | ~$0-2/M out | Code tracing, bug hunting, security, architecture review |
+
+> **⚠️ AUDIT model status (Sep 12, 2026):** GLM-5.3-flash via **Z.AI is DEAD** (`1113
+> Insufficient balance`) and **Ollama Cloud is at its weekly cap** (429, resets weekly). The
+> working AUDIT second-opinion is now **Kimi K2.7-code via Nous** (`moonshotai/kimi-k2.7-code`,
+> live on the Nous inference API). Do not route audits to glm-5.3-flash until Z.AI is re-funded;
+> treat any doc that still names it as the primary AUDIT model as stale (see E-17).
 | **BIG BOY** | Kimi K3 | Ollama Cloud / Hermes portal | ~$15/M out | Architecture decisions, security audits, design reviews, full-codebase analysis |
 
 **Provider routing (Sep 7, 2026 — Jordan directive):** Ollama Cloud is the ONLY primary provider. Hermes portal (Nous) is the fallback. OpenCode Go is retired — do NOT route to it. Primary `deepseek-v4-flash:0731` on ollama-cloud; fallback `deepseek/deepseek-v4-flash` on nous. The AUDIT pair is GLM-5.3-flash or Kimi K2.7-code, both on Ollama Cloud.
