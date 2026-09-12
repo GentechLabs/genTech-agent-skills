@@ -24,7 +24,7 @@ Vault sync     → git push vault → github.com/ProtoJay4789/gentech-vault.git
 
 ## Important
 
-- **Forge sometimes pushes only to GitHub** — always `git push vault main` before reading handoffs
+- **Forge sometimes pushes only to GitHub** — always `git pull vault main` before reading handoffs
 - **Tick script** lives at `scripts/tick_build_queue.py` — run with `--apply` after Forge completes
 - **`02-HANDOFFS/forge-to-gentech/`** — archived, not used. Forge writes to `01-HANDOFFS/from-the-forge.md`
 - **`gentech-vault-new`** — deprecated. All handoffs live in the root vault at `/root/vaults/gentech/01-HANDOFFS/`
@@ -41,6 +41,3 @@ Vault sync     → git push vault → github.com/ProtoJay4789/gentech-vault.git
 ## Sync Protocol
 
 Full protocol at `01-HANDOFFS/sync-protocol.md`.
-
-
-> 🚫 **NEVER `git pull` the vault** — Obsidian Sync writes this same working tree, so a pull reads its changes as local edits and DIVERGES the clone (Forge: 842 phantom deletions / 886 changed files). **Receive by `ob sync`, deliver by `git push vault main` + `ob sync`.** See `00-System/vault-transport-protocol.md`.

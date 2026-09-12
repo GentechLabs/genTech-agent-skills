@@ -50,6 +50,10 @@ curl -s -X POST "https://ollama.com/v1/chat/completions" \
 | AUDIT (deep) | `kimi-k2.7-code` | code-specialized audit — give ≥1000 tokens |
 | BIG | `kimi-k3` | heavy architecture/security review — worth the tokens |
 
+> **⚠️ Sep 12, 2026:** `glm-5.3-flash` via **Z.AI is dead** (`1113`) and **Ollama Cloud is
+> weekly-capped** (429). AUDIT second-opinion now = **Kimi K2.7-code via Nous** (live). Re-check
+> `/v1/models` on the live provider before assuming any glm model is reachable.
+
 ## What all 4 agents (gentech/gizmo/pixel/gentech-treasury) + Forge share
 - **No new credentials needed** — all use the shared `OLLAMA_API_KEY` in each
   profile's `.env` (already present + valid, verified). Nothing to install.
