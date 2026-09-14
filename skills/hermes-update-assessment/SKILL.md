@@ -17,7 +17,7 @@ Nous Research has unlimited tokens and 10+ agents building Hermes. There will be
 - After every Hermes update (`hermes update`)
 - When Nous Research announces a new release on X
 - Weekly cron check for new versions
-- **The Personal Assistant Suite runs this loop weekly (MONDAY 08:00) + after updates** — see the EVOLUTION section in the PA prompt and `personal-assistant-suite` skill. The PA writes dated entries to `/root/vaults/gentech/10-Labs/hermes-evolution-log.md`.
+- **The Personal Assistant Suite runs this loop weekly (MONDAY 08:00) + after updates** — see the EVOLUTION section in the PA prompt and `personal-assistant-suite` skill. The PA writes dated entries to `${VAULT_DIR}/10-Labs/hermes-evolution-log.md`.
 
 ## Workflow
 

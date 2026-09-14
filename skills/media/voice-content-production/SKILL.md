@@ -63,7 +63,7 @@ When a collaborator sends a voice message (OGG/Opus via Telegram):
 
 ```bash
 # 1. Find the most recent audio file
-ls -lt /root/.hermes/profiles/gentech/audio_cache/*.ogg | head -3
+ls -lt ${PROFILE_DIR}/audio_cache/*.ogg | head -3
 
 # 2. Clone via ElevenLabs
 curl -s -X POST \
@@ -188,7 +188,7 @@ For analyzing/reviewing existing music files (not generating), use the `audio-an
 - **Voice coherence:** Long texts (>500 words) may lose voice consistency. Break into shorter clips and combine.
 - **Post-processing is mandatory:** Raw ElevenLabs output has noise and inconsistent levels. Always apply the denoise + compress + normalize pipeline.
 - **ElevenLabs API key rotation (NEW - June 29, 2026):** API keys can become invalid/expired over time. Always test with `curl -X GET "https://api.elevenlabs.io/v1/user" -H "xi-api-key: YOUR_KEY"`. If returns `{"detail":{"status":"invalid_api_key"}}`, immediately use user-provided replacement keys. **Never** trust keys stored in documentation files for active use.
-- **ElevenLabs API key not in session env:** The key may be in `/root/.hermes/profiles/gentech/.env` OR `/root/.hermes/profiles/gentech/config/elevenlabs.env` (the config-specific location is often the freshest). Neither is auto-loaded into the session. Check both before generating:
+- **ElevenLabs API key not in session env:** The key may be in `${PROFILE_DIR}/.env` OR `${PROFILE_DIR}/config/elevenlabs.env` (the config-specific location is often the freshest). Neither is auto-loaded into the session. Check both before generating:
   ```
   cat ~/.hermes/profiles/gentech/config/elevenlabs.env 2>/dev/null || cat ~/.hermes/profiles/gentech/.env 2>/dev/null | grep ELEVENLABS_API_KEY
   ```

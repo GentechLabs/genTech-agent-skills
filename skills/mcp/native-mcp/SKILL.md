@@ -623,14 +623,14 @@ The `patch` tool is denied on `~/.hermes/config.yaml` — it's a protected syste
 
 ```python
 import yaml
-with open('/root/.hermes/profiles/gentech/config.yaml', 'r') as f:
+with open('${PROFILE_DIR}/config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 config['mcp_servers']['new_server'] = {'command': '...', 'args': [...]}
-with open('/root/.hermes/profiles/gentech/config.yaml', 'w') as f:
+with open('${PROFILE_DIR}/config.yaml', 'w') as f:
     yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 ```
 
-After editing, verify: `grep <server_name> /root/.hermes/profiles/gentech/config.yaml`
+After editing, verify: `grep <server_name> ${PROFILE_DIR}/config.yaml`
 
 ## References
 

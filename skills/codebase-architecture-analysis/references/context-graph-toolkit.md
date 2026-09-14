@@ -51,7 +51,7 @@ don't reintroduce the bugs.
 ## Verification recipe (reuse when touching the toolkit)
 
 ```bash
-cd /root/vaults/gentech/scripts/context-graph
+cd ${VAULT_DIR}/scripts/context-graph
 python3 test_context_graph.py          # 3/3 pass (build, staleness, blast-radius)
 python3 repo_map.py /root/iagent-x402  # real-repo smoke; then
 python3 repo_map_check.py /root/iagent-x402        # expect FRESH exit 0

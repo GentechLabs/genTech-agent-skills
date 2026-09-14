@@ -5,7 +5,7 @@ Jordan's Avalanche wallet — the scammer's token became a product.
 
 **Service file:** `/root/gentechlabs/services/treasury_defender.py` (port **8096**)
 **Manifest:** `/.well-known/x402-bazaar` v9.0.0 — `/v1/defender/classify/{chainId}/{token}` @ $0.01
-**Gateway wiring:** `BACKEND_ROUTES["treasury_defender"]` + `URL_TO_SERVICE["defender"]` in `/root/vaults/gentech/10-Labs/x402-gateway/server.py`
+**Gateway wiring:** `BACKEND_ROUTES["treasury_defender"]` + `URL_TO_SERVICE["defender"]` in `${VAULT_DIR}/10-Labs/x402-gateway/server.py`
 **systemd:** `x402-backend@treasury_defender.service` (template unit)
 
 ## Endpoints

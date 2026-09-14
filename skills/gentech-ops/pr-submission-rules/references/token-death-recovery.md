@@ -41,7 +41,7 @@ Worse — the ProtoJay4789 account itself returned 404 from every URL (profile, 
 1. **Generate a new Fine-Grained Token** with scopes: `repo`, `workflow`, `user`, `admin:public_key`
 2. **Update both locations:**
    - `~/.config/gh/hosts.yml` — replace `oauth_token` value
-   - `/root/.hermes/profiles/gentech/secrets/github-token` — replace contents
+   - `${PROFILE_DIR}/secrets/github-token` — replace contents
 3. **Verify account status** — check if `ProtoJay4789` was renamed. If renamed, update the handle in all configs.
 4. **Re-fork and re-submit** — the entire PR portfolio needs to be rebuilt from scratch. The diff content is lost with the forks.
 5. **Update rotation file** — set `repos_pending` to the full seed list so the next cron run picks up from scratch.

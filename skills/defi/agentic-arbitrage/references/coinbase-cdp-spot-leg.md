@@ -7,7 +7,7 @@ contango (short perp on Hyperliquid) is detection-only for US residents — see 
 ## Env vars (profile .env, chmod 600, never commit)
 - `CDP_API_KEY_ID` — the API key UUID
 - `CDP_API_KEY_SECRET` — the private key (base64-ish)
-Both go in `/root/.hermes/profiles/gentech/.env`. The SDK reads them via
+Both go in `${PROFILE_DIR}/.env`. The SDK reads them via
 `os.getenv("CDP_API_KEY_ID")` / `os.getenv("CDP_API_KEY_SECRET")`.
 
 ## The two quote paths (CRITICAL distinction)

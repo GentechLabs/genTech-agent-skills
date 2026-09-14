@@ -104,7 +104,7 @@ Body: Brief description of what was built and why.
 
 ### Stale env token shadows the valid one
 **Symptom:** `gh auth status` says "The token in GITHUB_TOKEN is invalid" even though
-`curl -H "Authorization: token $(cat /root/.hermes/profiles/gentech/secrets/github-token)" https://api.github.com/user` returns 200 and identifies ProtoJay4789.
+`curl -H "Authorization: token $(cat ${PROFILE_DIR}/secrets/github-token)" https://api.github.com/user` returns 200 and identifies ProtoJay4789.
 **Cause:** A dead `GITHUB_TOKEN` in the profile `.env` overrides the valid
 `secrets/github-token` — scripts read env first. `.bashrc` may already be clean; the
 `.env` copy is what poisons every session.
@@ -114,7 +114,7 @@ Also unset it defensively at the top of cron/one-shot scripts (`unset GITHUB_TOK
 ### Verify API results with the token, not bare curl
 After `gh repo create`/push, a bare unauthenticated `curl api.github.com/repos/...`
 can return a misleading 404 on a repo that actually exists. Always re-check with
-`-H "Authorization: token $(cat /root/.hermes/profiles/gentech/secrets/github-token)"`
+`-H "Authorization: token $(cat ${PROFILE_DIR}/secrets/github-token)"`
 before declaring a push failed. (The King's Gambit push WAS live; the first re-check
 was a red-herring 404.)
 

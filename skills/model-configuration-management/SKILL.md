@@ -50,7 +50,7 @@ After making changes, validate the configuration:
 
 ```bash
 # Check current config
-grep -A 5 -B 5 "default:" /root/.hermes/profiles/gentech/config.yaml
+grep -A 5 -B 5 "default:" ${PROFILE_DIR}/config.yaml
 
 # Verify model exists in provider catalog
 curl -s "https://openrouter.ai/api/v1/models" | jq -r '.data[].id' | grep "z-ai/glm-4.7"
@@ -299,7 +299,7 @@ If you set `provider: opencode-go` but the `providers.opencode-go` line is empty
 **Diagnosis:**
 ```bash
 # Check provider block
-grep -A 5 "^providers:" /root/.hermes/profiles/gentech/config.yaml
+grep -A 5 "^providers:" ${PROFILE_DIR}/config.yaml
 
 # Check env var
 echo $OPCODE_GO_API_KEY
@@ -325,7 +325,7 @@ echo $OPCODE_GO_API_KEY
 **Diagnosis:**
 ```bash
 # Check if providers.zai exists
-grep -A 3 "^providers:" /root/.hermes/profiles/gentech/config.yaml
+grep -A 3 "^providers:" ${PROFILE_DIR}/config.yaml
 
 # Check if env var is set
 echo $ZAI_API_KEY
@@ -469,16 +469,16 @@ sed -i '/^  ollama:/,/^[a-z]/{/ollama:/d;/base_url: http/d;/default_model:/d;/di
 hermes config show | grep -A 2 "Model:"
 
 # Check auxiliary models (sample)
-sed -n '/^auxiliary:/,/^[a-z]/p' /root/.hermes/profiles/gentech/config.yaml | grep -E "(provider|model):" | head -20
+sed -n '/^auxiliary:/,/^[a-z]/p' ${PROFILE_DIR}/config.yaml | grep -E "(provider|model):" | head -20
 
 # Check for any lingering OpenRouter references
-grep -i "openrouter" /root/.hermes/profiles/gentech/config.yaml
+grep -i "openrouter" ${PROFILE_DIR}/config.yaml
 
 # Check MOA presets
-sed -n '/^moa:/,/^skills:/p' /root/.hermes/profiles/gentech/config.yaml | grep -E "(provider|model):"
+sed -n '/^moa:/,/^skills:/p' ${PROFILE_DIR}/config.yaml | grep -E "(provider|model):"
 
 # Verify providers section
-sed -n '/^providers:/,/^fallback_providers:/p' /root/.hermes/profiles/gentech/config.yaml
+sed -n '/^providers:/,/^fallback_providers:/p' ${PROFILE_DIR}/config.yaml
 ```
 
 **Check Status:**
@@ -486,7 +486,7 @@ sed -n '/^providers:/,/^fallback_providers:/p' /root/.hermes/profiles/gentech/co
 hermes config show | grep -A 20 "auxiliary:"
 
 # Or inspect the auxiliary section directly
-sed -n '/^auxiliary:/,/^[a-z]/p' /root/.hermes/profiles/gentech/config.yaml | head -60
+sed -n '/^auxiliary:/,/^[a-z]/p' ${PROFILE_DIR}/config.yaml | head -60
 ```
 
 **Update Pattern:**
@@ -523,7 +523,7 @@ hermes config set session_search_provider opencode-go
 hermes config show | grep "Auxiliary Models" -A 10
 
 # Or detailed inspection
-sed -n '/^auxiliary:/,/^[a-z]/p' /root/.hermes/profiles/gentech/config.yaml | grep -E "(provider|model):" | head -20
+sed -n '/^auxiliary:/,/^[a-z]/p' ${PROFILE_DIR}/config.yaml | grep -E "(provider|model):" | head -20
 ```
 
 **Note:** The `hermes config show` command only shows the first few auxiliary models in summary view. Use `sed` or `grep` directly on the config file to verify all settings.
@@ -563,7 +563,7 @@ This updates the nested auxiliary section directly and is safer than manual file
 **Verification:**
 ```bash
 # Check auxiliary.vision section
-grep -A 6 "auxiliary:" /root/.hermes/profiles/gentech/config.yaml | grep -A 5 "vision:"
+grep -A 6 "auxiliary:" ${PROFILE_DIR}/config.yaml | grep -A 5 "vision:"
 
 # Should show:
 #   vision:
@@ -723,10 +723,10 @@ hermes config set zai.proxy_url <coding-proxy-url>
 
 ```bash
 # Safe model update
-sed -i 's/default: glm-4.5-flash/default: glm-4.7/' /root/.hermes/profiles/gentech/config.yaml
+sed -i 's/default: glm-4.5-flash/default: glm-4.7/' ${PROFILE_DIR}/config.yaml
 
 # Verify change
-grep "default:" /root/.hermes/profiles/gentech/config.yaml
+grep "default:" ${PROFILE_DIR}/config.yaml
 
 # Test model availability
 curl -s "https://openrouter.ai/api/v1/models" | jq -r '.data[].id' | grep "z-ai/glm-4.7"
@@ -754,7 +754,7 @@ The `cronjob` function is a Python-level Hermes agent tool, NOT a standalone CLI
 ```python
 import json
 
-with open('/root/.hermes/profiles/gentech/cron/jobs.json') as f:
+with open('${PROFILE_DIR}/cron/jobs.json') as f:
     data = json.load(f)
 
 target_ids = ['job-id-1', 'job-id-2', ...]  # List of job IDs to update
@@ -765,7 +765,7 @@ for job in data['jobs']:
         if job.get('model') and 'deepseek-v4-flash' in job['model']:
             job['model'] = 'deepseek-v4-flash'  # Normalize
 
-with open('/root/.hermes/profiles/gentech/cron/jobs.json', 'w') as f:
+with open('${PROFILE_DIR}/cron/jobs.json', 'w') as f:
     json.dump(data, f, indent=2)
 ```
 
@@ -774,7 +774,7 @@ with open('/root/.hermes/profiles/gentech/cron/jobs.json', 'w') as f:
 # Read back and check provider/model for each target job
 python3 -c "
 import json
-with open('/root/.hermes/profiles/gentech/cron/jobs.json') as f:
+with open('${PROFILE_DIR}/cron/jobs.json') as f:
     data = json.load(f)
 for j in data['jobs']:
     if j['id'] in ['target-ids']:
@@ -1090,7 +1090,7 @@ The provider label can stay `opencode-go` while `model.base_url` points at Ollam
 1. Read current state: `hermes --profile <P> config get model.provider`
 2. **Live-test the rail BEFORE flipping anyone:**
 ```bash
-KEY=$(grep '^OLLAMA_API_KEY=' /root/.hermes/profiles/gentech/.env | cut -d= -f2-)
+KEY=$(grep '^OLLAMA_API_KEY=' ${PROFILE_DIR}/.env | cut -d= -f2-)
 curl -s --max-time 30 -X POST https://ollama.com/v1/chat/completions \
   -H "Content-Type: application/json" -H "Authorization: Bearer $KEY" \
   -d '{"model":"glm-5.3-flash","messages":[{"role":"user","content":"reply OK"}],"max_tokens":8}'
@@ -1119,7 +1119,7 @@ Full 4-profile migration to `glm-5.3-flash` on Ollama Cloud (nemotron-3-super de
 
 **The fix (verified):**
 ```bash
-cd /root/vaults/gentech/00-System/agent-profiles
+cd ${VAULT_DIR}/00-System/agent-profiles
 python3 fleet_model_sync.py --check   # dry-run: shows which profiles DRIFT
 python3 fleet_model_sync.py           # sync gentech's settings to all profiles + repin crons
 ```

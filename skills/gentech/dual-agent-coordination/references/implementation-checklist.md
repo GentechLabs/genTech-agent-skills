@@ -49,7 +49,7 @@ providers:
 ### Vault Sync
 ```bash
 # Check git status
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git status
 
 # Sync if clean
@@ -65,8 +65,8 @@ ob sync
 ### Cross-Agent Coordination
 ```bash
 # Check implementation status
-grep -r "forge-implementation-plan.md" /root/vaults/gentech/
-grep -A5 "Dual-Agent Coordination" /root/vaults/gentech/00-HQ/current-status.md
+grep -r "forge-implementation-plan.md" ${VAULT_DIR}/
+grep -A5 "Dual-Agent Coordination" ${VAULT_DIR}/00-HQ/current-status.md
 ```
 
 ---

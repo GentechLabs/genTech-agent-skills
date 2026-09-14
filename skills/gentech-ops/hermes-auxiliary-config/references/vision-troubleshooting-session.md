@@ -131,7 +131,7 @@ hermes config check
 ```python
 import yaml
 
-config = yaml.safe_load(open("/root/.hermes/profiles/gentech/config.yaml"))
+config = yaml.safe_load(open("${PROFILE_DIR}/config.yaml"))
 vision = config.get('auxiliary', {}).get('vision', {})
 print(f"Provider: {vision.get('provider')}")
 print(f"Model: {vision.get('model')}")

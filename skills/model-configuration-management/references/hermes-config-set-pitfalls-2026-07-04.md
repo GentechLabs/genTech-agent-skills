@@ -79,7 +79,7 @@ The `hermes config set` CLI command does NOT support nested key paths like `prov
 Hermes blocks `patch` tool from editing config files for security reasons:
 
 ```
-Refusing to write to Hermes config file: /root/.hermes/profiles/gentech/config.yaml
+Refusing to write to Hermes config file: ${PROFILE_DIR}/config.yaml
 Agent cannot modify security-sensitive configuration. Edit ~/.hermes/config.yaml directly or use 'hermes config' instead.
 ```
 

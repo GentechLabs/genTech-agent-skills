@@ -97,7 +97,7 @@ When GLM weekly quota > 95%: Switch to DeepSeek V4 Flash
 
 ## 🤝 Key Operational Pattern: GitHub-Only Vault Access
 
-**Forge works from GitHub directly, not the local VPS path.** The vault at `/root/vaults/gentech/` lives on the VPS and is only accessible to Gentech.
+**Forge works from GitHub directly, not the local VPS path.** The vault at `${VAULT_DIR}/` lives on the VPS and is only accessible to Gentech.
 
 **CRITICAL — Handoff directory path:** Forge's wake-up protocol reads from `01-HANDOFFS/gentech-to-forge/<date>-forge-tasks.md`. The `build_queue_tick.py` writes to `01-HANDOFFS/gentech-to-forge/` (configured via HANDOFF_DIR env var). If handoffs aren't appearing for Forge, check this path first — the tick script was previously writing to `01-HANDOFFS/` while Forge was looking in `01-HANDOFFS/gentech-to-forge/` (fixed Jul 13, 2026).
 
@@ -240,7 +240,7 @@ Jordan's weekly schedule defines when each agent runs:
 
 Forge writes a timestamp every 5 min via `scripts/heartbeat.py`:
 ```bash
-date +%s > /root/vaults/gentech/scripts/.desktop-heartbeat
+date +%s > ${VAULT_DIR}/scripts/.desktop-heartbeat
 ```
 Gentech's cloud instance reads this at wake-up. If heartbeat < 10 min old → desktop is on → route `desktop` items. If > 30 min old → desktop is off → skip `desktop` items.
 
@@ -275,7 +275,7 @@ Gentech's cloud instance reads this at wake-up. If heartbeat < 10 min old → de
 When Obsidian sync times out or fails, use git as the primary delivery method:
 ```bash
 # Step 1: Commit handoff
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git add handoffs/forge-handoff-YYYY-MM-DD.md
 git commit -m "Add Forge handoff — YYYY-MM-DD"
 git push origin main
@@ -499,7 +499,7 @@ The handoff system uses five files in `01-HANDOFFS/`:
 - `from-the-forge.md` — last updated Jul 25. Forge hasn't reported back since.
 - `for-the-forge.md` — last updated Jul 25. No new tasks sent to Forge since.
 - `02-HANDOFFS/forge-to-gentech/` — **dead directory**, only a README template. Do not use.
-- `gentech-vault-new` — referenced in old sync protocol but **does not exist** on this machine. The vault is at `/root/vaults/gentech/` and syncs to `github.com/ProtoJay4789/gentech-vault.git` via remote named `vault`.
+- `gentech-vault-new` — referenced in old sync protocol but **does not exist** on this machine. The vault is at `${VAULT_DIR}/` and syncs to `github.com/ProtoJay4789/gentech-vault.git` via remote named `vault`.
 
 ## 🔁 Symmetric All-Group Return Loop (Aug 5, 2026) — supersedes the Forge-only gap
 

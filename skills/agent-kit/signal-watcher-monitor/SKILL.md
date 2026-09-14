@@ -234,7 +234,7 @@ cronjob(action='create',
         deliver='telegram:-1000000000')
 ```
 
-The bridge file path should resolve to a shared directory both scripts can access. Use `os.path.dirname(os.path.abspath(__file__))` scoped to one of the script directories, or a fixed absolute path like `/root/.hermes/profiles/gentech/scripts/position_bridge.json`.
+The bridge file path should resolve to a shared directory both scripts can access. Use `os.path.dirname(os.path.abspath(__file__))` scoped to one of the script directories, or a fixed absolute path like `${PROFILE_DIR}/scripts/position_bridge.json`.
 
 If using symlinks (repo code linked into hermes scripts dir), the `__file__` path resolves to the symlink location, not the target — this ensures the bridge file stays in the hermes scripts directory where both cron jobs can find it.
 

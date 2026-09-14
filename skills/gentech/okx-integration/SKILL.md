@@ -170,7 +170,7 @@ For the OKX Pay SDK edge (the durable fix for "use the official OKX Pay SDK" rej
     - Green arrow showing token movement from right to left (rebalancing action)
     - Gear icon representing automation
     - Text: "LP Rebalancing"
-  - **File**: `/root/vaults/gentech/assets/lp-rebalancing-avatar.png`
+  - **File**: `${VAULT_DIR}/assets/lp-rebalancing-avatar.png`
   - **Avatar URL**: `https://static.okx.com/cdn/web3/wallet/marketplace/headimages/agent/avatar/5fd633b9-f095-49a8-8de9-75663fb3b9a2.png`
   - **Tx Hash**: `0xa60cd07132c502c7eff063d1d5229b61a6c181c5a6fe94d9ca0f570fb371d884`
   - **Status**: Pending manual review (avatar updated successfully)

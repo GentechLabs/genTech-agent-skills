@@ -14,15 +14,15 @@ Three concurrent processes wrote to `/root/ProtoJay4789.github.io/DeFi/defi-data
 Plus THREE config files existed with different data:
 ```
 /root/.hermes/scripts/.lfj-aae-config.json                          → CORRECT (bid-ask, $6.3792)
-/root/.hermes/profiles/gentech/scripts/.lfj-aae-config.json          → STALE (curve, $6.13)
-/root/.hermes/profiles/gentech/home/.hermes/scripts/.lfj-aae-config.json → STALE (wrong range)
+${PROFILE_DIR}/scripts/.lfj-aae-config.json          → STALE (curve, $6.13)
+${PROFILE_DIR}/home/.hermes/scripts/.lfj-aae-config.json → STALE (wrong range)
 ```
 
-`HERMES_HOME` env var in cron context = `/root/.hermes/profiles/gentech`, so scripts using `os.environ.get("HERMES_HOME")` read the STALE config.
+`HERMES_HOME` env var in cron context = `${PROFILE_DIR}`, so scripts using `os.environ.get("HERMES_HOME")` read the STALE config.
 
 ## The Fix: lp-monitor-v2.py
 
-**Script location:** `/root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py`
+**Script location:** `${PROFILE_DIR}/scripts/lp-monitor-v2.py`
 
 **Design principles:**
 1. **Hardcoded paths** — never use `HERMES_HOME` env var for config

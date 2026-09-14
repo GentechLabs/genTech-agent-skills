@@ -272,7 +272,7 @@ strip `**` bold markers and `[text](url)` links from the Platform cell, or it em
 `**OpenDexter` which pollutes the exclusion list. Verified Aug 5, 2026: without
 `re.sub(r"\*\*", "", name)` the dedupe list carried literal `**` prefixes.
 **Pitfall — cron scripts must be copied to the profile scripts dir:** the cron scheduler
-rejects absolute vault paths; the seed must live at `/root/.hermes/profiles/gentech/scripts/marketplace-seed.py`
+rejects absolute vault paths; the seed must live at `${PROFILE_DIR}/scripts/marketplace-seed.py`
 and be referenced by filename only.
 
 ### Pitfall: verify the cron script path exists before trusting the job

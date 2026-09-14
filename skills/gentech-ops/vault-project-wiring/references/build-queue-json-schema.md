@@ -1,7 +1,7 @@
 # Build Queue JSON Schema (canonical)
 
-Source of truth: `/root/vaults/gentech/scripts/build_queue.json`
-Human-readable mirror: `/root/vaults/gentech/10-Labs/build-queue.md` (renumber rows there separately!)
+Source of truth: `${VAULT_DIR}/scripts/build_queue.json`
+Human-readable mirror: `${VAULT_DIR}/10-Labs/build-queue.md` (renumber rows there separately!)
 
 ## Item shape
 
@@ -31,7 +31,7 @@ blocked/cancelled/needs_jordan), `items`, `consolidation_notes`, `agents`,
 
 ```python
 import json
-path = '/root/vaults/gentech/scripts/build_queue.json'
+path = '${VAULT_DIR}/scripts/build_queue.json'
 with open(path) as f:
     data = json.load(f)
 existing_ids = [it.get('id') for it in data['items']]
@@ -50,7 +50,7 @@ with open(path, 'w') as f:
 ```bash
 python3 -c "
 import json
-data = json.load(open('/root/vaults/gentech/scripts/build_queue.json'))
+data = json.load(open('${VAULT_DIR}/scripts/build_queue.json'))
 ids = [it['id'] for it in data['items']]
 assert ids == list(range(1, len(ids) + 1)), f'IDs not sequential: {ids}'
 print('OK — sequential', len(ids), 'items')

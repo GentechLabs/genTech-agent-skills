@@ -146,7 +146,7 @@ Save findings to `11-Mess Hall/agent-brain/YYYY-MM-DD-nightly-build.md` covering
 
 After all updates, run:
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/build_queue_tick.py
+python3 ${PROFILE_DIR}/scripts/build_queue_tick.py
 ```
 
 This regenerates the Forge task list and Jordan items in `01-HANDOFFS/` with the latest queue state.

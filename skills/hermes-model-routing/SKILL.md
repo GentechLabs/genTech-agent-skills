@@ -31,7 +31,7 @@ Build session → `hermes config set model "opencode-go"`
 
 ## Fleet Model Sync Tool (Aug 30, 2026 — "switch once, all follow")
 
-**Tool:** `python3 /root/vaults/gentech/00-System/agent-profiles/fleet_model_sync.py`
+**Tool:** `python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_model_sync.py`
 Companion to fleet_update.py (which syncs CODE); this syncs MODEL WIRING. Reads the source
 profile (default gentech) and pushes model.default / model.provider / model.base_url /
 fallback_model to ALL profiles, then repins every cron job pinned to a dead-provider marker
@@ -885,7 +885,7 @@ The rate limit monitor runs automatically as a cron job:
 - **Name:** "Rate Limit Monitor — Auto-Escalate"
 - **Schedule:** Every 5 minutes (`*/5 * * * *`)
 - **Mode:** `no_agent=true` (script-only, no LLM needed)
-- **Workdir:** `/root/.hermes/profiles/gentech/scripts`
+- **Workdir:** `${PROFILE_DIR}/scripts`
 
 What the cron job does automatically:
 1. Scans `/root/.hermes/logs/errors.log` and `/root/.hermes/logs/agent.log` for rate limit patterns
@@ -902,7 +902,7 @@ cronjob action=list | grep "Rate Limit Monitor"
 # (Look for job_id 1a6d403954b9 in cron list output)
 
 # Manual status check
-cd /root/.hermes/profiles/gentech/scripts
+cd ${PROFILE_DIR}/scripts
 python3 rate-limit-escalation.py --check
 ```
 

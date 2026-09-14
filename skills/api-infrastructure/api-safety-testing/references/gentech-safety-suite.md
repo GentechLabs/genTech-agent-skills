@@ -1,7 +1,7 @@
 # GenTech API Safety Suite — Reference Implementation
 
-**Script location:** `/root/.hermes/profiles/gentech/scripts/api-safety-suite/run_safety_suite.py`
-**Golden files:** `/root/.hermes/profiles/gentech/scripts/api-safety-suite/golden/`
+**Script location:** `${PROFILE_DIR}/scripts/api-safety-suite/run_safety_suite.py`
+**Golden files:** `${PROFILE_DIR}/scripts/api-safety-suite/golden/`
 
 ## What It Tests
 

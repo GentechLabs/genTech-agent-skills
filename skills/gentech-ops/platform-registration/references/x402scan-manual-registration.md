@@ -39,7 +39,7 @@ us immediately. Manual registration is the working path.
   (Coinbase) is the #1 volume facilitator on x402scan (100K txns / $36K / 24h).
   Our gateway wires CDP `/verify`+`/settle` for Base/EVM plus PayAI + GoPlausible
   for Avalanche. Verify CDP vars are set in the live service env
-  (`EnvironmentFile=/root/.hermes/profiles/gentech/.env`): `CDP_API_KEY`,
+  (`EnvironmentFile=${PROFILE_DIR}/.env`): `CDP_API_KEY`,
   `CDP_API_KEY_ID`, `CDP_API_KEY_SECRET`, `CDP_WALLET_SECRET`.
 - **PayTo check**: confirm live `X402_PAYTO_*` env points to the wallet we control
   (0x7ebf…1296a) across all chains.

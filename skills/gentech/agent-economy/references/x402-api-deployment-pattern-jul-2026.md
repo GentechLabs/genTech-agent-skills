@@ -118,8 +118,8 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/root/agent-search-api
-Environment="PATH=/root/.hermes/profiles/gentech/home/.local/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/usr/local/lib/hermes-agent/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8091
+Environment="PATH=${PROFILE_DIR}/home/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=${INSTALL_DIR}/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8091
 Restart=always
 RestartSec=10
 StandardOutput=append:/var/log/search-api.log

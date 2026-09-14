@@ -83,7 +83,7 @@ curl -X POST "https://api.pinata.cloud/pinning/pinJSONToIPFS" \
 
 **Using Python script (Avalanche):**
 ```python
-# /root/vaults/gentech/scripts/update_erc8004_metadata.py
+# ${VAULT_DIR}/scripts/update_erc8004_metadata.py
 RPC_URL = "https://api.avax.network/ext/bc/C/rpc"
 CONTRACT_ADDRESS = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
 TOKEN_ID = 1770

@@ -43,7 +43,7 @@ different model on failover. Fixed by writing the real YAML list via the config 
 providers configured". Write a real YAML list via the config module:
 
 ```bash
-/usr/local/lib/hermes-agent/venv/bin/python -c "
+${INSTALL_DIR}/venv/bin/python -c "
 from hermes_cli.config import load_config, save_config
 cfg = load_config()
 cfg['fallback_providers'] = [

@@ -6,7 +6,7 @@ a code bug. This is the fastest way to prove it, so you don't chase a phantom co
 ## The definitive test — run the SDK's own call
 
 ```bash
-cd /root/.hermes/profiles/gentech
+cd ${PROFILE_DIR}
 set -a; source .env 2>/dev/null; set +a
 python3 -c "
 import os, asyncio

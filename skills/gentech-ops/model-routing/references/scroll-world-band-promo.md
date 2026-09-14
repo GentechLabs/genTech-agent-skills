@@ -29,7 +29,7 @@ The skill's core innovation is the "connector clip" — a video generated with f
 
 ## KAGEKŌ adaptation (Jul 17, 2026)
 
-Scene templates at `/root/vaults/gentech/Gaming/kageko-scroll-world-prompts.md`:
+Scene templates at `${VAULT_DIR}/Gaming/kageko-scroll-world-prompts.md`:
 
 1. Moon Rise — Gothic castle, full moon
 2. Dive Into Stage — Smoky crimson stage

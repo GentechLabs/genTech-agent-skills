@@ -51,6 +51,6 @@ natural fit), `telegraph-docs`, `telegraph-examples`. Start with docs/examples P
 (safe), read node source to learn miner routing/scoring.
 
 ## Worked example
-Draft miner YAML at `/root/vaults/gentech/10-Labs/telegraph/example-miner.yaml`
+Draft miner YAML at `${VAULT_DIR}/10-Labs/telegraph/example-miner.yaml`
 (GenTech Research wrapping Tavily, WEB_SEARCH / NEWS_SEARCH / RESEARCH_SYNTHESIS /
 FACT_CHECK intents, min_price 0.01).

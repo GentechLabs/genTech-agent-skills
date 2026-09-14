@@ -51,7 +51,7 @@ entry_p = pos_tracker.get("entry_price") or pos_tracker.get("entry_avax_price", 
 
 **Manual test after fix:**
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py
+python3 ${PROFILE_DIR}/scripts/defi-lp-consolidated.py
 # Result: ✅ Rainbow data synced: 🟡 Harvest Mode (efficiency: 69%)
 ```
 

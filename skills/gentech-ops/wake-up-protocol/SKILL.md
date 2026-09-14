@@ -21,14 +21,14 @@ When a session restarts, behavioral knowledge (who you are, how to act, routing 
 
 ### Step 1: Load Environment Variables (MANDATORY — New)
 ```bash
-source /root/.hermes/profiles/gentech/.env
+source ${PROFILE_DIR}/.env
 ```
 Makes all API keys available immediately (ElevenLabs, GitHub, Telegram). Without this, every session starts blank.
 
 Quick check:
 ```bash
 # Source env vars
-source /root/.hermes/profiles/gentech/.env 2>/dev/null
+source ${PROFILE_DIR}/.env 2>/dev/null
 
 # Verify keys are loaded
 if [ -n "$ELEVENLABS_API_KEY" ]; then echo "🎤 ElevenLabs: configured"; fi
@@ -55,7 +55,7 @@ The `.env` file has the token, but the `gh` CLI uses its own config. If one is s
 
 ### Step 1b: Load Routing File (MANDATORY — before ANY retrieval)
 ```bash
-read_file("/root/vaults/gentech/ROUTING.md")
+read_file("${VAULT_DIR}/ROUTING.md")
 ```
 **Read this BEFORE scanning any folder.** It's the one-line-per-folder index that tells
 you *which folder to open* for a given topic — so you never scan the whole vault. This is
@@ -65,7 +65,7 @@ Keep it current: update ROUTING.md whenever a top-level folder is created or rep
 
 ### Step 2: Load Context Weight (MANDATORY — Fast Track)
 ```bash
-read_file("/root/vaults/gentech/00-HQ/context-weight.md")
+read_file("${VAULT_DIR}/00-HQ/context-weight.md")
 ```
 **This is the single most important file on wake-up.** It contains live cross-group context — active projects, blockers, build queue summary, key decisions, and collaborators. Auto-generated nightly by Context Snapshot cron. If fresh (<24h), you can skip most subsequent steps — the weight file IS the summary.
 
@@ -76,18 +76,18 @@ read_file("/root/vaults/gentech/00-HQ/context-weight.md")
 ### Step 2: Identity Reset (MANDATORY)
 ```
 # Primary: check 00-HQ/ directory for briefing files
-search_files("*.md", path="/root/vaults/gentech/00-HQ/", target="files", limit=5)
+search_files("*.md", path="${VAULT_DIR}/00-HQ/", target="files", limit=5)
 # Fallback: check for standalone 00-BRIEFING.md (legacy path)
-read_file("/root/vaults/gentech/00-BRIEFING.md")  # may not exist in current vault layout
+read_file("${VAULT_DIR}/00-BRIEFING.md")  # may not exist in current vault layout
 ```
 Check `00-HQ/` for your briefing — this directory replaced the standalone `00-BRIEFING.md`. If you find nothing useful there, also scan `Gentech/` and the vault root for identity files. **This is your personality and rules.** Internalize before responding to anything.
 
 ### Step 3: Current State
 ```
 # Read the build queue for current operational state
-read_file("/root/vaults/gentech/scripts/build_queue.json")
+read_file("${VAULT_DIR}/scripts/build_queue.json")
 # Also check for generated handoffs
-search_files("2026-*-jordan-items.md", path="/root/vaults/gentech/01-HANDOFFS/", target="files", limit=3)
+search_files("2026-*-jordan-items.md", path="${VAULT_DIR}/01-HANDOFFS/", target="files", limit=3)
 ```
 The standalone `00-STATE.md` file no longer exists in the current vault. The build queue JSON and handoff files together form the live status board — what's active, blockers, pending handoffs.
 
@@ -126,10 +126,10 @@ The context-weight summary is the fast track, but decisions buried in the full v
 are still missable. Scan:
 ```
 # Decisions, approvals, blockers
-read_file("/root/vaults/gentech/11-Mess Hall/considerations.md")
-search_files("*.md", path="/root/vaults/gentech/00-HQ/", target="files", limit=5)
+read_file("${VAULT_DIR}/11-Mess Hall/considerations.md")
+search_files("*.md", path="${VAULT_DIR}/00-HQ/", target="files", limit=5)
 # Any new cross-lane handoffs since your last session
-search_files("*.md", path="/root/vaults/gentech/01-HANDOFFS/", target="files", limit=8)
+search_files("*.md", path="${VAULT_DIR}/01-HANDOFFS/", target="files", limit=8)
 ```
 Treat unread `considerations.md` checkbox items and new handoffs as context you must
 absorb before responding.
@@ -141,7 +141,7 @@ Jordan gets real perspective diversity instead of one echo.
 
 ```
 # Read the current open considerations
-read_file("/root/vaults/gentech/11-Mess Hall/considerations.md")
+read_file("${VAULT_DIR}/11-Mess Hall/considerations.md")
 
 # Add YOUR take under an open decision item — prefix with your agent name:
 ## 🤖 <AgentName> — <decision>
@@ -165,34 +165,34 @@ and Jordan gets a spectrum of viewpoints to decide from.
 ### Step 4: Load Your Soul
 ```
 # Check Gentech/ directory (current vault layout — moved from 03-GENTECH/)
-search_files("soul.md", path="/root/vaults/gentech/Gentech/", target="files", limit=3)
+search_files("soul.md", path="${VAULT_DIR}/Gentech/", target="files", limit=3)
 # Fallback: legacy path
-read_file("/root/vaults/gentech/03-GENTECH/soul.md")
+read_file("${VAULT_DIR}/03-GENTECH/soul.md")
 ```
 Your identity document — what you own, daily flow, cron manifest. The vault was reorganized from `03-GENTECH/` to `Gentech/`. Check both.
 
 ### Step 5: Check Forge Handoffs & Social Layer
 ```
 # Check for handoffs TO Forge (Gentech writes these, they show what's pending for desktop)
-search_files("2026-*-forge-tasks.md", path="/root/vaults/gentech/01-HANDOFFS/gentech-to-forge/", target="files", limit=5)
+search_files("2026-*-forge-tasks.md", path="${VAULT_DIR}/01-HANDOFFS/gentech-to-forge/", target="files", limit=5)
 
 # Check for handoffs FROM Forge (if they exist — Forge writes to forge-to-gentech/)
-search_files("*.md", path="/root/vaults/gentech/01-HANDOFFS/forge-to-gentech/", target="files", limit=3)
+search_files("*.md", path="${VAULT_DIR}/01-HANDOFFS/forge-to-gentech/", target="files", limit=3)
 
 # Also check for Jordan items
-search_files("2026-*-jordan-items.md", path="/root/vaults/gentech/01-HANDOFFS/", target="files", limit=3)
+search_files("2026-*-jordan-items.md", path="${VAULT_DIR}/01-HANDOFFS/", target="files", limit=3)
 
 # Check Mess Hall for hot takes and opinions
-search_files("*.md", path="/root/vaults/gentech/11-Mess Hall/opinions/", target="files", limit=3)
+search_files("*.md", path="${VAULT_DIR}/11-Mess Hall/opinions/", target="files", limit=3)
 ```
 Handoffs tell you what's pending for each lane. **Note:** The primary handoff direction is Gentech→Forge (`gentech-to-forge/`). Forge→Gentech handoffs may not exist unless Forge wrote one during a desktop session.
 
 ### Step 6: Active Ideas & Morning Prompt (MANDATORY)
 ```
 # Current path (vault reorganization Jul 2026):
-read_file("/root/vaults/gentech/09-Green Room/ideas.md")
+read_file("${VAULT_DIR}/09-Green Room/ideas.md")
 # Legacy path — may exist if vault hasn't been reorganized:
-read_file("/root/vaults/gentech/09-IDEAS/ideas.md")
+read_file("${VAULT_DIR}/09-IDEAS/ideas.md")
 ```
 Check for ideas to prompt Jordan with. **This is mandatory on wake-up.** After reading, ask Jordan:
 > "Morning — here's what's in the Mess Hall:
@@ -223,14 +223,14 @@ Check your memory usage % (shown on every `memory()` call). If it's high:
 
 Save command:
 ```bash
-python3 /root/.hermes/profiles/gentech/skills/gentech-ops/session-hygiene/scripts/context-save.py
+python3 ${PROFILE_DIR}/skills/gentech-ops/session-hygiene/scripts/context-save.py
 ```
 Then fill the generated file at `09-Green Room/context-bridge/context-{timestamp}.md` with what you were building, decisions, blockers, next steps. Then tell the user: *"Memory at [X]% — saved context to bridge. Ready for /new?"*
 
 **Rule: Save where you are, then start new. Don't let memory fill up and drop the ball.**
 **Primary path — Context Bridge (auto-saved before restart):**
 ```
-read_file("/root/vaults/gentech/09-Green Room/context-bridge/latest-context.md")
+read_file("${VAULT_DIR}/09-Green Room/context-bridge/latest-context.md")
 ```
 If this file exists and has content:
 - Extract: active projects, what was being built, decisions, blockers, next steps
@@ -245,7 +245,7 @@ session_search(limit=3)  # Last 3 sessions
 
 **Always check handoffs:**
 ```
-search_files("*.md", path="/root/vaults/gentech/01-HANDOFFS/", target="files", limit=5)
+search_files("*.md", path="${VAULT_DIR}/01-HANDOFFS/", target="files", limit=5)
 ```
 
 **Cross-reference and consolidate:**
@@ -299,7 +299,7 @@ The instant Jordan confirms, completes, or decides anything for a tracked item, 
 - Decision → tick the checkbox in `11-Mess Hall/considerations.md`
 - Handoff item → tick in `01-HANDOFFS/<date>-jordan-items.md`
 
-**After writing:** `cd /root/vaults/gentech && ob sync` so it's committed and visible to all agents.
+**After writing:** `cd ${VAULT_DIR} && ob sync` so it's committed and visible to all agents.
 
 **Verification:** if Jordan later asks "did I register for X?" and the vault doesn't show it, that's a capture failure — fix it immediately, don't argue.
 
@@ -323,7 +323,7 @@ The instant Jordan confirms, completes, or decides anything for a tracked item, 
 
 **Installation:** session-startup is part of the Agent Kit Behavioral Fixes package (`agent-kit-behavioral-fixes/`). Install via:
 ```bash
-cd /root/vaults/gentech/agent-kit-behavioral-fixes
+cd ${VAULT_DIR}/agent-kit-behavioral-fixes
 bash install.sh
 ```
 

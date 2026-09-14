@@ -319,4 +319,4 @@ The user doesn't lose control. They **train** the system. Their edge becomes the
 
 ## Example: Bull Market Exit Strategy (Completed)
 
-See `/root/vaults/gentech/03-Strategies/LP-Monitor-Rules.md` — "🐂 Bull Market Exit Strategy (DeFi Addendum — Apr 29, 2026)" for a fully documented example covering exit signals, resistance ladder ($10/$12/$15/$18/$20+), re-entry rules, position sizing, and monitor integration.
+See `${VAULT_DIR}/03-Strategies/LP-Monitor-Rules.md` — "🐂 Bull Market Exit Strategy (DeFi Addendum — Apr 29, 2026)" for a fully documented example covering exit signals, resistance ladder ($10/$12/$15/$18/$20+), re-entry rules, position sizing, and monitor integration.

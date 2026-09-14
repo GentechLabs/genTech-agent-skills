@@ -18,8 +18,8 @@ description: Budget-aware GitHub operation scheduling. Use whenever GitHub work 
 
 ## The scheduler (V4)
 - Script: `scripts/github_sync_scheduler.py` (cron `17 */1 * * *`, no_agent, silent when idle)
-- State: `/root/.hermes/profiles/gentech/state/github_sync_state.json`
-- Log: `/root/vaults/gentech/11-Mess Hall/github-sync-log.md`
+- State: `${PROFILE_DIR}/state/github_sync_state.json`
+- Log: `${VAULT_DIR}/11-Mess Hall/github-sync-log.md`
 - Ops: `repo_create`, `repo_check`, `pr_check`, `fork_attempt` (403 → `needs_manual`)
 - Budget: min(3 per tick, remaining−4 buffer). Drains queue over successive hourly ticks
 - Build-queue wiring: items with `github_op` + `github_repo` fields get auto-queued by `build_queue_tick.py` (`queue_github_ops`)
@@ -27,7 +27,7 @@ description: Budget-aware GitHub operation scheduling. Use whenever GitHub work 
 ## How to queue new GitHub work
 1. Add op to the scheduler state queue:
    ```python
-   import sys; sys.path.insert(0, "/root/.hermes/profiles/gentech/scripts")
+   import sys; sys.path.insert(0, "${PROFILE_DIR}/scripts")
    from github_sync_scheduler import STATE_PATH, load_state, save_state
    s = load_state(); s["queue"].append({"kind":"repo_create","name":"x","description":"d"}); save_state(s)
    ```

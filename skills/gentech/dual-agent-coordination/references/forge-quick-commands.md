@@ -81,7 +81,7 @@ Forge: "Synced vault"
 
 ### Jordan Checks
 ```bash
-cd /root/vaults/gentech && ob sync
+cd ${VAULT_DIR} && ob sync
 cat 10-Labs/build-queue.md
 ```
 
@@ -92,21 +92,21 @@ cat 10-Labs/build-queue.md
 ### After Major Changes
 ```bash
 # Both agents sync after changes
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 ob sync
 ```
 
 ### Jordan Checks Progress
 ```bash
 # Sync first, then check
-cd /root/vaults/gentech && ob sync
+cd ${VAULT_DIR} && ob sync
 cat 10-Labs/build-queue.md
 ```
 
 ### Forge Syncs After Work
 ```bash
 # After completing tasks or major progress
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 ob sync
 ```
 
@@ -203,7 +203,7 @@ Check: Did Forge sync vault?
 Fix:   Tell Forge: "Forge, sync vault"
 
 Check: Are you syncing your side?
-Fix:   Run: cd /root/vaults/gentech && ob sync
+Fix:   Run: cd ${VAULT_DIR} && ob sync
 
 Check: Git conflicts?
 Fix:   Resolve merge conflicts manually
@@ -232,7 +232,7 @@ Forge: "Blocked on: Need X approval"
 - Foundation: https://x402.foundation
 
 ### Gentech Resources
-- Vault: `/root/vaults/gentech/`
+- Vault: `${VAULT_DIR}/`
 - Build Queue: `10-Labs/build-queue.md`
 - Assignments: `10-Labs/forge-assignments.md`
 

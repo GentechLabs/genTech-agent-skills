@@ -158,7 +158,7 @@ The `cronjob` MCP tool and `hermes cron edit` CLI do NOT support `--model` or `-
 ```python
 import json
 
-with open('/root/.hermes/profiles/gentech/cron/jobs.json') as f:
+with open('${PROFILE_DIR}/cron/jobs.json') as f:
     data = json.load(f)
 
 target_ids = ['list-of-job-ids']
@@ -168,7 +168,7 @@ for job in data['jobs']:
         job['provider'] = 'new-provider'
         job['model'] = 'new-model'
 
-with open('/root/.hermes/profiles/gentech/cron/jobs.json', 'w') as f:
+with open('${PROFILE_DIR}/cron/jobs.json', 'w') as f:
     json.dump(data, f, indent=2)
 ```
 
@@ -200,12 +200,12 @@ For complex changes (rewriting whole job objects, adding fields), edit `jobs.jso
 
 ```python
 import json
-with open('/root/.hermes/profiles/gentech/cron/jobs.json') as f:
+with open('${PROFILE_DIR}/cron/jobs.json') as f:
     data = json.load(f)
 for job in data['jobs']:
     if job['id'] in TARGET_IDS:
         job['provider'] = 'opencode-go'
-with open('/root/.hermes/profiles/gentech/cron/jobs.json', 'w') as f:
+with open('${PROFILE_DIR}/cron/jobs.json', 'w') as f:
     json.dump(data, f, indent=2)
 ```
 

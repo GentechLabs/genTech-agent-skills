@@ -200,7 +200,7 @@ def detect_by_pattern(message):
 ### Directory Structure
 
 ```
-/root/vaults/gentech/
+${VAULT_DIR}/
 ├── 00-HQ/
 │   ├── collaborators/
 │   │   ├── jordan.md
@@ -283,7 +283,7 @@ def detect_by_pattern(message):
 For faster onboarding, use the automated script:
 
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/onboard.py \
+python3 ${PROFILE_DIR}/scripts/onboard.py \
   --name "Name" --username "@handle" --telegram_id 12345
 ```
 
@@ -293,10 +293,10 @@ See `collaborator-onboarding` skill for full usage. The script creates vault pro
 
 ```bash
 # Create directory
-mkdir -p /root/vaults/gentech/00-HQ/collaborators/
+mkdir -p ${VAULT_DIR}/00-HQ/collaborators/
 
 # Create Vanito profile
-cat > /root/vaults/gentech/00-HQ/collaborators/vanito.md << 'EOF'
+cat > ${VAULT_DIR}/00-HQ/collaborators/vanito.md << 'EOF'
 # Vanito — GenTech Labs Collaborator
 
 ## Role

@@ -41,7 +41,7 @@ The cron provides:
 
 ```python
 import json
-q = json.load(open('/root/vaults/gentech/scripts/build_queue.json'))
+q = json.load(open('${VAULT_DIR}/scripts/build_queue.json'))
 updated = q.get('updated', '')
 # If updated within the last 6 hours, the queue was already maintained
 # by the Nightly Build Session — skip redundant work
@@ -61,8 +61,8 @@ Process the tick output:
 Also read the actual `build_queue.json` and the generated handoff files:
 ```bash
 # Read generated handoffs
-/root/vaults/gentech/01-HANDOFFS/<date>-forge-tasks.md
-/root/vaults/gentech/01-HANDOFFS/<date>-jordan-items.md
+${VAULT_DIR}/01-HANDOFFS/<date>-forge-tasks.md
+${VAULT_DIR}/01-HANDOFFS/<date>-jordan-items.md
 ```
 
 ### Step 1.5: Reconcile Queue Against Forge's Handoff
@@ -124,7 +124,7 @@ Gentech works **cloud** items only (desktop/GPU items go to Forge).
 
 **If Step 2 finds zero Gentech cloud items that are actually actionable** (no pending items assigned to gentech, OR all gentech-assigned items are blocked/Jordan-dependent), don't go silent. Switch to **Brain Audit Mode** instead. The distinction matters: the queue may show 7 gentech items, but if all 7 are blocked on Jordan, the actionable count is zero — you should check this before deciding there's nothing to do.
 
-1. **Scan the vault** at `/root/vaults/gentech/` for:
+1. **Scan the vault** at `${VAULT_DIR}/` for:
    - Stale data in existing projects (outdated docs, dead links, incomplete specs)
    - **Stale nightly-report-*.md files in vault root** — These accumulate from interrupted `ob sync` or failed git push attempts. They are noise — record failed operations, not actual build work. Move them to `11-Mess Hall/agent-brain/` (if content has value) or delete them. Confirmed Jul 25, 2026: 3 stale reports found and moved in one pass. See `references/brain-audit-protocol.md` for the cleanup pattern.
    - Gaps in our documentation (missing READMEs, un-indexed folders)
@@ -224,7 +224,7 @@ For each selected item:
 
 ### Step 4: Update Build Queue
 
-Update `/root/vaults/gentech/scripts/build_queue.json`:
+Update `${VAULT_DIR}/scripts/build_queue.json`:
 
 | Action | `status` value |
 |--------|---------------|
@@ -273,7 +273,7 @@ This is a stopping-point record, not a status report. Write it when you finish a
 After updating the queue, regenerate the Forge task list and Jordan items:
 
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/build_queue_tick.py
+python3 ${PROFILE_DIR}/scripts/build_queue_tick.py
 ```
 
 This produces:
@@ -284,7 +284,7 @@ This produces:
 
 Verify the handoff files were created (non-empty):
 ```bash
-wc -l /root/vaults/gentech/01-HANDOFFS/gentech-to-forge/<date>-forge-tasks.md
+wc -l ${VAULT_DIR}/01-HANDOFFS/gentech-to-forge/<date>-forge-tasks.md
 ```
 
 **Augment if needed:** After verification, read the generated handoff and check whether any items listed as "Ready" actually have `needs_jordan: true` in the queue. The tick script does not check this field. If Jordan-dependent items appear actionable, add a warning section at the top of the handoff listing which items need Jordan first. Proven Jul 25: #63, #68, #7 were shown as "Ready" in the auto-generated handoff but all need Jordan.
@@ -343,7 +343,7 @@ group agent. This overrides the Forge-centric assumptions elsewhere in this skil
 ### 1. Deterministic gate — build vs maintain is a NUMBER, not a judgment call
 Compute the autonomous-work count instead of deciding "is the lane gated?":
 ```python
-python3 -c "import json; q=json.load(open('/root/vaults/gentech/scripts/build_queue.json')); items=[i for i in q if isinstance(i,dict)]; print(sum(1 for i in items if i.get('status')=='pending' and not i.get('needs_jordan')))"
+python3 -c "import json; q=json.load(open('${VAULT_DIR}/scripts/build_queue.json')); items=[i for i in q if isinstance(i,dict)]; print(sum(1 for i in items if i.get('status')=='pending' and not i.get('needs_jordan')))"
 ```
 - `count >= 1` → BUILD MODE. Ship 1-2 verified items (tests pass, code runs). Never fabricate.
 - `count == 0` → MAINTENANCE MODE. Do NOT idle. Run ALL: stale-notes scan → flesh/promote an
@@ -355,7 +355,7 @@ productive build night silently skips notes maintenance"). Run `stale-notes-scan
 nightly regardless of lane state; feed its output to the Morning Digest as a
 `## 🗂 Stale / unaddressed notes` section. Shipping and vault maintenance are no longer
 mutually exclusive.
-- Scanner: `/root/.hermes/profiles/gentech/scripts/stale-notes-scanner.py`
+- Scanner: `${PROFILE_DIR}/scripts/stale-notes-scanner.py`
 - Reads `11-Mess Hall/considerations.md` (open checkboxes + frontmatter date), `agent-brain/`
   (dated notes with "Jordan:" asks), `09-Green Room/ideas.md` (unchecked ideas).
 - Outputs JSON `{stale[], all_open[], counts}`. `[SILENT]` only if nothing changed AND nothing stale.
@@ -365,12 +365,12 @@ Every group agent gets a symmetric return path so work flows BACK overnight:
 - Return folders: `01-HANDOFFS/<group>-to-gentech/` (dated notes)
 - Completion files: `01-HANDOFFS/<group>-completions.md` (item IDs shipped, `- **#<id>** ...`)
 - Groups: labs, entertainment, finance (Treasury), hq, forge.
-- Scanner: `/root/.hermes/profiles/gentech/scripts/group-returns-scanner.py` reads EVERY
+- Scanner: `${PROFILE_DIR}/scripts/group-returns-scanner.py` reads EVERY
   group's return, extracts shipped IDs + notes, emits JSON.
 - Nightly Build applies returned IDs to the queue (status → shipped, note group+date).
 - Morning Digest surfaces `## 🔁 Group returns received` + `## 🗂 Stale / unaddressed notes`.
 - Both scanners attach to the cron jobs as `script` (their JSON auto-injects into context).
-- **Cron script paths MUST be relative to the profile scripts dir** (`/root/.hermes/profiles/gentech/scripts/`), not absolute vault paths — the cron scheduler rejects absolute paths. Keep a copy of each scanner in the profile scripts dir and reference it by filename.
+- **Cron script paths MUST be relative to the profile scripts dir** (`${PROFILE_DIR}/scripts/`), not absolute vault paths — the cron scheduler rejects absolute paths. Keep a copy of each scanner in the profile scripts dir and reference it by filename.
 - **The return-loop plumbing is NOT enough — each group agent needs the instruction in its SOUL.md (Aug 6, 2026).** The folders + scanner existed, but only Forge was writing real completions; labs/entertainment/finance/hq all sat at `*None this session.*` placeholders. The fix was adding an **"End-of-Day Report (REQUIRED)"** section to each group agent's `SOUL.md` (gizmo, gentech-treasury, desmond, dmob, yoyo) telling it to write a dated note to `01-HANDOFFS/<group>-to-gentech/YYYY-MM-DD.md` + append shipped IDs to `<group>-completions.md` + `git add -A && git commit` at end of session. **Diagnostic:** if the Morning Digest's `## 🔁 Group returns received` is always empty, check the group agents' SOUL.md files for the instruction — the folders existing doesn't mean the agents know to write to them. Note: SOUL.md files live in each profile dir (NOT the vault), so they're not git-tracked and take effect on the agent's next session; the `<your-group>` placeholder should be confirmed per-agent.
 
 ### 4. Forge = desktop lane (routing rule, Jordan Aug 5)

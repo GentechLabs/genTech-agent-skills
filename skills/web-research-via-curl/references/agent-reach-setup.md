@@ -1,6 +1,6 @@
 # Agent Reach Setup Notes (Jul 2026)
 
-Installed at `/usr/local/lib/hermes-agent/venv/bin/agent-reach` v1.4.0.
+Installed at `${INSTALL_DIR}/venv/bin/agent-reach` v1.4.0.
 Starred by Jordan at github.com/Panniantong/Agent-Reach (62k ⭐).
 
 ## Working Channels (no setup needed)

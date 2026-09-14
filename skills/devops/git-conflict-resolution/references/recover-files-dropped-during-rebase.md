@@ -10,7 +10,7 @@
 
 ```bash
 # 1. Confirm the file exists in history (not truly lost)
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git log --all --oneline -- "*gentech-token-security.yaml"   # find the commit that added it
 # e.g. → 37678591 Labs: #49 Telegraph miner YAML + prediction-market rail assessment
 

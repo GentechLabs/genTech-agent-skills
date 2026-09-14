@@ -150,7 +150,7 @@ YouTube Skills for AI Agents (432⭐, MIT) installed at `youtube-full`. Gives ag
 
 **Fix (one command):**
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/cron-provider-sync.py
+python3 ${PROFILE_DIR}/scripts/cron-provider-sync.py
 ```
 This reads the session's current `model.default` + `provider` from `config.yaml`, then re-pins every LLM cron job in `jobs.json` to match. Takes ~2 seconds. After the sync, re-run any jobs that failed during the stale window.
 

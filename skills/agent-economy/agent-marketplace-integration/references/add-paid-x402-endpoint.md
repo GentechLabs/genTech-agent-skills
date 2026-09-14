@@ -14,7 +14,7 @@ lands in the treasury. This is the full, verified workflow.
    - Run on a **free port** (check `ss -tlnp` first — 8098/8099 are Docker, use 8100+).
    - Default port in `__main__` must match the systemd `PORT` (or set `PORT` env).
 
-2. **Gateway routing** — `/root/vaults/gentech/10-Labs/x402-gateway/server.py` (the
+2. **Gateway routing** — `${VAULT_DIR}/10-Labs/x402-gateway/server.py` (the
    LIVE copy; the systemd unit runs from the vault, not `/root/gentechlabs`):
    - `BACKEND_ROUTES[<key>] = (backend_base, public_prefix, backend_prefix)`
    - `URL_TO_SERVICE[<public_segment>] = <key>`
@@ -32,8 +32,8 @@ lands in the treasury. This is the full, verified workflow.
    [Service]
    Type=simple
    WorkingDirectory=/root/gentechlabs/services
-   EnvironmentFile=/root/.hermes/profiles/gentech/.env
-   ExecStart=/usr/local/lib/hermes-agent/venv/bin/python3 <name>.py
+   EnvironmentFile=${PROFILE_DIR}/.env
+   ExecStart=${INSTALL_DIR}/venv/bin/python3 <name>.py
    Restart=always
    RestartSec=3
    ```
@@ -85,7 +85,7 @@ transfer_sig = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3
 
 Cross-check the payer balance dropped by exactly the price (e.g. 1.00 → 0.95 USDC for
 a $0.05 settle). Then log it in the Revenue Monitor tracker
-(`/root/.hermes/profiles/gentech/scripts/revenue-tracker.json`) and sync to the vault.
+(`${PROFILE_DIR}/scripts/revenue-tracker.json`) and sync to the vault.
 
 ## Landing page update
 

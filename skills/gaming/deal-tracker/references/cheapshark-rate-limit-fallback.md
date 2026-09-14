@@ -109,7 +109,7 @@ For weekly cron sweeps of 86+ games:
 
 When CheapShark is completely blocked, the HTML dashboards in the vault contain the last successful deal scan. These are static HTML files with embedded deal data:
 
-- `/root/vaults/gentech/Gaming/wishlist-vanito.html` — Vanito's wishlist with tiered deals
-- `/root/vaults/gentech/hub-vanito.html` — Vanito's hub dashboard
+- `${VAULT_DIR}/Gaming/wishlist-vanito.html` — Vanito's wishlist with tiered deals
+- `${VAULT_DIR}/hub-vanito.html` — Vanito's hub dashboard
 
 Parse these with `web_extract` or `read_file` to extract the last-known deal data. The HTML has a consistent structure: `.game` divs with `.game-title`, `.price-current`, `.discount`, and `.store` classes. The stats bar at the top shows total games, on-sale count, deep cuts, and unreleased counts.

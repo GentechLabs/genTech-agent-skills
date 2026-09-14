@@ -19,7 +19,7 @@ and surfaces dead nginx backends.
      tr '\0' ' ' < /proc/$pid/cmdline | head -c 200; echo
    done
    ```
-   The cwd reveals the project (e.g. `/root/vaults/gentech/10-Labs/deal-tracker-api`).
+   The cwd reveals the project (e.g. `${VAULT_DIR}/10-Labs/deal-tracker-api`).
 
 3. **Probe HTTP health per port** — `/docs` returns 200 only if FastAPI is up:
    ```bash
@@ -71,8 +71,8 @@ and surfaces dead nginx backends.
 
 - Template unit: `/etc/systemd/system/x402-backend@.service`
   - WorkingDirectory=/root/gentechlabs/services
-  - ExecStart=`/usr/local/lib/hermes-agent/venv/bin/python3 %i.py`
-  - EnvironmentFile=/root/.hermes/profiles/gentech/.env
+  - ExecStart=`${INSTALL_DIR}/venv/bin/python3 %i.py`
+  - EnvironmentFile=${PROFILE_DIR}/.env
 - Per-service drop-in: `/etc/systemd/system/x402-backend@<name>.service.d/port.conf`
   - e.g. `Environment=PORT=8096` for treasury_defender (its py default is 8095;
     the drop-in overrides to 8096 to match nginx)

@@ -52,7 +52,7 @@ sdk.vaultClaim(withdrawKey)      // Claim
 - Get from: https://sdk.zyf.ai/
 - Format: `zyfai_...` (SDK API key) or regular API key
 - SDK API keys enable `addWalletToSdk()` method
-- **Configured:** Saved to `/root/.hermes/profiles/gentech/.env` as `ZYFAI_API_KEY`
+- **Configured:** Saved to `${PROFILE_DIR}/.env` as `ZYFAI_API_KEY`
 
 ## Test Results (Jun 22, 2026)
 

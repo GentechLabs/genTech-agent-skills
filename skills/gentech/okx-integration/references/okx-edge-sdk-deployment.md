@@ -56,7 +56,7 @@ payment for that payer (match on `x-payer` / `x-wallet` header).
 
 ## systemd + nginx wiring
 
-- systemd unit: `EnvironmentFile=/root/.hermes/profiles/gentech/.env` (loads OKX creds), `ExecStart`
+- systemd unit: `EnvironmentFile=${PROFILE_DIR}/.env` (loads OKX creds), `ExecStart`
   with the real node path (`/usr/local/node22/bin/node` — NOT `/usr/bin/node`), `Restart=always`.
 - nginx: add `location /v1/market/price` and `location /v1/security/score` blocks proxying to the
   edge port (e.g. 8410) in BOTH the HTTP and HTTPS server blocks for `api.gentechlabs.net`.

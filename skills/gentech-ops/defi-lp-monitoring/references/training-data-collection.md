@@ -1,7 +1,7 @@
 # Training Data Collection Guide
 
 ## File
-`/root/vaults/gentech/defi-training-data.json`
+`${VAULT_DIR}/defi-training-data.json`
 
 ## When to Log
 1. **After every rebalance** — New sample with full context

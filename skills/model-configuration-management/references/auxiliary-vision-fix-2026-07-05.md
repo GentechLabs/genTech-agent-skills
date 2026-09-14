@@ -34,7 +34,7 @@ All failed with same error.
    - None worked
 
 4. **Restored from backup**
-   - `/root/.hermes/profiles/gentech/config.yaml.backup` existed
+   - `${PROFILE_DIR}/config.yaml.backup` existed
    - Restored to clean state
 
 5. **Used hermes config set with dot notation**
@@ -81,7 +81,7 @@ This updates the exact nested structure without manual edits or risky sed operat
 
 ```bash
 # Check auxiliary.vision section
-grep -A 6 "auxiliary:" /root/.hermes/profiles/gentech/config.yaml | grep -A 5 "vision:"
+grep -A 6 "auxiliary:" ${PROFILE_DIR}/config.yaml | grep -A 5 "vision:"
 
 # Expected output:
 #   vision:

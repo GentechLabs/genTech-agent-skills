@@ -39,7 +39,7 @@ The spec source (Binance x402 v2 verify-payment docs) confirms: `extra.name` and
 `extra.version` are the token EIP-712 domain name/version. Hardcoding is fine for
 a fixed asset; if supporting multiple tokens, derive name/version per asset.
 
-**Where it lives in our stack:** `/root/vaults/gentech/10-Labs/x402-gateway/server.py`
+**Where it lives in our stack:** `${VAULT_DIR}/10-Labs/x402-gateway/server.py`
 → `build_payment_required()` (systemd unit `x402-api.service`, port 8090, behind
 api.gentechlabs.net). Deploy = `systemctl restart x402-api` then verify:
 `curl -s <endpoint> | python3 -m json.tool` and check `accepts[0].extra`.

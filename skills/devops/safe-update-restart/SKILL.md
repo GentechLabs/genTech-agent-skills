@@ -70,7 +70,7 @@ hermes backup -q -l pre-update-$(date +%Y%m%d) -o /root/hermes-quick-backup.zip
 ```
 Also record the git rollback point:
 ```bash
-cd /usr/local/lib/hermes-agent && git log -1 --oneline && git describe --tags
+cd ${INSTALL_DIR} && git log -1 --oneline && git describe --tags
 ```
 > **PITFALL:** A full `hermes backup` (no `-q`) zips the entire 30-40GB `~/.hermes`
 > including cargo/node caches — slow and fills disk. Use `-q`. Delete any stale
@@ -80,16 +80,16 @@ cd /usr/local/lib/hermes-agent && git log -1 --oneline && git describe --tags
 
 **DEFAULT: use the fleet updater when multiple profiles share this install.**
 All profiles (gentech, treasury, gizmo, pixel) share ONE Hermes install at
-`/usr/local/lib/hermes-agent`. A plain `hermes update` only drains/restarts the
+`${INSTALL_DIR}`. A plain `hermes update` only drains/restarts the
 *gateways Hermes manages for the calling profile* — it leaves the other profiles'
 gateways on old code (the fleet left-behind bug, verified Aug 22). So when Jordan
 says "update Hermes," run the fleet updater by default:
 
 ```bash
 # The fleet updater (canonical location in the vault):
-python3 /root/vaults/gentech/00-System/agent-profiles/fleet_update.py --check   # preview, no changes
-python3 /root/vaults/gentech/00-System/agent-profiles/fleet_update.py           # update + restart ALL gateways
-python3 /root/vaults/gentech/00-System/agent-profiles/fleet_update.py --restart-only  # just restart gateways
+python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_update.py --check   # preview, no changes
+python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_update.py           # update + restart ALL gateways
+python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_update.py --restart-only  # just restart gateways
 ```
 
 `fleet_update.py` (patched Aug 22) updates the shared code ONCE, restarts every
@@ -114,14 +114,14 @@ duplicate spawn), falling back to `hermes gateway restart`. Run it in the
 > cron (`no_agent` script that runs `systemctl --user restart hermes-gateway-<p>.service`)
 > — cron runs in a fresh session outside the gateway tree, so the guard doesn't block it.
 
-> **PITFALL — `TIMEOUT after 300s: hermes update` then "Continuing to restart gateways anyway" (verified Aug 30):** this reads scarier than it is. The code usually DID land — the timeout is the fetch/install step exceeding the updater's 300s wrapper on a big commit jump, and the updater correctly proceeds to the restart phase. Treat it as suspect until proven: after the run verify `cd /usr/local/lib/hermes-agent && git log -1 && git status --short` (clean tree + HEAD == origin/main tip = code is fine), `hermes --version`, and an import test with the hermes venv's python. Only roll back if the tree is dirty or imports fail. Do NOT panic re-run the updater during the gateway restart phase.
+> **PITFALL — `TIMEOUT after 300s: hermes update` then "Continuing to restart gateways anyway" (verified Aug 30):** this reads scarier than it is. The code usually DID land — the timeout is the fetch/install step exceeding the updater's 300s wrapper on a big commit jump, and the updater correctly proceeds to the restart phase. Treat it as suspect until proven: after the run verify `cd ${INSTALL_DIR} && git log -1 && git status --short` (clean tree + HEAD == origin/main tip = code is fine), `hermes --version`, and an import test with the hermes venv's python. Only roll back if the tree is dirty or imports fail. Do NOT panic re-run the updater during the gateway restart phase.
 > **PITFALL — `hermes --version` does NOT bump on hash-only updates (verified Sep 3):** when the update jump has no release tag, the version string stays identical (e.g. still `v0.21.0`) while the upstream hash changes — "bumped = good" would misjudge a SUCCESSFUL update as failed. The authoritative check is git: `git fetch origin && git rev-list --count HEAD..origin/main` → **0** + clean tree = code landed. Secondary signals: `hermes --version` shows "Up to date" (practical pass), and the actual fix you updated FOR is greppable in the code (e.g. feature file exists under the install dir). Treat a version bump as sufficient-but-not-necessary proof.
 
 > **PITFALL — config edits after gateway start never reach running jobs (verified Aug 30):** gateways and their cron runners snapshot config at process start. Edits + cron repins made mid-session silently don't apply — jobs keep failing with the OLD provider's error even though disk config is correct. Any fleet model/config change REQUIRES `fleet_update.py --restart-only` afterward, then verify every gateway's `ExecMainStartTimestamp` is fresh. A config change without a gateway flush is a half-done change.
 
 If the fleet updater is unavailable (e.g. a single-profile box), fall back to:
 ```bash
-cd /usr/local/lib/hermes-agent && hermes update --yes
+cd ${INSTALL_DIR} && hermes update --yes
 ```
 > The update does a **graceful gateway drain** before restarting managed gateways on
 > the new code — this is the safe handoff, not a bug. Wait it out; don't kill it.
@@ -135,7 +135,7 @@ together (the fleet path), NOT just your own. A single-profile restart leaves th
 - **Default (fleet-wide):**
   ```bash
   # Restart all 4 gateways, defer your own, no code update:
-  python3 /root/vaults/gentech/00-System/agent-profiles/fleet_update.py --restart-only
+  python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_update.py --restart-only
   ```
 - **Isolated problem:** only restart a single profile when the issue is provably
   specific to it (e.g. one agent's gateway is down while the other 3 are healthy).
@@ -169,7 +169,7 @@ Compare against the Step 1 baseline. All managed gateways should have **new PIDs
 for p in <profiles>; do echo "$p: pid=$(pgrep -f "profile $p gateway run" | head -1)"; done
 # 2. version / code state?
 hermes --version   # "Up to date" = pass; a bump is nice-to-have, NOT required on hash-only updates
-cd /usr/local/lib/hermes-agent && git fetch origin -q && git rev-list --count HEAD..origin/main   # must be 0 — authoritative
+cd ${INSTALL_DIR} && git fetch origin -q && git rev-list --count HEAD..origin/main   # must be 0 — authoritative
 # 3. services still active?
 for svc in <services>; do echo "$svc: $(systemctl is-active "$svc")"; done
 # 4. public endpoints still up (must match baseline)?

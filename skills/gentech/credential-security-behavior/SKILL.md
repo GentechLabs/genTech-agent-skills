@@ -64,11 +64,11 @@ hermes config set approvals.mode smart           # Smart approval (recommended m
 
 **Fix:** After any GitHub token rotation, explicitly update BOTH places:
 1. `gh auth login --with-token < ~/.github-token`
-2. `GITHUB_TOKEN=` in `/root/.hermes/profiles/gentech/.env`
+2. `GITHUB_TOKEN=` in `${PROFILE_DIR}/.env`
 
 **Verification:** Test the `.env` token independently (not through `gh`):
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/gh-check.py
+python3 ${PROFILE_DIR}/scripts/gh-check.py
 ```
 This checks the `.env` token directly against the GitHub API, bypassing `gh` CLI entirely.
 
@@ -126,8 +126,8 @@ The agent can write credentials correctly but cannot verify them through normal 
 ElevenLabs now requires API keys to start with `sk_`. Old-format keys (e.g. `82a9e2...`) are rejected with `invalid_api_key_prefix` — "API key must start with 'sk_'." This is a provider format change, not a propagation issue.
 
 **Fix:** Get a fresh key from elevenlabs.io → Profile → API Keys (starts with `sk_`). Update ALL locations atomically:
-- `/root/.hermes/profiles/gentech/.env`
-- `/root/.hermes/profiles/gentech-treasury/.env`
+- `${PROFILE_DIR}/.env`
+- `${PROFILE_DIR}/.env`
 - `/root/.hermes/.env`
 - Scripts read via `os.environ.get("ELEVENLABS_API_KEY")` — so the `.env` update is what matters.
 

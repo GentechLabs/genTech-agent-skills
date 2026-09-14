@@ -30,7 +30,7 @@ Call text_to_speech() like this:
 ```
 text_to_speech(
   text="Jordan, your game intelligence report is ready...",
-  output_path="/root/.hermes/profiles/gentech/audio_cache/jordan-game-intel.mp3"
+  output_path="${PROFILE_DIR}/audio_cache/jordan-game-intel.mp3"
 )
 ```
 ```
@@ -50,7 +50,7 @@ This fails because the agent is never told to CALL the tool.
 When `text_to_speech()` is called successfully, the agent's final response will include:
 
 ```
-MEDIA:/root/.hermes/profiles/gentech/audio_cache/jordan-game-intel.mp3
+MEDIA:${PROFILE_DIR}/audio_cache/jordan-game-intel.mp3
 ```
 
 Hermes automatically converts this to a native voice bubble in Telegram.
@@ -102,7 +102,7 @@ Call text_to_speech() like this:
 ```
 text_to_speech(
   text="Jordan, your game intelligence report is ready...",
-  output_path="/root/.hermes/profiles/gentech/audio_cache/jordan-game-intel.mp3"
+  output_path="${PROFILE_DIR}/audio_cache/jordan-game-intel.mp3"
 )
 ```
 

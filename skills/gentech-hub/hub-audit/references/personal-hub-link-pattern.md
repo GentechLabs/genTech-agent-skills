@@ -60,7 +60,7 @@ Plain text → auto-converts to clickable link in Telegram
 
 ## Dashboard Registry Pattern
 
-All personal dashboards should be registered in `/root/vaults/gentech/Dashboards/dashboard-registry.json`:
+All personal dashboards should be registered in `${VAULT_DIR}/Dashboards/dashboard-registry.json`:
 
 ```json
 {
@@ -92,7 +92,7 @@ When adding a new personal dashboard:
 1. **Create HTML file** in appropriate directory (`Cookbook/`, `Gaming/`, `Travels/`, etc.)
 2. **Add "Back to Hub" link** at top of page
 3. **Register in dashboard-registry.json** with `deployed_url` field
-4. **Sync vault to GitHub**: `cd /root/vaults/gentech && ob sync`
+4. **Sync vault to GitHub**: `cd ${VAULT_DIR} && ob sync`
 5. **Sync GitHub Pages repo**: 
    ```bash
    cd /root/ProtoJay4789.github.io

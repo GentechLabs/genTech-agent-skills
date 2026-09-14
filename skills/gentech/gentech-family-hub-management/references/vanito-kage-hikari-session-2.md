@@ -102,7 +102,7 @@ Part III — KAGEKŌ (how they met)
 Epilogue (the rooftop scene, "Now it feels warm")
 ```
 
-Save to vault: `/root/vaults/gentech/Travels/music/kageko-story.txt`
+Save to vault: `${VAULT_DIR}/Travels/music/kageko-story.txt`
 Embed in hub as styled card with `<div class="char-bio">` and inline `<video>` for epilogue
 
 ### 9. User-Sung Audio Workflow

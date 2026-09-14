@@ -21,7 +21,7 @@ The BlockRun MCP server had been restarted, which created a **new wallet** with 
 
 There were **two different `.session` files**:
 - `/root/.blockrun/.session` — the OLD key (Jun 16), address `0xebc8c...`
-- `/root/.hermes/profiles/gentech/home/.blockrun/.session` — the NEW key (Jul 30), address `0x8B1a1...`
+- `${PROFILE_DIR}/home/.blockrun/.session` — the NEW key (Jul 30), address `0x8B1a1...`
 
 The MCP server was reading the profile-specific copy, not the root copy.
 

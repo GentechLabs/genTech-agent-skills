@@ -27,7 +27,7 @@ Read each file and trace what value flows where. The cron script says `daily_fee
 
 Execute the script directly:
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py
+python3 ${PROFILE_DIR}/scripts/lp-monitor-v2.py
 ```
 
 Check its output against the LFJ UI. If the numbers don't match, the script is reading stale input or calculating incorrectly.

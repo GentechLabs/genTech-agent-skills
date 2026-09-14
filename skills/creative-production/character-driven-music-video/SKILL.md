@@ -844,7 +844,7 @@ When Vanito requests a new version that combines elements from two images (e.g.,
 3. **Camera perspective is critical** — for stage/concert shots from behind, explicitly say "Same camera angle behind them the whole time. They never turn around." The model WILL rotate the view if you don't lock it
 4. **Hub push rejection:** Always pull --rebase before pushing:
    ```bash
-   cd /root/vaults/gentech/github/ProtoJay4789.github.io
+   cd ${VAULT_DIR}/github/ProtoJay4789.github.io
    git pull --rebase origin main  # CRITICAL: do this before EVERY push
    git push origin main
    ```
@@ -852,7 +852,7 @@ When Vanito requests a new version that combines elements from two images (e.g.,
 5. Always verify files pushed correctly by checking the raw URL returns HTTP 200
 6. **Poster dimensions issue:** The poster is 1288x853 which is ODD height. libx264 requires even dimensions. Always scale/pad to 1280x720 before encoding with h264
 
-7. **Hub push via fresh clone when local repo is tangled:** The hub repo is nested inside the vault directory (`/root/vaults/gentech/github/ProtoJay4789.github.io/`), which causes the working tree to always show vault changes as uncommitted modifications. This blocks clean pulls/pushes. When this happens, do a fresh shallow clone instead:
+7. **Hub push via fresh clone when local repo is tangled:** The hub repo is nested inside the vault directory (`${VAULT_DIR}/github/ProtoJay4789.github.io/`), which causes the working tree to always show vault changes as uncommitted modifications. This blocks clean pulls/pushes. When this happens, do a fresh shallow clone instead:
 
    ```bash
    rm -rf /tmp/hub-push

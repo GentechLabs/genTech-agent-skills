@@ -23,7 +23,7 @@ catalog on OpenDexter because it settled on the **wrong rail**:
 
 1. Confirm the gateway's Dexter path is actually enabled:
    ```bash
-   grep X402_USE_DEXTER /root/.hermes/profiles/gentech/.env
+   grep X402_USE_DEXTER ${PROFILE_DIR}/.env
    cat /proc/<pid>/environ | tr '\0' '\n' | grep X402_USE_DEXTER   # running process = ground truth
    ```
    (A stale process may not have picked up a new .env value — same class of trap as the

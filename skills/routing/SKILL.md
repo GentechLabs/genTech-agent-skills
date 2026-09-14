@@ -70,7 +70,7 @@ One routing system, two dimensions:
 
 ### Task-Aware Scheduler (TAS) Implementation
 
-**Location:** `/root/vaults/gentech/10-Labs/model-router/`  
+**Location:** `${VAULT_DIR}/10-Labs/model-router/`  
 **Tests:** 27/27 passing  
 **Agent Kit:** `/root/projects/genTech-agent-kit/core/intelligence/model-router/`
 
@@ -136,7 +136,7 @@ When someone talks about a topic, auto-detect and log to their hub. No cron — 
 ### What To Do
 
 1. Detect topic in message
-2. Read hub registry at `/root/vaults/gentech/hubs/registry.json`
+2. Read hub registry at `${VAULT_DIR}/hubs/registry.json`
 3. Find or create the person's hub
 4. Log the entry (dish, trip, goal, etc.)
 5. Respond naturally — don't mention logging
@@ -145,9 +145,9 @@ When someone talks about a topic, auto-detect and log to their hub. No cron — 
 ### Hub Registry
 
 ```
-/root/vaults/gentech/hubs/registry.json
-/root/vaults/gentech/Cookbook/christel-journal.json
-/root/vaults/gentech/Travels/christel-travel.json
+${VAULT_DIR}/hubs/registry.json
+${VAULT_DIR}/Cookbook/christel-journal.json
+${VAULT_DIR}/Travels/christel-travel.json
 ```
 
 ### Important Rules
@@ -402,7 +402,7 @@ Code-heavy cron jobs (Project Audit, code reviews) currently use MiMo-V2.5 inste
 When a routing mismatch is found (wrong model for domain, suboptimal provider for task type), fix it immediately — don't just flag it in a report. Jordan's directive: "Less troubleshooting, fix all issues." Update the cron job model/provider on the spot, verify it works, then report what was fixed.
 
 ## References
-- Code: `/root/vaults/gentech/10-Labs/model-router/` — Model router module (27 tests, 84.6% savings)
+- Code: `${VAULT_DIR}/10-Labs/model-router/` — Model router module (27 tests, 84.6% savings)
 - GLM Model Router Guide: `references/glm-model-router.md` — Quick reference, cron update patterns, coding rule
 - x402 Bazaar: `references/x402-bazaar.md` — How to get listed, API pricing, revenue monitor
 - Wallet Security: `references/wallet-security.md` — Jordan's verified wallets, agent-generated wallet rules

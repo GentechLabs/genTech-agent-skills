@@ -32,7 +32,7 @@ for j in data['jobs']:
 ```python
 import json
 
-with open('/root/.hermes/profiles/gentech/cron/jobs.json') as f:
+with open('${PROFILE_DIR}/cron/jobs.json') as f:
     data = json.load(f)
 
 target_jobs = ['id1', 'id2', ...]  # List of job IDs
@@ -44,7 +44,7 @@ for job in data['jobs']:
         if job.get('model') and 'deepseek-v4-flash' in job['model']:
             job['model'] = 'deepseek-v4-flash'
 
-with open('/root/.hermes/profiles/gentech/cron/jobs.json', 'w') as f:
+with open('${PROFILE_DIR}/cron/jobs.json', 'w') as f:
     json.dump(data, f, indent=2)
 ```
 
@@ -53,7 +53,7 @@ with open('/root/.hermes/profiles/gentech/cron/jobs.json', 'w') as f:
 ```bash
 python3 -c "
 import json
-with open('/root/.hermes/profiles/gentech/cron/jobs.json') as f:
+with open('${PROFILE_DIR}/cron/jobs.json') as f:
     data = json.load(f)
 targets = ['list-of-job-ids']
 all_ok = True
@@ -124,7 +124,7 @@ After switching, verify:
 ```python
 import json
 
-with open('/root/.hermes/profiles/gentech/cron/jobs.json') as f:
+with open('${PROFILE_DIR}/cron/jobs.json') as f:
     data = json.load(f)
 
 target_ids = ['list-of-llm-job-ids']
@@ -203,7 +203,7 @@ Fleet-wide migration to glm-5.3-flash: profiles were flipped via `hermes --profi
 ```python
 import json, os
 profiles = ['gentech', 'gentech-treasury', 'gizmo', 'pixel']
-base = '/root/.hermes/profiles'
+base = '${PROFILES_DIR}'
 for p in profiles:
     with open(f'{base}/{p}/cron/jobs.json') as f:
         data = json.load(f)

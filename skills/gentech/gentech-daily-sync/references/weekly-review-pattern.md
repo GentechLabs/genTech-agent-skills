@@ -24,7 +24,7 @@ Three-section review delivered every Sunday. Independent sections — if one fai
 - Include: TL;DR, key decisions table, hackathon status, completed items, blockers, system health, lessons learned, forward hook
 
 ### 2. Skills Update (deliver to HQ)
-- Check upstream: `cd /usr/local/lib/hermes-agent && git fetch origin && git rev-list --left-right --count HEAD...origin/main`
+- Check upstream: `cd ${INSTALL_DIR} && git fetch origin && git rev-list --left-right --count HEAD...origin/main`
 - Categorize commits: `git log HEAD..origin/main --oneline | grep -ci "security|harden|inject|bypass"` for security count
 - Compare skills: `diff <(find skills/ -name SKILL.md | sed ...) <(find ~/.hermes/profiles/gentech/skills/ -name SKILL.md | sed ...)`
 - Check optional-skills for new additions

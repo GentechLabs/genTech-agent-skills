@@ -52,7 +52,7 @@ Reset BOTH global and profile state files with current data:
 
 ```python
 # /root/.hermes/scripts/.lfj-defi-state.json  (global — script reads this)
-# /root/.hermes/profiles/gentech/scripts/.lfj-defi-state.json  (profile — backup)
+# ${PROFILE_DIR}/scripts/.lfj-defi-state.json  (profile — backup)
 {
   "last_price": 6.48,                  # current AVAX price
   "last_efficiency": 0,                # 0 if out of range, or actual %

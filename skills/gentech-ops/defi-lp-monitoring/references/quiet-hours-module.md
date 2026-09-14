@@ -1,7 +1,7 @@
 # Shared Quiet Hours Module
 
 ## Location
-`/root/.hermes/profiles/gentech/scripts/quiet_hours.py`
+`${PROFILE_DIR}/scripts/quiet_hours.py`
 
 ## Usage
 ```python

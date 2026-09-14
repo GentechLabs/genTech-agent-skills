@@ -15,7 +15,7 @@
 Before using a voice, verify it's still active:
 
 ```bash
-API_KEY=$(grep ELEVENLABS_API_KEY /root/.hermes/profiles/gentech/.env | cut -d= -f2)
+API_KEY=$(grep ELEVENLABS_API_KEY ${PROFILE_DIR}/.env | cut -d= -f2)
 curl -s -H "xi-api-key: $API_KEY" \
   "https://api.elevenlabs.io/v1/voices/{VOICE_ID}" | python3 -c "
 import json, sys

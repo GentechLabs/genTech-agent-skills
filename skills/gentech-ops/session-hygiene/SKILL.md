@@ -12,7 +12,7 @@ hermes:
 
 ## Pitfall: cron blocks skill-dir scripts (Aug 20 2026)
 The cron runner **blocks any `script:` whose path resolves outside the
-scripts directory** (`/root/.hermes/profiles/gentech/scripts`). A job pointing
+scripts directory** (`${PROFILE_DIR}/scripts`). A job pointing
 directly at `skills/<x>/scripts/<script>.py` fails with:
 `Blocked: script path resolves outside the scripts directory`.
 Fix: put a thin wrapper in `scripts/` that subprocess-calls the skill script
@@ -37,7 +37,7 @@ When memory hits 85% or higher:
 
 1. **Run the context-save script:**
    ```bash
-   python3 /root/.hermes/profiles/gentech/skills/gentech-ops/session-hygiene/scripts/context-save.py
+   python3 ${PROFILE_DIR}/skills/gentech-ops/session-hygiene/scripts/context-save.py
    ```
 2. **Populate the bridge file** — Write key decisions, what I was building, blockers, next steps into the generated file at `09-Green Room/context-bridge/context-{timestamp}.md`
 3. **Compact memory** — Use `memory()` with a batch operations array to:
@@ -314,7 +314,7 @@ Sessions accumulate context from cron deliveries until they hit limits. Without 
 
 The system crontab script at 6:25 AM ET:
 ```bash
-25 6 * * * /root/.hermes/profiles/gentech/scripts/daily-gateway-restart.sh >> /root/.hermes/logs/gateway-restart.log 2>&1
+25 6 * * * ${PROFILE_DIR}/scripts/daily-gateway-restart.sh >> /root/.hermes/logs/gateway-restart.log 2>&1
 ```
 
 This script:

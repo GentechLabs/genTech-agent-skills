@@ -21,7 +21,7 @@ Hermes cron CLI has quirks worth knowing:
 - The reliable way to inspect a job is plain `hermes cron list` combined with `grep` and context:
 
 ```bash
-cd /root/.hermes/profiles/gentech
+cd ${PROFILE_DIR}
 hermes cron list | grep -B 1 -A 12 'Harness Critic'
 ```
 
@@ -29,7 +29,7 @@ Look for:
 - Active job ID (e.g. `8f71e23cbfd6 [active]`)
 - Correct schedule (`2 */4 * * *`)
 - Next run timestamp in the near future
-- Correct workdir (`/root/.hermes/profiles/gentech/harness`)
+- Correct workdir (`${PROFILE_DIR}/harness`)
 
 ## Self-Confirming Prediction Pattern
 

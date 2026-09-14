@@ -49,7 +49,7 @@ The built-in `text_to_speech` tool uses the profile's configured voice and doesn
 **Key source:** Script searches multiple `.env` locations (see Pitfalls below). Working key is in `~/.hermes/profiles/desmond/.env`.
 **Output:** `/tmp/steve-harvey/steve_harvey_YYYYMMDD_HHMMSS.mp3`
 
-Usage in cron prompt: `python3 /root/.hermes/profiles/gentech/scripts/steve-harvey-tts.py "script text here"`
+Usage in cron prompt: `python3 ${PROFILE_DIR}/scripts/steve-harvey-tts.py "script text here"`
 
 ## Pitfalls
 

@@ -78,7 +78,7 @@ Use Python (execute_code) to read and analyze the config structure. Do NOT rely 
 ```python
 import yaml
 
-config_path = "/root/.hermes/profiles/gentech/config.yaml"
+config_path = "${PROFILE_DIR}/config.yaml"
 
 with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
@@ -665,7 +665,7 @@ When the in-session vision tool is stuck on a broken provider (config fix pendin
 
 ```python
 import base64, json, os, urllib.request
-# Source .env first: set -a; source /root/.hermes/profiles/gentech/.env; set +a
+# Source .env first: set -a; source ${PROFILE_DIR}/.env; set +a
 img_b64 = base64.b64encode(open('/tmp/frame.png','rb').read()).decode()
 url = (f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash'
        f':generateContent?key={os.environ["GOOGLE_API_KEY"]}')
@@ -693,7 +693,7 @@ print(resp['candidates'][0]['content']['parts'][0]['text'])
 
 **Symptom**: You set `auxiliary.vision.api_key: ${GOOGLE_API_KEY}` but vision still fails. The running session's environment doesn't have `GOOGLE_API_KEY` exported — only the wakeup script sources `.env`, and the auxiliary client may run without it.
 
-**Fix**: Either (a) hardcode the literal key in config (acceptable here — key already lives in `.env`), or (b) `source /root/.hermes/profiles/gentech/.env` in the terminal before the direct-API workaround. For `hermes config set auxiliary.vision.api_key`, prefer the literal key over the `${VAR}` form to avoid resolution gaps.
+**Fix**: Either (a) hardcode the literal key in config (acceptable here — key already lives in `.env`), or (b) `source ${PROFILE_DIR}/.env` in the terminal before the direct-API workaround. For `hermes config set auxiliary.vision.api_key`, prefer the literal key over the `${VAR}` form to avoid resolution gaps.
 
 ## Verification Steps
 
@@ -812,4 +812,4 @@ This skill was created from a session where vision_analyze repeatedly failed wit
   ```
 
 - **references/vision-troubleshooting-session.md** - Detailed session transcript with error patterns, debugging attempts, and successful resolution path. Use as reference when encountering similar issues.
-- **references/direct-gemini-vision.py** - Session-hotfix script: calls Gemini vision API directly when vision_analyze is stuck on a broken provider (no restart needed). Usage: `source /root/.hermes/profiles/gentech/.env && python3 references/direct-gemini-vision.py <image> [question]`.
+- **references/direct-gemini-vision.py** - Session-hotfix script: calls Gemini vision API directly when vision_analyze is stuck on a broken provider (no restart needed). Usage: `source ${PROFILE_DIR}/.env && python3 references/direct-gemini-vision.py <image> [question]`.

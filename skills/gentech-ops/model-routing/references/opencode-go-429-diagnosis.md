@@ -15,7 +15,7 @@ This means the OpenCode Go free tier for `deepseek-v4-flash` hit capacity. The p
 
 If interactive sessions work but cron jobs fail:
 
-1. **Check model pinning:** `hermes config get model` shows session model → `cronjob list` shows cron models. If they differ, the user switched models interactively but `cron-provider-sync.py` hasn't run yet. Fix: `python3 /root/.hermes/profiles/gentech/scripts/cron-provider-sync.py`
+1. **Check model pinning:** `hermes config get model` shows session model → `cronjob list` shows cron models. If they differ, the user switched models interactively but `cron-provider-sync.py` hasn't run yet. Fix: `python3 ${PROFILE_DIR}/scripts/cron-provider-sync.py`
 
 2. **Check provider:** If session is on `opencode-go` but crons are on `nous` or `clawrouter`, same root cause. Sync fixes it.
 
@@ -31,7 +31,7 @@ hermes config get model
 hermes config set model.default deepseek-v4-pro
 
 # 3. Sync all 41 LLM cron jobs
-python3 /root/.hermes/profiles/gentech/scripts/cron-provider-sync.py
+python3 ${PROFILE_DIR}/scripts/cron-provider-sync.py
 
 # 4. Re-run any jobs that failed during the stale window
 cronjob action=run job_id=<id>

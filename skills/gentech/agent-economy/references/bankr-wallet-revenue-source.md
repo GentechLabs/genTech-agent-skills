@@ -30,5 +30,5 @@ Track them **side-by-side as distinct channels**. Do NOT conflate them. The Bank
 
 ## Verification
 ```bash
-cd /root/.hermes/profiles/gentech/scripts && set -a && . /root/.hermes/profiles/gentech/.env && set +a && timeout 90 python3 revenue-monitor.py | grep -A5 "Bankr Wallet"
+cd ${PROFILE_DIR}/scripts && set -a && . ${PROFILE_DIR}/.env && set +a && timeout 90 python3 revenue-monitor.py | grep -A5 "Bankr Wallet"
 ```

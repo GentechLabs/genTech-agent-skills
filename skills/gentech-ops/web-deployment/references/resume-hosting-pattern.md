@@ -6,7 +6,7 @@ Jordan asked for the master résumé to be hosted on the website suite AND "alwa
 updated." The solution is a single vault source-of-truth + generated artifacts + a sync cron.
 
 ## Source of truth
-Vault: `/root/vaults/gentech/10-Labs/Resumes/Jordan_Master_Resume.{md,html,pdf}`
+Vault: `${VAULT_DIR}/10-Labs/Resumes/Jordan_Master_Resume.{md,html,pdf}`
 
 - The `.md` is the editable master (header rule: email + GitHub org + portfolio + Telegram —
   NO location, per Jordan's format preference).

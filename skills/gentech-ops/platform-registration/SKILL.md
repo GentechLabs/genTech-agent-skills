@@ -114,7 +114,7 @@ Glama (`glama.ai`) is an MCP server quality scoring and discovery platform. Publ
 
 ## x402 Scout Auto-Queue
 
-The x402 Compliance Scout cron (3x daily) automatically adds Tier 2 or higher items to `/root/vaults/gentech/scripts/build_queue.json` with: `status: "pending"`, `assigned_to: "gentech"`, `priority: high`, and detailed notes. Tier 2 items are worked on immediately. Only Tier 3 (decisions or costs over $0.10) are drafted for Jordan's review.
+The x402 Compliance Scout cron (3x daily) automatically adds Tier 2 or higher items to `${VAULT_DIR}/scripts/build_queue.json` with: `status: "pending"`, `assigned_to: "gentech"`, `priority: high`, and detailed notes. Tier 2 items are worked on immediately. Only Tier 3 (decisions or costs over $0.10) are drafted for Jordan's review.
 
 This rule applies to:
 - Agent marketplaces (OKX, Atelier, Agentic.Market, Syra, etc.)

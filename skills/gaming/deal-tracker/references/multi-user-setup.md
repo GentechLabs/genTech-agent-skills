@@ -9,7 +9,7 @@
 
 ### Step 2: Sync Their Wishlist
 ```bash
-cd /root/vaults/gentech/10-Labs/deal-tracker
+cd ${VAULT_DIR}/10-Labs/deal-tracker
 python3 deal_runner.py sync-steam 76561198132811363
 ```
 This creates `watchlist-76561198132811363.json` automatically.
@@ -29,7 +29,7 @@ Use `[Username]` prefix in job names for clarity:
 **Prompt pattern:**
 ```
 1. Sync Vanito's Steam wishlist:
-cd /root/vaults/gentech/10-Labs/deal-tracker
+cd ${VAULT_DIR}/10-Labs/deal-tracker
 python3 deal_runner.py sync-steam 76561198132811363
 
 2. Generate the weekly report for Vanito:

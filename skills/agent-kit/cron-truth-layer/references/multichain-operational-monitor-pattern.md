@@ -2,7 +2,7 @@
 
 ## Overview
 
-An operational monitor that verifies infrastructure health BEFORE touching financial data, then scans across multiple chains. Implemented in the revenue monitor v3 (`revenue-monitor.py` at `/root/.hermes/profiles/gentech/scripts/revenue-monitor.py`).
+An operational monitor that verifies infrastructure health BEFORE touching financial data, then scans across multiple chains. Implemented in the revenue monitor v3 (`revenue-monitor.py` at `${PROFILE_DIR}/scripts/revenue-monitor.py`).
 
 ## Architecture
 

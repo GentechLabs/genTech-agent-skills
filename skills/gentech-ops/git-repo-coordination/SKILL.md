@@ -130,7 +130,7 @@ cronjob action=update job_id=f3e90d867b9c schedule="15 */6 * * *"
 
 #### Fix 2: Add File-Based Locking
 
-Create `git_repo_lock.py` in `/root/.hermes/profiles/gentech/scripts/`:
+Create `git_repo_lock.py` in `${PROFILE_DIR}/scripts/`:
 
 ```python
 #!/usr/bin/env python3
@@ -227,7 +227,7 @@ Add locking to each sync script:
 ```python
 import sys
 import os
-sys.path.insert(0, '/root/.hermes/profiles/gentech/scripts')
+sys.path.insert(0, '${PROFILE_DIR}/scripts')
 from git_repo_lock import GitRepoLock
 
 def sync_function():
@@ -244,7 +244,7 @@ def sync_function():
 
 **Test each script:**
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/script-name.py
+python3 ${PROFILE_DIR}/scripts/script-name.py
 ```
 
 ### Phase 2: Robust Coordination
@@ -328,7 +328,7 @@ LOCK_FILE = "/tmp/protojay-repo.lock"  # Always absolute
 
 **Fix:** Add script directory to path:
 ```python
-sys.path.insert(0, '/root/.hermes/profiles/gentech/scripts')
+sys.path.insert(0, '${PROFILE_DIR}/scripts')
 from git_repo_lock import GitRepoLock
 ```
 
@@ -532,7 +532,7 @@ def check_in_progress_rebase(repo_path):
     return True, f"{age:.0f}s old ({done_count} done)", int(age)
 
 # In your sync function:
-has_rebase, reason, age = check_in_progress_rebase("/root/vaults/gentech")
+has_rebase, reason, age = check_in_progress_rebase("${VAULT_DIR}")
 if has_rebase:
     if age < 900:  # < 15 min — likely active, another agent may be working
         print(f"⚠️ Skipping vault sync: {reason}")
@@ -641,13 +641,13 @@ The `sanitize_json_text()` function (which strips `<<<<<<<` / `=======` / `>>>>>
 cd /path/to/repo
 
 # 1. Identify the ground-truth copy (the data source the script writes from)
-#    For hub-sync-nightly.py → /root/vaults/gentech/defi-data.json
+#    For hub-sync-nightly.py → ${VAULT_DIR}/defi-data.json
 
 # 2. Verify the ground-truth copy is valid
 python3 -c "import json; json.load(open('DeFi/defi-data.json')); print('VALID')"
 
 # 3. Replace the corrupted file with the clean copy
-cp /root/vaults/gentech/defi-data.json /root/ProtoJay4789.github.io/DeFi/defi-data.json
+cp ${VAULT_DIR}/defi-data.json /root/ProtoJay4789.github.io/DeFi/defi-data.json
 
 # 4. Re-commit (amend the failed sync commit)
 git add DeFi/defi-data.json
@@ -689,11 +689,11 @@ git checkout --theirs DeFi/defi-data.json && git add . && git rebase --continue
 
 **Symptom:** Your build queue items (IDs, statuses, priorities) disappear after another session commits. The file on disk is a different version than what you wrote.
 
-**Cause:** Multiple agents (cron jobs, nightly maintenance, interactive sessions) all write `/root/vaults/gentech/scripts/build_queue.json` concurrently. Last writer overwrites without seeing other session's changes.
+**Cause:** Multiple agents (cron jobs, nightly maintenance, interactive sessions) all write `${VAULT_DIR}/scripts/build_queue.json` concurrently. Last writer overwrites without seeing other session's changes.
 
 **Diagnosis:**
 ```bash
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git log --oneline -5 -- scripts/build_queue.json  # recent changes
 grep -c '"id": 69' scripts/build_queue.json         # check if items survived
 head -5 scripts/build_queue.json                     # check format version
@@ -793,7 +793,7 @@ git push origin main
 **For multiple repos, fix all:**
 ```bash
 TOKEN=$(gh auth token)
-for repo in /root/repos/genTech-agent-kit /root/builds/genTech-agent-kit /root/vaults/gentech; do
+for repo in /root/repos/genTech-agent-kit /root/builds/genTech-agent-kit ${VAULT_DIR}; do
     if [ -d "$repo/.git" ]; then
         cd "$repo"
         git remote set-url origin "https://ProtoJay4789:${TOKEN}@github.com/ProtoJay4789/$(basename $(git rev-parse --show-toplevel)).git"
@@ -870,12 +870,12 @@ git push -u origin main
 # If this returns the account login, the credential is fine — the env var is shadowing:
 gh api user --jq '.login'
 # Confirm the stale env var:
-grep -n "GITHUB_TOKEN" /root/.hermes/profiles/gentech/.env
+grep -n "GITHUB_TOKEN" ${PROFILE_DIR}/.env
 ```
 
 **Fix:** sync the valid token into `.env` (or remove the line and `unset GITHUB_TOKEN` before gh work):
 ```bash
-VALID=$(cat /root/.hermes/profiles/gentech/secrets/github-token | tr -d '\n')
+VALID=$(cat ${PROFILE_DIR}/secrets/github-token | tr -d '\n')
 # Replace the GITHUB_TOKEN= line in .env with $VALID, or:
 unset GITHUB_TOKEN && gh auth status   # falls back to hosts.yml
 ```
@@ -920,7 +920,7 @@ A valid token returning the login but showing 60/hr = account flag, not token is
 
 ```bash
 # Test 1: Basic import
-cd /root/.hermes/profiles/gentech/scripts
+cd ${PROFILE_DIR}/scripts
 python3 -c "from git_repo_lock import GitRepoLock, push_with_retry; print('Import successful')"
 
 # Test 2: Lock acquisition
@@ -939,10 +939,10 @@ print('Lock released')
 ```bash
 # Test gaming hub sync
 cd /root/ProtoJay4789.github.io
-python3 /root/.hermes/profiles/gentech/scripts/gaming-hub-sync.py
+python3 ${PROFILE_DIR}/scripts/gaming-hub-sync.py
 
 # Test hub nightly sync
-python3 /root/.hermes/profiles/gentech/scripts/hub-sync-nightly.py
+python3 ${PROFILE_DIR}/scripts/hub-sync-nightly.py
 
 # Test vanito music sync
 cd /root/my-music
@@ -990,7 +990,7 @@ git log --oneline --since="1 week ago" --format="%H %ad %s" --date=iso | grep -E
 
 - **Git conflict analysis:** `/root/git-conflict-analysis.md`
 - **Fix summary:** `/root/git-conflict-fixes-summary.md`
-- **Lock utility:** `/root/.hermes/profiles/gentech/scripts/git_repo_lock.py`
+- **Lock utility:** `${PROFILE_DIR}/scripts/git_repo_lock.py`
 
 ---
 

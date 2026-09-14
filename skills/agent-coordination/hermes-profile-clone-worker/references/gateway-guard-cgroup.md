@@ -18,7 +18,7 @@ identified the one reliable escape hatch.
 ```bash
 # Enable + start a worker gateway (or run any gateway-touching setup script)
 systemd-run --user --scope --unit=worker-<name>-setup \
-  bash /root/.hermes/profiles/gentech/scripts/setup-worker.sh <BOT_TOKEN>
+  bash ${PROFILE_DIR}/scripts/setup-worker.sh <BOT_TOKEN>
 
 # Stop an orphan's gateway before profile teardown
 systemd-run --user --scope bash cleanup-orphan.sh   # script does stop/disable + rm unit
@@ -32,7 +32,7 @@ process tree. The guard sees no SIGTERM propagation path and allows it.
    → `systemctl --user daemon-reload`.
 2. Confirm processes gone: `ps aux | grep '--profile <name> gateway'` → none.
 3. `printf '%s\n' '<name>' | hermes profile delete <name>` (detached or via the same scope).
-4. Verify: `ls /root/.hermes/profiles/` shows only the active fleet; no dead unit symlinks in
+4. Verify: `ls ${PROFILES_DIR}/` shows only the active fleet; no dead unit symlinks in
    `~/.config/systemd/user/default.target.wants/`.
 - **A running gateway is an ORPHAN the moment its profile is deleted** — always stop+disable
   the unit BEFORE `hermes profile delete`, or you get a zombie polling bot.

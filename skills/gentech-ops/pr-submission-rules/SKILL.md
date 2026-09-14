@@ -43,7 +43,7 @@ When `gh auth status` fails, verify the account still exists by checking the pro
 
 The token lives in two places:
 - `~/.config/gh/hosts.yml` (used by `gh` CLI)
-- `/root/.hermes/profiles/gentech/secrets/github-token` (used by scripts)
+- `${PROFILE_DIR}/secrets/github-token` (used by scripts)
 
 Both must contain the same valid token. If one is stale, update both.
 
@@ -553,7 +553,7 @@ The PR auto-updates because the branch name matches the PR's head ref. Then comm
 `"Rebased onto current main — all conflicts resolved. Ready for review."`
 
 **Tier 2/3 flow (do NOT rebase):**
-1. Add to build_queue.json with next available ID (expected at `/root/vaults/gentech/11-Mess Hall/build_queue.json`; create it if it doesn't exist)
+1. Add to build_queue.json with next available ID (expected at `${VAULT_DIR}/11-Mess Hall/build_queue.json`; create it if it doesn't exist)
 2. Set status: "pending", assigned_to: "gentech" (Tier 2) or "jordan" (Tier 3), priority: high
 3. Include detail field with: PR number, repo, conflict description, what the PR does
 4. Report it in the daily summary — Jordan scans these

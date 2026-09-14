@@ -27,7 +27,7 @@ Vault sync     → git push vault → github.com/ProtoJay4789/gentech-vault.git
 - **Forge sometimes pushes only to GitHub** — always `git push vault main` before reading handoffs
 - **Tick script** lives at `scripts/tick_build_queue.py` — run with `--apply` after Forge completes
 - **`02-HANDOFFS/forge-to-gentech/`** — archived, not used. Forge writes to `01-HANDOFFS/from-the-forge.md`
-- **`gentech-vault-new`** — deprecated. All handoffs live in the root vault at `/root/vaults/gentech/01-HANDOFFS/`
+- **`gentech-vault-new`** — deprecated. All handoffs live in the root vault at `${VAULT_DIR}/01-HANDOFFS/`
 
 ## Tick Script
 

@@ -8,7 +8,7 @@ Pass two local photos as `reference_image_urls` to `image_generate` so the new i
 ## What failed (in order)
 
 1. **Local absolute paths**
-   - Input: `reference_image_urls: ["/root/.hermes/profiles/gentech/image_cache/img_x.jpg", ...]`
+   - Input: `reference_image_urls: ["${PROFILE_DIR}/image_cache/img_x.jpg", ...]`
    - Error: `file_download_error` — "Failed to download the file... input: ['/root/...']"
    - Cause: FAL is a remote backend; it interprets the path as a URL and cannot reach the VPS filesystem. Local paths only work in the agent-side tool, not the remote generation backend.
 
@@ -64,13 +64,13 @@ After generation: download the result (`curl -s -L -o out.png <fal_url>`), check
 Same task class: transform one user-sent photo into a stylized graphic art illustration via `image_generate` with `image_url` (single-image edit mode, same FAL downloader).
 
 ## Sequence
-1. `image_url: /root/.hermes/profiles/gentech/image_cache/img_60e8e977fef8.jpg` → `file_download_error` (same as 2026-08-01; FAL can't read local paths).
+1. `image_url: ${PROFILE_DIR}/image_cache/img_60e8e977fef8.jpg` → `file_download_error` (same as 2026-08-01; FAL can't read local paths).
 2. tmpfiles.org upload → direct URL served `200 text/html` (viewer page), `/dl/` variant `302` → back to HTML. FAL: `image_load_error`. (Already documented — re-hit because the skill wasn't loaded first.)
 3. 0x0.st → **uploads disabled**: "uploads disabled because it's been almost nothing but AI botnet spam for the past few months... no ETA." Transient host status; re-check before relying on it.
 4. **Succeeded with python http.server on the VPS**:
    ```bash
    # Hermes terminal background=true (nohup/disown/setsid wrappers are rejected):
-   cd /root/.hermes/profiles/gentech/image_cache && python3 -m http.server 8791 --bind 0.0.0.0
+   cd ${PROFILE_DIR}/image_cache && python3 -m http.server 8791 --bind 0.0.0.0
    ```
    - First attempt on port **8765 failed: `OSError: [Errno 98] Address already in use`** — an existing python3 service was already serving a web app there. Ports on this VPS are not free by default.
    - Port 8791 bound cleanly; verified:

@@ -186,7 +186,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/path/to/project
-ExecStart=/usr/local/lib/hermes-agent/venv/bin/python3 server.py
+ExecStart=${INSTALL_DIR}/venv/bin/python3 server.py
 Restart=always
 RestartSec=5
 Environment=BRIDGE_PORT=8765
@@ -266,7 +266,7 @@ cd /root/hermes-bridge && python3 server.py
 **Proven Jul 15, 2026:** Bridge deployed on VPS at `100.73.143.15:8765`, accessed from Unihertz Titan (`titan-2`) on same tailnet. Full Hermes chat session via `hermes chat -q` bridge. Survives reboots via systemd `gentech-bridge.service`.
 
 ```bash
-PUB="/root/.hermes/profiles/gentech/skills/productivity/here.now/scripts/publish.sh"
+PUB="${PROFILE_DIR}/skills/productivity/here.now/scripts/publish.sh"
 cd /path/to/project && /bin/bash "$PUB" index.html --client hermes --slug <slug>
 ```
 
@@ -336,7 +336,7 @@ For external devices that can't reach the VPS directly:
 
 14. **Full path to hermes binary required in subprocess:** When running `hermes chat -q` from a systemd service or non-interactive subprocess, the PATH may not include the Hermes venv. Always use the absolute path:
     ```python
-    cmd = ["/usr/local/lib/hermes-agent/venv/bin/hermes", "-p", PROFILE, "chat", "-q", message, "-Q"]
+    cmd = ["${INSTALL_DIR}/venv/bin/hermes", "-p", PROFILE, "chat", "-q", message, "-Q"]
     ```
 
 12. **Bridge can time out after extended use:** The server's `hermes chat -q` subprocess has a 120-second timeout barrier. After many messages in a session, cold Hermes response times can drift past this. **Fix:** On the frontend, add a periodic keepalive/heartbeat ping (e.g., `GET /api/health` every 30s) and on the backend, raise the subprocess timeout or implement streaming response. Proven Jul 15, 2026 — Jordan's Unihertz Titan session timed out after ~15 minutes of active conversation.
@@ -345,7 +345,7 @@ For external devices that can't reach the VPS directly:
 
 14. **Full path to hermes binary required in subprocess:** When running `hermes chat -q` from a systemd service or non-interactive subprocess, the PATH may not include the Hermes venv. Always use the absolute path:
     ```python
-    cmd = ["/usr/local/lib/hermes-agent/venv/bin/hermes", "-p", PROFILE, "chat", "-q", message, "-Q"]
+    cmd = ["${INSTALL_DIR}/venv/bin/hermes", "-p", PROFILE, "chat", "-q", message, "-Q"]
     ```
 
 ## File Structure

@@ -106,11 +106,11 @@ Before submitting to any platform:
 
 ## References
 
-- Atelier Integration Plan: `/root/vaults/gentech/00-HQ/atelier-integration-plan.md`
-- Agentic.Market Listing Plan: `/root/vaults/gentech/00-HQ/agentic-market-listing.md`
-- x402.org Listing Plan: `/root/vaults/gentech/00-HQ/x402-org-listing.md`
-- Competitive Analysis: `/root/vaults/gentech/00-HQ/competitive-full-stack-comparison.md`
-- Build Queue: `/root/vaults/gentech/00-HQ/build-queue.md` (Item 18: Platform Compatibility)
+- Atelier Integration Plan: `${VAULT_DIR}/00-HQ/atelier-integration-plan.md`
+- Agentic.Market Listing Plan: `${VAULT_DIR}/00-HQ/agentic-market-listing.md`
+- x402.org Listing Plan: `${VAULT_DIR}/00-HQ/x402-org-listing.md`
+- Competitive Analysis: `${VAULT_DIR}/00-HQ/competitive-full-stack-comparison.md`
+- Build Queue: `${VAULT_DIR}/00-HQ/build-queue.md` (Item 18: Platform Compatibility)
 
 ---
 

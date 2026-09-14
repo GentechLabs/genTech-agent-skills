@@ -52,7 +52,7 @@ subprocess.run(["python3", "/root/.hermes/scripts/preflight.py", "--job", "data-
 
 ## Reference: Handoff Truth Check (LIVE — built Aug 29, 2026)
 
-**Where:** embedded in `/root/.hermes/profiles/gentech/scripts/handoff-watcher.py` (`verify_truth()` + helpers).
+**Where:** embedded in `${PROFILE_DIR}/scripts/handoff-watcher.py` (`verify_truth()` + helpers).
 
 **What it does:** every watcher run cross-checks OPEN handoff claims against the vault brain and reports drift as a stateful `🔍 TRUTH CHECK` block. Two validator classes:
 
@@ -72,7 +72,7 @@ subprocess.run(["python3", "/root/.hermes/scripts/preflight.py", "--job", "data-
 
 ## Reference: Operational Monitor Pattern
 
-A health-check-first, multichain-aware operational monitor is documented in `references/multichain-operational-monitor-pattern.md` with the live example at `/root/.hermes/profiles/gentech/scripts/revenue-monitor.py`.
+A health-check-first, multichain-aware operational monitor is documented in `references/multichain-operational-monitor-pattern.md` with the live example at `${PROFILE_DIR}/scripts/revenue-monitor.py`.
 
 This extends the preflight principle: verify ALL deployed services are up before trusting wallet or payment data, scan across multiple chains, then report infrastructure readiness alongside financial metrics.
 
@@ -222,27 +222,27 @@ POOL = load_pool_config()
 
 ### Anti-Pattern 3: Path Resolution Under Non-Standard HOME
 
-**Bug:** `os.path.expanduser("~")` uses the `HOME` environment variable. Under Hermes profiles, HOME is set to the profile's `home/` subdirectory (`/root/.hermes/profiles/gentech/home`), NOT `/root` and NOT the profile root directory. This causes `~/.hermes/scripts/` to resolve to `/root/.hermes/profiles/gentech/home/.hermes/scripts/` — a three-level-deep nested path that doesn't exist.
+**Bug:** `os.path.expanduser("~")` uses the `HOME` environment variable. Under Hermes profiles, HOME is set to the profile's `home/` subdirectory (`${PROFILE_DIR}/home`), NOT `/root` and NOT the profile root directory. This causes `~/.hermes/scripts/` to resolve to `${PROFILE_DIR}/home/.hermes/scripts/` — a three-level-deep nested path that doesn't exist.
 
 Two common patterns that fail:
 
 | Pattern | Resolves To (bogus) | Actual Path |
 |---------|---------------------|-------------|
-| `expanduser("~/.hermes/scripts/config.json")` | `/root/.hermes/profiles/gentech/home/.hermes/scripts/config.json` | `/root/.hermes/scripts/config.json` |
-| `expanduser("~/.hermes/profiles/gentech/secrets/token")` | `/root/.hermes/profiles/gentech/home/.hermes/profiles/gentech/secrets/token` | `/root/.hermes/profiles/gentech/secrets/token` |
+| `expanduser("~/.hermes/scripts/config.json")` | `${PROFILE_DIR}/home/.hermes/scripts/config.json` | `/root/.hermes/scripts/config.json` |
+| `expanduser("~/.hermes/profiles/gentech/secrets/token")` | `${PROFILE_DIR}/home/.hermes/profiles/gentech/secrets/token` | `${PROFILE_DIR}/secrets/token` |
 
 The second pattern is especially insidious — the path already contains `.hermes/profiles/gentech/` which makes the expanded path doubly nested and the error message harder to correlate with the source.
 
 **Fix:** Use absolute paths for scripts that run under Hermes profiles. Never use `os.path.expanduser()` in a script that runs as a cron job under a profile.
 
 ```python
-# ❌ WRONG — resolves to wrong path when HOME=/root/.hermes/profiles/gentech/home
+# ❌ WRONG — resolves to wrong path when HOME=${PROFILE_DIR}/home
 CONFIG = os.path.expanduser("~/.hermes/scripts/config.json")
 TOKEN = os.path.expanduser("~/.hermes/profiles/gentech/secrets/github-token")  # doubly nested!
 
 # ✅ CORRECT — absolute path works regardless of HOME
 CONFIG = "/root/.hermes/scripts/config.json"
-TOKEN = "/root/.hermes/profiles/gentech/secrets/github-token"
+TOKEN = "${PROFILE_DIR}/secrets/github-token"
 ```
 
 **Where to look:** Any script using `os.path.expanduser()` that references `.hermes/`. Also check for `~` in shell commands (`cd ~/.hermes/...`) within `subprocess.run()` or `run_cmd()` — those use `HOME` too. Test by running the script under the profile environment (`echo $HOME` first).
@@ -385,7 +385,7 @@ QUIET_START = 25  # Disabled for testing
 QUIET_END = 25
 
 # Run test:
-python3 /root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py
+python3 ${PROFILE_DIR}/scripts/defi-lp-consolidated.py
 
 # Revert after test:
 QUIET_START = 23
@@ -909,7 +909,7 @@ git rev-parse HEAD | cut -c1-12
 
 ### Cron Health Tracker (`cron-health.py`)
 
-**Location:** `/root/.hermes/profiles/gentech/scripts/cron-health.py`
+**Location:** `${PROFILE_DIR}/scripts/cron-health.py`
 
 **What it does:**
 - Tracks last run time for each cron job
@@ -921,13 +921,13 @@ git rev-parse HEAD | cut -c1-12
 **Usage:**
 ```bash
 # Check all jobs and generate report
-python3 /root/.hermes/profiles/gentech/scripts/cron-health.py --report
+python3 ${PROFILE_DIR}/scripts/cron-health.py --report
 
 # Check specific job
-python3 /root/.hermes/profiles/gentech/scripts/cron-health.py --job <job_id>
+python3 ${PROFILE_DIR}/scripts/cron-health.py --job <job_id>
 
 # Manual health check (runs from a cron job)
-python3 /root/.hermes/profiles/gentech/scripts/cron-health.py
+python3 ${PROFILE_DIR}/scripts/cron-health.py
 ```
 
 **Health states:**
@@ -948,11 +948,11 @@ JOB_SCHEDULES = {
 }
 ```
 
-**Health data storage:** `/root/.hermes/profiles/gentech/cron/state/health-tracking.json`
+**Health data storage:** `${PROFILE_DIR}/cron/state/health-tracking.json`
 
 ### Cron Wrapper (`cron-wrapper.py`)
 
-**Location:** `/root/.hermes/profiles/gentech/scripts/cron-wrapper.py`
+**Location:** `${PROFILE_DIR}/scripts/cron-wrapper.py`
 
 **What it does:**
 - **Enforces preflight before execution** — verifies data freshness
@@ -965,14 +965,14 @@ JOB_SCHEDULES = {
 # Before:
 cronjob(action='create',
         name='DeFi LP Monitor',
-        script='/root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py',
+        script='${PROFILE_DIR}/scripts/defi-lp-consolidated.py',
         schedule='0 */6 * * *')
 
 # After:
 cronjob(action='create',
         name='DeFi LP Monitor',
-        script='/root/.hermes/profiles/gentech/scripts/cron-wrapper.py',
-        args='--job defi-lp-consolidated --script /root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py',
+        script='${PROFILE_DIR}/scripts/cron-wrapper.py',
+        args='--job defi-lp-consolidated --script ${PROFILE_DIR}/scripts/defi-lp-consolidated.py',
         schedule='0 */6 * * *')
 ```
 

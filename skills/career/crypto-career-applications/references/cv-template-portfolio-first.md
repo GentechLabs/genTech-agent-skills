@@ -69,7 +69,7 @@ Focus: [1-3 word domain]
 
 ## Example (Somnia Agentathon)
 
-Saved to: `/root/vaults/gentech/09-Green-Room/jordan-cv.md`
+Saved to: `${VAULT_DIR}/09-Green-Room/jordan-cv.md`
 
 Key projects highlighted:
 - Agent Arena (AAE) — multi-chain, 100+ holders, Flaunch mainnet

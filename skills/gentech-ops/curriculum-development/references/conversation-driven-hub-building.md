@@ -4,7 +4,7 @@
 - **Name:** first pilot student (departed Aug 2026)
 - **Background:** Non-technical mom, Lapu-Lapu Cebu, Cebuano primary
 - **Hub file:** `10-Labs/gentech-academy/{name}-hub-template.html`
-- **Vault path:** `/root/vaults/gentech/10-Labs/gentech-academy/{name}-hub-template.html`
+- **Vault path:** `${VAULT_DIR}/10-Labs/gentech-academy/{name}-hub-template.html`
 
 ## Sections Built (in order)
 
@@ -17,7 +17,7 @@
 
 ## Photo Handling
 - Student shared 3 photos in chat (Oslob whale sharks, Kawasan Falls, Simala Shrine)
-- Images saved to `/root/vaults/gentech/assets/{student}/`
+- Images saved to `${VAULT_DIR}/assets/{student}/`
 - Embedded as base64 data URIs directly in the HTML (no external hosting needed)
 - CSS: `object-fit:cover; height:180px` for consistent card image display
 

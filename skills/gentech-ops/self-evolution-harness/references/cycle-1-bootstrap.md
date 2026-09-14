@@ -22,7 +22,7 @@ The harness was bootstrapped on 2026-07-26 with a constitution, state file, crit
 
 ## Key findings
 
-1. **Path mismatch**: The original skill documented `/root/.hermes/profiles/gentech/harness/` but the actual harness lives at `/root/.hermes/harness/`. Always verify with `ls` before referencing paths.
+1. **Path mismatch**: The original skill documented `${PROFILE_DIR}/harness/` but the actual harness lives at `/root/.hermes/harness/`. Always verify with `ls` before referencing paths.
 2. **No cron trigger**: The harness has no cron entry. It only runs when manually invoked.
 3. **Single-agent design works**: The four-role plan (Evolution/Critic/Verifier/Gardener) was aspirational. The current deployment runs as a single cron job that handles all roles in one pass, which is simpler and sufficient.
 

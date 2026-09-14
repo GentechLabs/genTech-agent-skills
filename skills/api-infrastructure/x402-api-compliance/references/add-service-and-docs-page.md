@@ -16,7 +16,7 @@ Standalone FastAPI service in `/root/gentechlabs/services/<name>.py`:
 
 ## 2. Wire it into the gateway (2 lines)
 
-`/root/vaults/gentech/10-Labs/x402-gateway/server.py`:
+`${VAULT_DIR}/10-Labs/x402-gateway/server.py`:
 - `BACKEND_ROUTES["<key>"] = ("http://127.0.0.1:8100", "<public_prefix>", "/v1/<svc>/")`
 - `URL_TO_SERVICE["<url_segment>"] = "<key>"`
 
@@ -39,8 +39,8 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/root/gentechlabs/services
-EnvironmentFile=/root/.hermes/profiles/gentech/.env
-ExecStart=/usr/local/lib/hermes-agent/venv/bin/python3 agent_research.py
+EnvironmentFile=${PROFILE_DIR}/.env
+ExecStart=${INSTALL_DIR}/venv/bin/python3 agent_research.py
 Restart=always
 RestartSec=3
 [Install]
@@ -62,9 +62,9 @@ Verify: `systemctl is-active` + `curl localhost:8100/v1/health`.
 
 ## 7. Self-settle to prove the money lands (on-chain proof)
 
-Use the existing `self-settle.mjs` in `/root/vaults/gentech/10-Labs/x402-gateway/`:
+Use the existing `self-settle.mjs` in `${VAULT_DIR}/10-Labs/x402-gateway/`:
 ```bash
-cd /root/vaults/gentech/10-Labs/x402-gateway && npm install   # first time: needs @dexterai/x402 + viem
+cd ${VAULT_DIR}/10-Labs/x402-gateway && npm install   # first time: needs @dexterai/x402 + viem
 EVM_PRIVATE_KEY=<key> SELF_SETTLE_URL="https://api.gentechlabs.net/v1/agent/research?task=summary&topic=test" SELF_SETTLE_CAP="100000" node self-settle.mjs
 ```
 

@@ -194,7 +194,7 @@ def push_to_github():
         # Step B: Check if JSON is still structurally broken (missing closing braces)
         vault_fallback_recovery(
             staged_file=f"{REPO_PATH}/DeFi/defi-data.json",
-            vault_source="/root/vaults/gentech/defi-data.json",
+            vault_source="${VAULT_DIR}/defi-data.json",
             repo_path=REPO_PATH,
             errors=errors
         )

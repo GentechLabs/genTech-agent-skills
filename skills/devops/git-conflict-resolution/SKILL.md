@@ -34,7 +34,7 @@ The root cause is almost always **uncoordinated concurrent writes**:
 **Check cron jobs:**
 ```bash
 # Look for jobs that write to the target repo
-cd /root/.hermes/profiles/gentech/cron
+cd ${PROFILE_DIR}/cron
 jq -r '.jobs[] | "\(.id) | \(.name) | \(.schedule.display // null) | \(.script // null) | \(.enabled // false)"' jobs.json | grep -i "<repo-name|sync|deploy>"
 ```
 
@@ -79,7 +79,7 @@ Check each script for:
 
 ```bash
 # Search for conflict-related code
-grep -r "stash\|rebase\|lock\|retry" /root/.hermes/profiles/gentech/scripts/
+grep -r "stash\|rebase\|lock\|retry" ${PROFILE_DIR}/scripts/
 ```
 
 ### Step 4: Identify Race Condition Evidence
@@ -243,12 +243,12 @@ from datetime import datetime
 SYNC_JOBS = [
     {
         "name": "portfolio-sync",
-        "script": "/root/.hermes/profiles/gentech/scripts/portfolio_sync.py",
+        "script": "${PROFILE_DIR}/scripts/portfolio_sync.py",
         "schedule": "12:00"
     },
     {
         "name": "gaming-hub-sync",
-        "script": "/root/.hermes/profiles/gentech/scripts/gaming-hub-sync.py",
+        "script": "${PROFILE_DIR}/scripts/gaming-hub-sync.py",
         "schedule": "12:15"
     },
     # ... more jobs
@@ -282,8 +282,8 @@ def run_sync_queue():
 ## Files to Modify
 
 When diagnosing conflicts, check these files:
-- `/root/.hermes/profiles/gentech/cron/jobs.json` - Schedule definitions
-- `/root/.hermes/profiles/gentech/scripts/*.py` - Sync scripts
+- `${PROFILE_DIR}/cron/jobs.json` - Schedule definitions
+- `${PROFILE_DIR}/scripts/*.py` - Sync scripts
 - `/root/repos/<target-repo>/.git/config` - Remote configuration
 - `/root/.github-token` - Authentication token
 
@@ -446,7 +446,7 @@ for file in production_files:
 ```bash
 # Untracked files in working directory block merge
 # Move them out of the way
-mv /root/vaults/gentech/00-Working-Memory.md /tmp/
+mv ${VAULT_DIR}/00-Working-Memory.md /tmp/
 
 # Or add to .gitignore (if it should never be tracked)
 echo "00-Working-Memory.md" >> .gitignore
@@ -480,7 +480,7 @@ git add 10-Labs/x402-gateway/
 git commit -m "Resolve x402 merge conflicts, accept Forge's deployed version"
 
 # 3. Move untracked files blocking pull
-mv /root/vaults/gentech/00-Working-Memory.md /tmp/
+mv ${VAULT_DIR}/00-Working-Memory.md /tmp/
 
 # 4. Pull remote changes
 git pull --no-rebase origin main
@@ -563,7 +563,7 @@ if '<<<<<<<' in raw or '=======' in raw or '>>>>>>>' in raw:
 
 ```bash
 # 1. Hard-reset to origin/main — discard ALL local divergence
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git reset --hard origin/main
 
 # 2. Re-create ONLY the files you intend to push (from scratch)
@@ -870,7 +870,7 @@ Also: never `git add -A` in these repos — cron writers edit data files (build_
 
 ### Pitfall 16b: Parallel Same-Purpose Repos — Verify Remote Before Push During Chaos
 
-**Symptom:** Deep in conflict-fighting, a push quietly targets the WRONG repo — e.g. `/root/vaults/gentech` (vault) whose remote is the dead old `ProtoJay4789.github.io` mirror, while the real site repo is `/root/repos/gentechlabs.github.io`.
+**Symptom:** Deep in conflict-fighting, a push quietly targets the WRONG repo — e.g. `${VAULT_DIR}` (vault) whose remote is the dead old `ProtoJay4789.github.io` mirror, while the real site repo is `/root/repos/gentechlabs.github.io`.
 
 **Root cause:** session working directory drifts between repos that share a purpose. Conflicts/rebases run in one while conclusions drawn from the other.
 

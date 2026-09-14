@@ -15,12 +15,22 @@ A cron-driven self-improvement loop. The harness cron job (this session) acts as
 
 **Multi-agent design (current).** The harness runs four separate cron jobs:
 
-| Role | Schedule | Job ID | Purpose |
+| Role | Schedule (LIVE, verified Sep 13 2026) | Job ID | Purpose |
 |------|----------|--------|---------|
-| Evolution | `0 */4 * * *` | 22d8ad319fd4 | Read constitution, check witness log, propose + execute improvements |
-| Critic | `2 */4 * * *` | 8f71e23cbfd6 | Audit Evolution's output for stagnation, data corruption, action-type monoculture |
+| Evolution | `0 */4 * * *` | 22d8ad319fd4 | Read constitution, check witness log, propose + execute improvements — ⚠️ **CURRENTLY DISABLED** (verified Sep 13 2026) |
+| Critic | `0 2 * * *` (daily 02:00) | 8f71e23cbfd6 | Audit Evolution's output for stagnation, data corruption, action-type monoculture |
 | Verifier | `0 */6 * * *` | 6e771a4bf8a3 | Check past-due predictions, record outcomes, produce critique entries |
-| Gardener | `0 4 1,8,15,22 * *` | c1fc1e48409a | Skill-pruning and credential-health maintenance (monthly) |
+| Gardener | `15 4 1,8,15,22 * *` | c1fc1e48409a | Skill-pruning, credential-health, log compaction, **reference-drift + skill-freshness** (monthly) |
+
+**Schedules drift — verify, don't trust this table.** Docs said Critic ran `2 */4 * * *`
+and Gardener `0 4 1,8,15,22 * *`; live is `0 2 * * *` and `15 4 1,8,15,22 * *`. Re-read the
+job before relying on a cadence: `reference-drift-audit.py` does this automatically.
+
+**⚠️ The Evolution job is DISABLED.** The harness has been running its checking roles
+(Critic, Verifier, Gardener) without its acting role since at least Sep 13 2026. That is
+the single most important thing to know about this harness — a self-evolution loop whose
+Evolution arm is off is a reviewer with nothing to review. Confirm before assuming the
+harness is improving anything.
 
 The Critic and Verifier roles have converged: the Verifier now also produces critique entries (checking prediction outcomes + data integrity) in the same run. This is a deliberate simplification — the Verifier's 6-hour cadence catches stale state faster than the Critic's 4-hour offset, and the Critic focuses on deeper stagnation analysis.
 
@@ -28,7 +38,7 @@ All jobs use `opencode-go → ollama-cloud` as the model provider (switched from
 
 ## Location
 
-**Canonical harness home: `/root/.hermes/profiles/gentech/harness/`** — this is the tree
+**Canonical harness home: `${PROFILE_DIR}/harness/`** — this is the tree
 all four crons use as Workdir. The `/root/.hermes/harness/` path that earlier versions of
 this skill documented was a **split-brain duplicate** with its own git history and its own
 `facts/`; it was archived to `/root/.hermes/harness.orphan-20260731` in evolve-21 after
@@ -68,7 +78,7 @@ Five articles, all binding:
 - **Article II: Allowlist** — Evolution may only recommend: (a) adding new skills, (b) patching outdated skills, (c) improving the constitution, (d) improving the critique process. It may NOT recommend disabling safety gating, modifying production data without confirmation, or bypassing user consent.
 - **Article III: Falsifiability** — Every prediction must be measurable. "This will reduce errors" is not falsifiable. "This will reduce X error from 5/wk to <2/wk" is.
 - **Article IV: Action Bearing** — Evolution must produce a concrete, executable action. Observations without actionable next steps are noise, not recommendations.
-- All evidence, recommendations, and critiques survive in `/root/.hermes/profiles/gentech/harness/facts/`. No ephemeral knowledge.
+- All evidence, recommendations, and critiques survive in `${PROFILE_DIR}/harness/facts/`. No ephemeral knowledge.
 
 ## Cycle Protocol (8 Steps)
 
@@ -80,14 +90,14 @@ Each cycle follows this exact sequence:
 4. **Ground in evidence** — read witness-log.md, harness-state.md, execution-log.md, skills inventory; cite one witness by timestamp
 5. **Write recommendation.md** — with RECOMMENDED_ACTION, CONFIDENCE, REASONING fields
 6. **Append prediction** — write falsifiable prediction to predictions.md BEFORE executing
-7. **Execute** — `cd /root/.hermes/profiles/gentech/harness && bash execution-loop.sh evolve 2>&1 | tail -15`
+7. **Execute** — `cd ${PROFILE_DIR}/harness && bash execution-loop.sh evolve 2>&1 | tail -15`
 8. **Record outcomes** — after execution, verify ALL past-due predictions (not just the current one) and record verdicts in `facts/prediction-outcomes.md`. Cross-reference predictions.md (entries past DUE) against prediction-outcomes.md and fill in any gaps. This prevents the Verifier or Critic from finding stale outcomes. If the Verifier cron is too slow to check 1-cycle predictions (e.g., every 2 days), the Evolution agent must backfill outcomes itself — do not wait for the Verifier.
 
 ## Pitfalls
 
 - **Empty witness log** — if no friction is recorded, Evolution has nothing to act on. Seed the witness log with current-state evidence on first cycle.
 - **No execution loop** — the harness is a static directory without `execution-loop.sh`. Always create the loop before running cycles.
-- **Phantom paths** — the original skill documented `/root/.hermes/profiles/gentech/harness/` but the actual harness lives at `/root/.hermes/harness/`. Always verify the actual path with `ls /root/.hermes/harness/` before referencing. **Fixed Jul 29, 2026** — all paths in this skill now correct.
+- **Phantom paths** — the original skill documented `${PROFILE_DIR}/harness/` but the actual harness lives at `/root/.hermes/harness/`. Always verify the actual path with `ls /root/.hermes/harness/` before referencing. **Fixed Jul 29, 2026** — all paths in this skill now correct.
 - **Silent fallback to phantom path** — all 5 harness scripts originally used `HERMES_HOME="${HERMES_HOME:-$HOME/hermes-harness}"` as a fallback when auto-detect failed. The path `$HOME/hermes-harness` does not exist on this system. When auto-detect failed (e.g., script copied outside the harness tree), the script silently created phantom directories and wrote data to a location no one ever checks. **Fixed evolve-8 (Jul 28, 2026)** — replaced with a hard error: `echo "FATAL: cannot determine HERMES_HOME" >&2; exit 1`. See `references/auto-detect-hard-fail.md` for the full pattern and verification steps.
 - **No cron trigger (RESOLVED Jul 29, 2026)** — the harness had no cron entry and only ran when manually invoked. Cycle 2 added `0 8 * * * cd /root/.hermes/harness && bash execution-loop.sh evolve >> /root/.hermes/harness/facts/cron-output.log 2>&1`. The cron sits between the gateway restart (06:25) and the opportunity scanner (09:00).
 - **Proposal-only amendments** — Evolution cannot modify constitution.md directly. It writes proposals to `facts/amendment-proposal.md` for human review.
@@ -319,19 +329,48 @@ Every action cycle pre-registers a falsifiable prediction before executing. Pred
 - Jul 26: Harness directory created with constitution.md, facts/ directory, critique-log.md, harness-state.md, recommendation.md placeholder
 - Jul 27 (Cycle 1): Full bootstrap — created execution-loop.sh, witness-log.md (3 entries), predictions.md (2 predictions), execution-log.md, updated recommendation.md with real RECOMMENDED_ACTION, ran first evolve cycle, updated harness-state.md to "Active — Cycle 1 completed"
 
-## Gardener Role (skill-pruning + credential-health + log compaction)
+## Gardener Role (skill-pruning + credential-health + log compaction + **drift/freshness**)
 
-The Gardener cron (`0 4 1,8,15,22 * *`) runs three maintenance passes:
+The Gardener cron (`0 4 1,8,15,22 * *`) runs five maintenance passes:
 
 1. **Dormant skills** — scan `harness/skills/`; any skill file untouched > 30 days and
    unreferenced by prompts/scripts/cron is a candidate for archive. The
    `harness-gardener.sh` script prints the dormant/active split (mtime-based proxy).
+   **Wiring (Sep 13 2026):** `harness-gardener.sh` is now the single mechanical entry
+   point — `harness-gardener.sh [dormant|drift|freshness|all]` (default `all`) runs
+   pass 1 plus passes 4 and 5 in one invocation; the Gardener cron prompt calls it
+   for each pass. Legacy/unknown args fall through to `all`.
 2. **Credential health** — run `bash scripts/credential-health.sh`; it probes
    github/telegram/elevenlabs/blockrun/q402 and appends to `facts/credential-health.log`.
    Exit 0 = all OK. A `401`/`KEY_EXPIRED` means re-auth is needed — flag it, don't
    silently pass.
 3. **Log compaction** — any `facts/` or `logs/` file over 200 lines gets compacted.
    Full recipe + the header-preservation pitfall: `references/log-compaction.md`.
+4. **Reference drift** — `python3 scripts/reference-drift-audit.py`. Docs vs reality:
+   flags skill text that references a cron job that **no longer exists**, a job that is
+   **disabled**, a **schedule the doc states differently** from the live cron expr, and
+   **paths that are not there**. Silent when clean. First run found **195 unique
+   drifts** (49 dead job refs, 124 phantom paths, 12 schedule mismatches, 10 disabled).
+5. **Skill freshness** — `python3 scripts/skill-freshness-audit.py`. Two questions kept
+   separate: (a) **staleness** — a skill untouched > 90 days AND unreferenced by any cron
+   is dead weight (20 found on first run); (b) **upstream drift** — an imported skill
+   whose origin repo has moved past the commit we pinned, read from `.origin.json` beside
+   the skill. Silent when clean.
+
+**Why passes 4 and 5 exist (Jordan, Sep 13 2026):** *"we have a drifting issue, a stale
+data issue... we don't have a way of identifying it, and completely crushing it... this is
+our opportunity to add to the self-healing."* The self-audit checked SCRIPTS; nothing
+checked whether the **documentation still described the system**. A single fed-council
+audit found four drifts at once — including a job that had been silently running twice a
+day for ten days because a rename created a copy instead of moving the original.
+
+**Design rules for both passes (learned building them):**
+- **Exclude `archive/` and dated snapshot files** from drift scanning. A dead job id in a
+  file called `...-2026-05-05.md` is correct history, not drift. Including them produced
+  **1,313 findings** of mostly noise; excluding them produced 195 real ones.
+- **Dedupe by the DRIFT, not the file.** Every profile carries its own copy of the fleet's
+  skills, so one drift reported up to 4× and buried the signal.
+- **Silent when clean** — Gardener doctrine. Report only what changed.
 
 Report `[SILENT]` only when: no dormant skills, no credential expiry, and the cleanup
 log is empty. Otherwise report what was pruned/archived/expired and why.

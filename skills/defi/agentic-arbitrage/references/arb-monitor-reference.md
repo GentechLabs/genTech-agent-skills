@@ -90,7 +90,7 @@ ondo-finance, pax-gold
 ## Scripts Location
 
 All scripts live at:
-`/root/.hermes/profiles/gentech/scripts/` (actual file copies, not symlinks)
+`${PROFILE_DIR}/scripts/` (actual file copies, not symlinks)
 
 Repo mirror at:
 `/root/repos/gentech-treasury-trader/src/`

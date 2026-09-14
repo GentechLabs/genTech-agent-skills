@@ -31,7 +31,7 @@ grep TELEGRAM_ALLOWED_USERS ~/.hermes/profiles/gentech/.env
 # 2. Verify mapping is correct
 python3 -c "
 import json
-with open('/root/vaults/gentech/00-HQ/collaborators/mapping.json') as f:
+with open('${VAULT_DIR}/00-HQ/collaborators/mapping.json') as f:
     data = json.load(f)
 for name, info in data['collaborators'].items():
     print(f'{name}: id={info.get(\"telegram_id\")}')

@@ -57,7 +57,7 @@ survive reboots. A freshly-cloned profile has NO gateway until you create one.
 
 1. Create `~/.config/systemd/user/hermes-gateway-<name>.service`, modeled on
    `hermes-gateway-gentech.service` (Type=simple, ExecStart=python -m hermes_cli.main
-   --profile <name> gateway run, HERMES_HOME=/root/.hermes/profiles/<name>,
+   --profile <name> gateway run, HERMES_HOME=${PROFILES_DIR}/<name>,
    WorkingDirectory=<profile>, Restart=always, RestartSec=5, WantedBy=default.target).
 2. Enable + start. **Do this from a DETACHED background script**, not an inline command:
    ```bash
@@ -93,7 +93,7 @@ if the token is valid and NRestarts=0, give it time; the handshake completes.
 - **Verify, don't assume** — confirm config/.env/SOUL.md/memories/skills/cron all exist after ANY clone.
 - **Memory is a clone-time snapshot** — new memories added after cloning don't propagate automatically.
 - **Cron double-fire** — scope the new profile's jobs.json to the group's `deliver` and disable the source profile's copies.
-- **Shared vault** — workers on the same VPS share `/root/vaults/gentech`; vault handoffs are instant. Git push is backup only (GitHub unreliable).
+- **Shared vault** — workers on the same VPS share `${VAULT_DIR}`; vault handoffs are instant. Git push is backup only (GitHub unreliable).
 - **Bot token hygiene** — a token pasted in chat is exposed; store in `.env` + `/root/.bot-tokens/`, verify by byte-count/sha256. May need regeneration via BotFather.
 - **Bot token in a shell command trips the parser blocklist** — don't inline the token in a `sed`/`python -c`. Write a Python script file that reads the token from `/root/.bot-tokens/<name>.token` to edit `.env`.
 - **`systemctl --user start` is blocked from inside a running gateway** — the gateway-process guard flags it as a self-kill risk and refuses. Run enable/start from a detached background `.sh` (terminal background=true), not inline.
@@ -102,7 +102,7 @@ if the token is valid and NRestarts=0, give it time; the handshake completes.
 
 ## Handoff Federation — shared Obsidian vault as the cross-worker inbox
 Once multiple workers exist (Treasury, Labs, Entertainment), they communicate through the SHARED
-vault `/root/vaults/gentech` — NOT direct messaging and NOT git (GitHub has been
+vault `${VAULT_DIR}` — NOT direct messaging and NOT git (GitHub has been
 rate-limited/conflict-prone). Design (Jordan's Aug 2026 plan):
 
 - **The Obsidian sink is the inbox.** Any worker writes a dated handoff note to the vault; all

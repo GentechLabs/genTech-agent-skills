@@ -27,7 +27,7 @@ gets its key generated and stored at creation time.
 | Wallet | Address | Key on disk? |
 |--------|---------|--------------|
 | Signer/ops (Jordan's AVAX) | `0x7ebff188...96a` | ✅ `/root/.blockrun/jordan-personal-avax-key` |
-| Arb (GTA test) | `0x3d117Bf...eCb` | ✅ `/root/.hermes/profiles/gentech/secure/gentech-arb-wallet.json` |
+| Arb (GTA test) | `0x3d117Bf...eCb` | ✅ `${PROFILE_DIR}/secure/gentech-arb-wallet.json` |
 | Almanak Steward | `0x572ABd...037` | ✅ `/root/.blockrun/almanak-steward-key` |
 | CDP exec | `0x934Cbf...C05` | ✅ `/root/.blockrun/cdp-wallet-secret` (DER EC key) |
 | Remit test | `0x36795F...E93` | ✅ `/root/.blockrun/remit-test-wallet.json` |
@@ -36,7 +36,7 @@ gets its key generated and stored at creation time.
 ## Key locations
 
 - Raw key files: `/root/.blockrun/` (chmod 600)
-- JSON keyfiles: `/root/.hermes/profiles/gentech/secure/`
+- JSON keyfiles: `${PROFILE_DIR}/secure/`
 
 ## Verify a key before trusting it
 
@@ -75,5 +75,5 @@ Key points:
 - Only keep chains with non-zero balance to keep the report clean.
 - Sum USDC at $1.00 + native × per-chain price for a USD total.
 
-This is now built into `/root/.hermes/profiles/gentech/scripts/revenue-monitor.py`
+This is now built into `${PROFILE_DIR}/scripts/revenue-monitor.py`
 (`SWEEP_WALLETS`, `SWEEP_CHAINS`, `get_full_balance_sweep`, `sweep_total_usd`).
