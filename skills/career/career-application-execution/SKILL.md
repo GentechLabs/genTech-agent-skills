@@ -323,7 +323,7 @@ For Web3/AI ecosystem grants (Solana Foundation, Chainlink BUILD, Arbitrum, etc.
 # Jordan Jones — Resume (Master)
 
 **Email:** jordanjones0902@gmail.com
-**GitHub:** https://github.com/ProtoJay4789
+**GitHub:** https://github.com/GentechLabs
 **Portfolio:** https://protojay4789.github.io
 **Telegram:** @ProtoJay4789
 ```

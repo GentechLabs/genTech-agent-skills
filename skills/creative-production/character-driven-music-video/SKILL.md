@@ -262,7 +262,7 @@ Vanito's character designs evolve. Always start from his current reference image
   - Setting: Tokyo rooftop, blood red moon, rain, ravens
   - Source: `music/vanito/kage-character-sheet.png` on hub
 - **Poster:** KAGE on left (arms crossed, coat with kanji), HIKARI on right-center (mic, red-highlight hair). View from BEHIND them facing crowd + moon.
-- **All assets** are served from: https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/github/ProtoJay4789.github.io/music/vanito/scenes/
+- **All assets** are served from: https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/github/gentechlabs.github.io/music/vanito/scenes/
 
 For publishing completed songs with cover art to Vanito's hub page, see `references/hub-music-deployment.md`.
 
@@ -318,7 +318,7 @@ Mood: She's not just watching anymore. She's in it. Both of them now.
 ### Step 1: Lock the Reference
 - Save the user's character sheet image
 - Upload to hub (`git add -f music/vanito/scenes/<name>.jpg`)
-- Push commit to ProtoJay4789.github.io (origin remote)
+- Push commit to gentechlabs.github.io (origin remote)
 - Use the raw.githubusercontent.com URL as the image source
 
 ### Step 2: Scene Generation (optional — for transitional shots)
@@ -404,7 +404,7 @@ Seedance 2.0 CAN animate specific dramatic character movements from a single pos
   ```
 - **Cost confirmed:** $2.55 for 8 seconds (Seedance 2.0, Jul 14 session)
 - **GIF conversion:** ffmpeg at 8fps/480px → ~9MB for 8s clip
-- **Hub hosting:** push GIF to `music/vanito/` on ProtoJay4789.github.io
+- **Hub hosting:** push GIF to `music/vanito/` on gentechlabs.github.io
 
 **Prompts to AVOID** from failed attempts:
 - ❌ "Subtle cinematic movement... gentle flickering... slight breathing" — Vanito called this "underwhelming"
@@ -844,19 +844,19 @@ When Vanito requests a new version that combines elements from two images (e.g.,
 3. **Camera perspective is critical** — for stage/concert shots from behind, explicitly say "Same camera angle behind them the whole time. They never turn around." The model WILL rotate the view if you don't lock it
 4. **Hub push rejection:** Always pull --rebase before pushing:
    ```bash
-   cd ${VAULT_DIR}/github/ProtoJay4789.github.io
+   cd ${VAULT_DIR}/github/gentechlabs.github.io
    git pull --rebase origin main  # CRITICAL: do this before EVERY push
    git push origin main
    ```
-4. The hub repo path is nested under the vault: `github/ProtoJay4789.github.io/` — the files end up at `music/vanito/scenes/<file>` on the hub, but the raw URL path includes the vault nesting: `.../main/github/ProtoJay4789.github.io/music/vanito/scenes/<file>`
+4. The hub repo path is nested under the vault: `github/gentechlabs.github.io/` — the files end up at `music/vanito/scenes/<file>` on the hub, but the raw URL path includes the vault nesting: `.../main/github/gentechlabs.github.io/music/vanito/scenes/<file>`
 5. Always verify files pushed correctly by checking the raw URL returns HTTP 200
 6. **Poster dimensions issue:** The poster is 1288x853 which is ODD height. libx264 requires even dimensions. Always scale/pad to 1280x720 before encoding with h264
 
-7. **Hub push via fresh clone when local repo is tangled:** The hub repo is nested inside the vault directory (`${VAULT_DIR}/github/ProtoJay4789.github.io/`), which causes the working tree to always show vault changes as uncommitted modifications. This blocks clean pulls/pushes. When this happens, do a fresh shallow clone instead:
+7. **Hub push via fresh clone when local repo is tangled:** The hub repo is nested inside the vault directory (`${VAULT_DIR}/github/gentechlabs.github.io/`), which causes the working tree to always show vault changes as uncommitted modifications. This blocks clean pulls/pushes. When this happens, do a fresh shallow clone instead:
 
    ```bash
    rm -rf /tmp/hub-push
-   git clone https://github.com/ProtoJay4789/ProtoJay4789.github.io.git /tmp/hub-push --depth 1
+   git clone https://github.com/GentechLabs/gentechlabs.github.io.git /tmp/hub-push --depth 1
    # Copy files into /tmp/hub-push/
    cd /tmp/hub-push
    git add -f <files>

@@ -66,7 +66,7 @@ xurl auth apps add jordan-personal --client-id <ID> --client-secret <SECRET>
 
 # Authenticate
 xurl auth oauth2 --app gentech-agent GentechLabs
-xurl auth oauth2 --app jordan-personal ProtoJay4789
+xurl auth oauth2 --app jordan-personal GentechLabs
 
 # Set default
 xurl auth default gentech-agent

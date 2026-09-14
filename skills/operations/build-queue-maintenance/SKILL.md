@@ -145,7 +145,7 @@ The `gh` CLI may fail with `GITHUB_TOKEN` env var conflict (stale token in env o
 ```bash
 GH_TOKEN=$(grep 'oauth_token:' ~/.config/gh/hosts.yml | head -1 | awk '{print $2}' | tr -d '"')
 curl -s -H "Authorization: token $GH_TOKEN" \
-  "https://api.github.com/search/issues?q=author:ProtoJay4789+type:pr+is:merged&per_page=10"
+  "https://api.github.com/search/issues?q=author:GentechLabs+type:pr+is:merged&per_page=10"
 ```
 
 See the `github-auth` skill for the full GITHUB_TOKEN env var conflict resolution pattern.

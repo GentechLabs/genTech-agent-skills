@@ -82,8 +82,8 @@ Check for new game news for TWO categories:
 1. Wishlist games — Games Jordan wants to buy
 2. Recently played games (last 60 days) — Games Jordan is actively playing
 
-Load wishlist from: /root/ProtoJay4789.github.io/Gaming/gentech-shop.json
-Load recently played from: /root/ProtoJay4789.github.io/Gaming/installed-games.json
+Load wishlist from: /root/repos/gentechlabs.github.io/Gaming/gentech-shop.json
+Load recently played from: /root/repos/gentechlabs.github.io/Gaming/installed-games.json
 
 Search for news (patch notes, general news, major announcements) via web_search
 with game title + "news", "update", "patch", "announcement" keywords.

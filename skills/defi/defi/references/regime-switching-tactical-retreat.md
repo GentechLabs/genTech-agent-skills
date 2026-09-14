@@ -34,6 +34,6 @@ DEPLOY → EARNING → BREAKOUT → HOLD 2-5min → RETREAT to USDC → SENTINEL
 
 ## Files
 
-- Full spec: `/root/repos/ProtoJay4789.github.io/DeFi/aae-tactical-retreat.md`
-- Deploy UX: `/root/repos/ProtoJay4789.github.io/DeFi/aae-yield-farm-ux.md`
+- Full spec: `/root/repos/gentechlabs.github.io/DeFi/aae-tactical-retreat.md`
+- Deploy UX: `/root/repos/gentechlabs.github.io/DeFi/aae-yield-farm-ux.md`
 - Vault: `${VAULT_DIR}/03-Strategies/aae-regime-switching.md`

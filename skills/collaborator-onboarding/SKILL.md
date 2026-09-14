@@ -108,7 +108,7 @@ With CSS:
 .hub-photo{width:100%;height:300px;object-fit:cover;display:block;margin:12px 0}
 ```
 
-**Deploy:** Push to `ProtoJay4789.github.io` repo under a `collaborators/{name}/` directory, or keep in vault at `10-Labs/gentech-academy/` until Jordan decides to deploy. For VPS deployment, scp the HTML file and set ownership:
+**Deploy:** Push to `gentechlabs.github.io` repo under a `collaborators/{name}/` directory, or keep in vault at `10-Labs/gentech-academy/` until Jordan decides to deploy. For VPS deployment, scp the HTML file and set ownership:
 ```bash
 scp /var/www/gentechlabs/{name}.html root@2.24.195.196:/var/www/gentechlabs/
 ssh root@2.24.195.196 "chown www-data:www-data /var/www/gentechlabs/{name}.html && chmod 644 /var/www/gentechlabs/{name}.html"

@@ -64,7 +64,7 @@ GitHub Pages has a 30-60s deploy delay. Use raw.githubusercontent.com URLs:
 
 ```html
 <!-- ✅ Instant delivery (raw CDN, no delay) -->
-<video src="https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/music/vanito/file.mp4">
+<video src="https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/music/vanito/file.mp4">
 
 <!-- ❌ Delayed (GitHub Pages build) -->
 <video src="music/vanito/file.mp4">

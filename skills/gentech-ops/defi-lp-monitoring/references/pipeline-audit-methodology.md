@@ -36,7 +36,7 @@ Check its output against the LFJ UI. If the numbers don't match, the script is r
 
 Check what `defi-data.json` actually contains:
 ```bash
-python3 -c "import json; d=json.load(open('/root/ProtoJay4789.github.io/DeFi/defi-data.json')); print(d.get('fees', {}))"
+python3 -c "import json; d=json.load(open('/root/repos/gentechlabs.github.io/DeFi/defi-data.json')); print(d.get('fees', {}))"
 ```
 
 If `dailyFees` is stale (e.g. 0.204 vs 0.24 from LFJ UI), the pipeline is correct math on stale input. **The cron is not the problem.**

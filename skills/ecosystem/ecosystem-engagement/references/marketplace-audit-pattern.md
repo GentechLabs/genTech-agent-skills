@@ -20,7 +20,7 @@ When the GitHub account has 100+ repos, many are stale forks from PR submissions
 - **Stale own repos** — hackathon projects, experiments, superseded tools that are no longer maintained
 
 ### Cleanup Workflow
-1. List all repos: `curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/users/ProtoJay4789/repos?per_page=100&type=all&sort=updated"`
+1. List all repos: `curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/users/GentechLabs/repos?per_page=100&type=all&sort=updated"`
 2. Categorize: active own, active forks (PRs submitted), stale forks (no PRs), stale own (abandoned)
 3. Delete stale forks: `gh api -X DELETE repos/ProtoJay4789/<name>`
 4. Archive stale own repos: `gh repo edit ProtoJay4789/<name> --visibility private` or delete if truly abandoned

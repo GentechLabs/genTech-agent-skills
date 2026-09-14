@@ -14,7 +14,7 @@ Run this during Brain Audit Mode when there are no buildable Gentech items. Chec
 
 **The PR portfolio is NOT the source of truth for which PRs exist.** The portfolio only tracks PRs that were previously discovered and logged. PRs may exist that the portfolio doesn't know about — submitted from a fork whose name differs from the expected one, submitted by another agent, or never recorded. Always run a cross-repo discovery before trusting the portfolio's completeness.
 
-Build a hashmap of ALL upstream repos where GenTech has submitted or could have submitted PRs, then query each repo's PR list filtered by ProtoJay4789 head label:
+Build a hashmap of ALL upstream repos where GenTech has submitted or could have submitted PRs, then query each repo's PR list filtered by GentechLabs head label:
 
 ```bash
 declare -A REPOS=(
@@ -29,19 +29,19 @@ declare -A REPOS=(
 
 for name in "${!REPOS[@]}"; do
   repo="${REPOS[$name]}"
-  result=$(gh api "repos/$repo/pulls?state=all&per_page=10&head=ProtoJay4789:" \
+  result=$(gh api "repos/$repo/pulls?state=all&per_page=10&head=GentechLabs:" \
     --jq '.[] | {number, state, title: (.title[0:60]), html_url}' 2>/dev/null)
   if [ -z "$result" ]; then
     # Fallback: list all open PRs and filter by head label client-side
     result=$(gh api "repos/$repo/pulls?state=all&per_page=5" \
-      --jq '.[] | select(.head.label | startswith("ProtoJay4789")) | {number, state, title: (.title[0:60]), html_url}' 2>/dev/null)
+      --jq '.[] | select(.head.label | startswith("GentechLabs")) | {number, state, title: (.title[0:60]), html_url}' 2>/dev/null)
   fi
   echo "=== $name ($repo) ==="
   echo "${result:-No GenTech PRs found}"
 done
 ```
 
-**Why the two-step query:** The `head=ProtoJay4789:` server-side filter may return empty if GitHub's PR index is behind or the filter syntax is too specific. The fallback (no head filter, then client-side `.head.label` check) catches everything GitHub has.
+**Why the two-step query:** The `head=GentechLabs:` server-side filter may return empty if GitHub's PR index is behind or the filter syntax is too specific. The fallback (no head filter, then client-side `.head.label` check) catches everything GitHub has.
 
 **Why this beats the portfolio-only approach:** The portfolio may be stale, missing entries, or wrong about PR numbers. The cross-repo sweep is the ground truth. Proven Jul 24, 2026: the portfolio tracked 4 PRs, but the full sweep found 10 — 6 were missing entirely (awesome-web3 #733, awesome-agent-cortex #43/#44, awesome-agents #40, awesome-ai-agents-2026 #455, pay-skills #154).
 
@@ -67,7 +67,7 @@ This is the canonical list of ALL previously-discovered PRs. It is NOT the sourc
 This is the most reliable technique. Query the upstream repo's open PRs and filter by your username. This catches PRs from any fork name, regardless of what the fork is actually called:
 
 ```bash
-gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("ProtoJay4789")) | {number, state, title: .title[0:60]}'
+gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("GentechLabs")) | {number, state, title: .title[0:60]}'
 ```
 
 **Fallback method — REST API create attempt (422 confirmation):**
@@ -76,7 +76,7 @@ When `gh pr list` (GraphQL) returns empty due to rate limiting, or when you need
 
 ```bash
 gh api repos/<owner>/<repo>/pulls --method POST \
-  -f head='ProtoJay4789:<branch>' \
+  -f head='GentechLabs:<branch>' \
   -f base='main' \
   -f title='test'
 # 422 "already exists" = PR confirmed real
@@ -93,7 +93,7 @@ gh api repos/<owner>/<repo>/pulls --method POST \
 2. **Log it** — note the PR number, the branch used, and that it was closed
 3. **Check the real PR's actual head branch** via the upstream open-PR list filtered by username:
    ```bash
-   gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("ProtoJay4789")) | {number: .number, head: .head.label, title: .title[0:60]}'
+   gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("GentechLabs")) | {number: .number, head: .head.label, title: .title[0:60]}'
    ```
 4. **Update the portfolio** with the correct branch name — branch-field freshness matters
 
@@ -213,7 +213,7 @@ For phantom PRs specifically:
 
 When every PR in the portfolio returns 404 and the following are also true:
 
-1. **Account is alive:** `gh api user` returns valid ProtoJay4789 data, not 404
+1. **Account is alive:** `gh api user` returns valid GentechLabs data, not 404
 2. **All upstream repos exist:** `gh api repos/<owner>/<repo>` returns 200 for every repo in the portfolio
 3. **Other users' PRs are visible:** `gh api repos/<owner>/<repo>/pulls?state=all&per_page=5` returns real data from other contributors
 4. **The PR numbers are skipped in the repo's PR sequence:** Listing all PRs shows #153 → #155 (no #154), or #207 → #208 with no #190/#192 in between
@@ -264,7 +264,7 @@ for owner, repo in [repo for _, repo in _]:  # unique repos
         url, headers={"Accept": "application/vnd.github.v3+json"}
     ), timeout=10)
     prs = json.loads(resp.read())
-    our_prs = [p for p in prs if p.get("head", {}).get("label", "").startswith("ProtoJay4789")]
+    our_prs = [p for p in prs if p.get("head", {}).get("label", "").startswith("GentechLabs")]
     print(f"  {owner}/{repo}: {len(prs)} recent PRs, {len(our_prs)} from us")
     for p in prs[:3]:
         print(f"    PR #{p['number']}: {p['user']['login']} — {p['title'][:50]}")
@@ -276,7 +276,7 @@ for owner, repo in [repo for _, repo in _]:  # unique repos
   PR #190 (solana-foundation/pay-skills): HTTP 404
   PR #192 (solana-foundation/pay-skills): HTTP 404
   ...
-Account: ProtoJay4789 — active: yes
+Account: GentechLabs — active: yes
   solana-foundation/pay-skills: 5 recent PRs, 0 from us
     PR #205: x402engine — Add x402engine gateway provider
     PR #204: MacroPulse — Add Macro Pulse (finance) provider
@@ -333,9 +333,9 @@ If #153 and #155 both exist with PRs from other users, and #154 is purely missin
 - **PRs may have been replaced** — A closed PR may have a replacement PR with a different number. Check the repo's open PRs for similar titles.
 - **Timeline endpoint may 404** — `pulls/{number}/timeline` and `pulls/{number}/events` are not available on all repos. Fall back to `pulls/{number}/reviews` and `pulls/{number}/comments`.
 - **Rate limit recovery** — If both REST and GraphQL are exhausted, note the PRs that couldn't be checked and retry next session. The rate limit resets at the top of each hour.
-- **Fork-name mismatch — the most common false negative.** When checking if a PR exists, do NOT search for a fork by its expected name alone (e.g. `ProtoJay4789/pay-skills`). The actual fork may have a different name (`ProtoJay4789/pay-skills-fork`). This caused the Jul 20 audit to falsely report all 11 PRs as "never submitted" — the forks existed under different names. **Fix:** Instead of checking the fork directly, query the upstream repo's open PR list and filter by `head.label` starting with your username:
+- **Fork-name mismatch — the most common false negative.** When checking if a PR exists, do NOT search for a fork by its expected name alone (e.g. `GentechLabs/pay-skills`). The actual fork may have a different name (`GentechLabs/pay-skills-fork`). This caused the Jul 20 audit to falsely report all 11 PRs as "never submitted" — the forks existed under different names. **Fix:** Instead of checking the fork directly, query the upstream repo's open PR list and filter by `head.label` starting with your username:
   ```bash
-  gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("ProtoJay4789")) | {number: .number, title: .title, state: .state}'
+  gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("GentechLabs")) | {number: .number, title: .title, state: .state}'
   ```
   This catches PRs from any fork name. Run this once per upstream repo, not once per expected fork name.
 - **Fork names are not predictable.** GitHub auto-generates fork names when the expected name is taken, or when the user renames the fork. Never hardcode a fork name in queue notes or portfolio entries. Always discover the actual fork name via the upstream PR list or the user's repos list (`gh api users/ProtoJay4789/repos --jq '.[] | select(.fork == true) | .name'`).

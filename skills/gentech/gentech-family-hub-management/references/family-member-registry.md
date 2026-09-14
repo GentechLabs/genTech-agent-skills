@@ -10,12 +10,12 @@
 ### Identity
 - **Name:** Jordan
 - **Steam ID:** `76561197996487689`
-- **Profile:** ProtoJay4789
+- **Profile:** GentechLabs
 - **Groups:** HQ, Strategies, Labs, Entertainment
 
 ### Hub Infrastructure
-- **Main Hub:** `/root/ProtoJay4789.github.io/hub-jordan.html` (if exists)
-- **Data File:** `/root/ProtoJay4789.github.io/hub-jordan-data.json` (if exists)
+- **Main Hub:** `/root/repos/gentechlabs.github.io/hub-jordan.html` (if exists)
+- **Data File:** `/root/repos/gentechlabs.github.io/hub-jordan-data.json` (if exists)
 - **Portfolio:** `https://protojay4789.github.io`
 
 ### Cronjobs
@@ -49,7 +49,7 @@
 
 ### Hub Infrastructure
 - **Main Hub:** `https://protojay4789.github.io/hub-vanito.html`
-- **Data File:** `/root/ProtoJay4789.github.io/hub-vanito-data.json`
+- **Data File:** `/root/repos/gentechlabs.github.io/hub-vanito-data.json`
 - **Music Dashboard:** `https://protojay4789.github.io/Gaming/vanito-music-dashboard.html`
 - **Wishlist Tracker:** `https://protojay4789.github.io/Gaming/wishlist-vanito.html`
 
@@ -169,7 +169,7 @@
 
 ### GitHub Pages Structure
 ```
-/root/ProtoJay4789.github.io/
+/root/repos/gentechlabs.github.io/
 ├── hub-vanito.html              # Vanito's main hub
 ├── hub-vanito-data.json         # Vanito's data source
 ├── Gaming/

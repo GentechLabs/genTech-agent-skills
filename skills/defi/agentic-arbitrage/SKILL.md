@@ -911,7 +911,7 @@ product. Build once, submit many times. The Solana Foundation USA grant (up to $
 + $200 coding-subs receipts) both feed the same engine. **Colosseum next window: Sep 28 – Nov 2, 2026.**
 - Hyperliquid Python SDK: `/root/repos/hyperliquid-python-sdk/`
 - Across Protocol: https://across.to
-- GTA repo: https://github.com/ProtoJay4789/gentech-treasury-trader
+- GTA repo: https://github.com/GentechLabs/gentech-treasury-trader
 - Coinbase for Agents: CDP API key env vars
 - Q402 gasless payments: BNB trial (2000 free sends, expires Aug 15)
 - Across V3 contract investigation (proxy, selectors, fill status): `references/across-v3-contract-investigation.md`

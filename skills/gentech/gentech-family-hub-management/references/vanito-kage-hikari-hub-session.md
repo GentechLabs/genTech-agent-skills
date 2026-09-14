@@ -42,7 +42,7 @@ Shadow-Light. Split composition album cover — KAGE dark/crimson left, HIKARI g
 - Gold/yellow color was replaced with red throughout to match the dark album theme
 
 ## GitHub state
-- Repo: ProtoJay4789.github.io
+- Repo: gentechlabs.github.io
 - Hub file: hub-vanito.html
 - Music JSON: hub-vanito-data.json
 - Audio dir: music/vanito/

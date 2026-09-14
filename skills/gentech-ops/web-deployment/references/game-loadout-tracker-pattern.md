@@ -11,7 +11,7 @@ viewable + savable at a glance**, per faction/situation, updated by telling the
 agent. This is a demo-able, subscription-flavored feature ("I can save and view
 my build anytime").
 
-## File layout (in canonical repo `/root/ProtoJay4789.github.io/`)
+## File layout (in canonical repo `/root/repos/gentechlabs.github.io/`)
 ```
 Gaming/
 ├── <game>.html          ← themed page, fetches the .json and renders cards

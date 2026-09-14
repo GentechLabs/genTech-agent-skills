@@ -25,16 +25,16 @@ python3 /root/.hermes/scripts/defi-dashboard-sync.py   --range 6.20-6.37   --bal
 
 ## Two-Repo Sync (Critical)
 
-Dashboard reads from `ProtoJay4789/ProtoJay4789.github.io`, NOT `gentech-vault`.
+Dashboard reads from `GentechLabs/gentechlabs.github.io`, NOT `gentech-vault`.
 
 ```bash
-cp ${VAULT_DIR}/defi-data.json /root/ProtoJay4789.github.io/DeFi/defi-data.json
-cd /root/ProtoJay4789.github.io && git add DeFi/defi-data.json && git commit -m "..." && git push
+cp ${VAULT_DIR}/defi-data.json /root/repos/gentechlabs.github.io/DeFi/defi-data.json
+cd /root/repos/gentechlabs.github.io && git add DeFi/defi-data.json && git commit -m "..." && git push
 ```
 
 **Verify via GitHub API (bypasses CDN cache):**
 ```bash
-curl -s "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/contents/DeFi/defi-data.json" | python3 -c "
+curl -s "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/contents/DeFi/defi-data.json" | python3 -c "
 import sys, json, base64
 d = json.load(sys.stdin)
 content = base64.b64decode(d['content']).decode()

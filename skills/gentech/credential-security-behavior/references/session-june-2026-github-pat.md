@@ -37,7 +37,7 @@ git remote set-url origin https://github.com/user/repo.git
 # Fix gitconfig
 cat > ~/.gitconfig << 'EOF'
 [user]
-    name = ProtoJay4789
+    name = GentechLabs
     email = protojay4789@users.noreply.github.com
 [credential]
     helper = store

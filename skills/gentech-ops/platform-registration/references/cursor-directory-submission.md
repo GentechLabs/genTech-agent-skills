@@ -18,7 +18,7 @@
 |-------|------------------------|
 | **Name** | GenTech Gateway |
 | **Description** | x402 pay-per-call gateway for AI agents — 16 endpoints, 5 chains, no API keys |
-| **Source URL** | github.com/ProtoJay4789/x402-gateway |
+| **Source URL** | github.com/GentechLabs/x402-gateway |
 | **Tags** | x402, payments, usdc, base, solana, gateway, mcp |
 | **Logo/Avatar** | Square PNG, ~400KB, recognizable at 96x96px |
 | **Rules** | 1+ spend-safety rules (markdown, paste into field) |

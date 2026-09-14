@@ -1,7 +1,7 @@
 # PR Portfolio Verification — Jul 22, 2026 Session
 
 ## Context
-Audited the GenTech PR portfolio at `${VAULT_DIR}/10-Labs/pr-portfolio.md`. The portfolio had a Jul 20 audit note warning that all PRs from the Jul 19 run were never actually created. Verified all 10 PRs + 9 ProtoJay4789 forks + 2 "Already listed" claims.
+Audited the GenTech PR portfolio at `${VAULT_DIR}/10-Labs/pr-portfolio.md`. The portfolio had a Jul 20 audit note warning that all PRs from the Jul 19 run were never actually created. Verified all 10 PRs + 9 GentechLabs forks + 2 "Already listed" claims.
 
 ## Method
 - `gh pr view` blocked by GitHub API rate limit (5,000-point/hour GraphQL exhausted)
@@ -24,7 +24,7 @@ Audited the GenTech PR portfolio at `${VAULT_DIR}/10-Labs/pr-portfolio.md`. The 
 | 9 | solana-foundation/pay-skills | #154 | 404 |
 | 10 | coinbase/agentkit | #1375 | 404 |
 
-### All 9 ProtoJay4789 Forks — 404
+### All 9 GentechLabs Forks — 404
 x402, pay-skills, awesome-ai-agents-2026, awesome-web3, awesome-agent-cortex, awesome-erc8004, awesome-web3-services, awesome-agents, agentkit — all 404.
 
 ### "Already Listed" Claims

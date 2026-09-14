@@ -1205,13 +1205,13 @@ Two traps trip up "propagate the fresh token" far more often than the expiry its
    ```
    github.com:
        users:
-           ProtoJay4789:
+           GentechLabs:
                oauth_token: <TOKEN>
-       user: ProtoJay4789
+       user: GentechLabs
        oauth_token: <TOKEN>
        git_protocol: https
    ```
-   Verify after: `gh auth status` shows `✓ Logged in ... account ProtoJay4789` and
+   Verify after: `gh auth status` shows `✓ Logged in ... account GentechLabs` and
    `gh api rate_limit --jq '.resources.core.limit'` returns `5000` (the authenticated view), not `60`.
 
 2. **A 403 "API rate limit exceeded" is NOT an invalid token.** A token that authenticates — the

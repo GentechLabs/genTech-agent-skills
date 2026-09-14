@@ -244,8 +244,8 @@ This is Jordan's "frustration to dollars" framework — their frustration is you
 - **GenTech advantages over Kite:** Q402 Trust Receipts (cryptographic ECDSA), Paymenter x402 Extension (hosting billing), ClawWork (agents earn money), Agent Warfare/Arcade (gaming), CAD Viewer (text-to-cad), self-hosted gateway (19/19 validator checks), Hermes integration, Google ADK x402 contribution
 - **Kite advantages over GenTech:** Paid API catalog (100+ services), Amazon shopping, cloud deploy, user auth, activity feed, CLI auto-upgrade, virtual cards, cross-chain auto-routing
 - **Contribution ideas:** (1) Q402 Trust Receipts → add cryptographic verification to Kite's receipt model, (2) Self-hosted gateway → package as Kite-compatible merchant backend, (3) ClawWork as a Kite skill, (4) Arcade as a Kite merchant, (5) CAD as a Kite service, (6) Hermes skill for Kite Passport (built at github.com/ProtoJay4789/gentech-kite-passport), (7) Cross-chain routing knowledge sharing
-- **Decision: Contribute + Integrate** — Hermes skill for Kite Passport built and pushed. PR to Kite's repo blocked (forking restricted). Jordan needs to open PR from ProtoJay4789/gentech-kite-passport to gokite-ai/passport-skills.
-- **Fork blocked:** Kite's repo has forking restricted (HTTP 403). Cannot create fork via API. Workaround: standalone repo at github.com/ProtoJay4789/gentech-kite-passport, PR must come from Jordan's account.
+- **Decision: Contribute + Integrate** — Hermes skill for Kite Passport built and pushed. PR to Kite's repo blocked (forking restricted). Jordan needs to open PR from GentechLabs/gentech-kite-passport to gokite-ai/passport-skills.
+- **Fork blocked:** Kite's repo has forking restricted (HTTP 403). Cannot create fork via API. Workaround: standalone repo at github.com/GentechLabs/gentech-kite-passport, PR must come from Jordan's account.
 
 **Arc / ArcLens (arclenz.xyz) deep dive (Jul 18, 2026):**
 - **Arc blockchain** — Circle's L1, USDC-native gas ($0.001 flat), 0.5s blocks, Chain 5042002 (testnet live)

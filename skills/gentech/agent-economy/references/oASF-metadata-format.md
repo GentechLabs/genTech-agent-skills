@@ -92,7 +92,7 @@ Common domains:
   "name": "GenTech Labs",
   "description": "AI agent economy infrastructure — risk scoring, data access, identity verification, and DeFi intelligence for autonomous agents.",
   "version": "1.0.0",
-  "author": "ProtoJay4789",
+  "author": "GentechLabs",
   "services": [
     {
       "type": "x402",

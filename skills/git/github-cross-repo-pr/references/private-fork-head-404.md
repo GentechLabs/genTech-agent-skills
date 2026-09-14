@@ -9,7 +9,7 @@ pull request create failed: GraphQL: not all refs are readable (createPullReques
 ## Root cause
 You cannot open a cross-repo PR into a **public** repo from a **private** fork. GitHub can't expose the head repo's refs for comparison, so the API/GraphQL rejects the `head:` reference. The error is generic ("not all refs are readable") and looks like an auth problem — it is not. It's a visibility problem on the head fork.
 
-Diagnosis: `gh api repos/ProtoJay4789/bankr-skills` returned 404 even though `git ls-remote` on the same URL worked. A 404 via the API while git push/ls-remote works = the repo is PRIVATE (git auth uses an embedded/credentialed token; the API token can't see it). A private fork is unreachable as a PR head.
+Diagnosis: `gh api repos/GentechLabs/bankr-skills` returned 404 even though `git ls-remote` on the same URL worked. A 404 via the API while git push/ls-remote works = the repo is PRIVATE (git auth uses an embedded/credentialed token; the API token can't see it). A private fork is unreachable as a PR head.
 
 ## The fix — use a PUBLIC fork under the clean account
 1. Create a **public** fork under the account that can be a PR head (on a fresh/unflagged account):

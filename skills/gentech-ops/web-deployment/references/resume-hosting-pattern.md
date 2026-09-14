@@ -43,7 +43,7 @@ Prompt outline (job id 877b19f24f9f):
 4. Report: silent ("[SILENT]") when clean; short report when synced or stale
 
 ## Content rules encoded (Jordan's standards)
-- Work GitHub = `github.com/gentechlabs` org (personal ProtoJay4789 unused for work)
+- Work GitHub = `github.com/gentechlabs` org (personal GentechLabs unused for work)
 - Portfolio URL = `gentechlabs.github.io` (after rename; `protojay4789.github.io` is dead)
 - AI-training/evaluation gig platforms (Outlier, Mercor, DataAnnotation, Surge AI) count as
   work experience for these resumes; assessments are the screening, never pay to apply

@@ -38,19 +38,19 @@ The old `ProtoJay4789` user account is gone:
 - `github.com/ProtoJay4789` → 404
 - `ProtoJay4789/ProtoJay4789.github.io` repo → 404
 
-The portfolio now lives at **`GentechLabs/ProtoJay4789.github.io`**:
+The portfolio now lives at **`GentechLabs/gentechlabs.github.io`**:
 - Pages enabled, build_type `workflow`
-- Live at `gentechlabs.github.io/ProtoJay4789.github.io/` (HTTP 200)
+- Live at `gentechlabs.github.io/gentechlabs.github.io/` (HTTP 200)
 - Last deploy success
 
 Local clones may still point `origin` at the dead account. The embedded token in
 the remote URL masks the host, so inspect with `git remote -v` and fix:
 ```bash
-git remote set-url origin https://github.com/GentechLabs/ProtoJay4789.github.io.git
+git remote set-url origin https://github.com/GentechLabs/gentechlabs.github.io.git
 ```
 
 **Signal note:** `gh` CLI authenticates as **GentechLabs**, so
-`gh repo view ProtoJay4789/...` returns "Could not resolve to a Repository" —
+`gh repo view GentechLabs/...` returns "Could not resolve to a Repository" —
 that is the **migrated-repo signal**, not a permissions error. Don't misread it
 as a token/scope problem.
 

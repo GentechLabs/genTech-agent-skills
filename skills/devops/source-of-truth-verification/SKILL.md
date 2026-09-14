@@ -96,7 +96,7 @@ Both failure modes fired in a single task.
 
 ### Stale mirror
 
-| Check | Mirror (`ProtoJay4789.github.io/10-Labs/x402-gateway/`) | Live (`vaults/gentech/10-Labs/x402-gateway/`) |
+| Check | Mirror (`gentechlabs.github.io/10-Labs/x402-gateway/`) | Live (`vaults/gentech/10-Labs/x402-gateway/`) |
 |---|---|---|
 | Services defined | 7 | 8 (adds `lineage_guard`) |
 | `/status` health path | `f"{url}/health"` where `url` is a 3-tuple → always `down` | `route[0]` + `/v1/health` → correct |

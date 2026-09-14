@@ -88,7 +88,7 @@ After any change to the embed function, run:
 ```python
 python3 -c "
 import json
-with open('/root/ProtoJay4789.github.io/DeFi/defi-data.json') as f:
+with open('/root/repos/gentechlabs.github.io/DeFi/defi-data.json') as f:
     d = json.load(f)
 for k in ['regime', 'strategyComparison', 'yieldSpectrum', 'narrativeRotation']:
     print(f'{k}: {\"✅\" if k in d else \"❌\"} {list(d.get(k, {}).keys())[:3] if k in d else \"MISSING\"}')"

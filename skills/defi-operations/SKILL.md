@@ -393,7 +393,7 @@ Hub fetch & renders (HTML/CSS)
 **Verification command:**
 ```python
 # Check what's syncing to Hub
-with open("/root/ProtoJay4789.github.io/DeFi/defi-data.json") as f:
+with open("/root/repos/gentechlabs.github.io/DeFi/defi-data.json") as f:
     data = json.load(f)
 lp = data.get("lpPosition", {})
 print(f"Shape: {lp.get('shape')}")
@@ -444,7 +444,7 @@ print(f"In Range: {lp.get('inRange')}")
 ```python
 config_files = [
     "~/.hermes/scripts/.lfj-position-tracker.json",      # Primary source
-    "/root/ProtoJay4789.github.io/DeFi/defi-data.json", # Dashboard
+    "/root/repos/gentechlabs.github.io/DeFi/defi-data.json", # Dashboard
     # ... 7 additional config files
 ]
 ```
@@ -485,7 +485,7 @@ def fix_entry_price(range_low, range_high):
 **4. Validation Command**
 ```bash
 # Verify consistency across all systems
-curl -s "https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/DeFi/defi-data.json" | \
+curl -s "https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/DeFi/defi-data.json" | \
 python3 -c "
 import json, sys
 data = json.load(sys.stdin)
@@ -534,7 +534,7 @@ def validate_shape_consistency():
     """Ensure all sources report the same shape"""
     sources = {
         "Config": "/root/.hermes/scripts/.lfj-aae-config.json",
-        "Dashboard": "/root/ProtoJay4789.github.io/DeFi/defi-data.json"
+        "Dashboard": "/root/repos/gentechlabs.github.io/DeFi/defi-data.json"
     }
     
     for name, path in sources.items():

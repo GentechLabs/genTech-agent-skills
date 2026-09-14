@@ -55,7 +55,7 @@ https://github.com/ORIGINAL_ORG/ORIGINAL_REPO/compare/main...YOUR_USERNAME:YOUR_
 
 Example:
 ```
-https://github.com/GOATNetwork/agentkit/compare/main...ProtoJay4789:agentkit:main
+https://github.com/GOATNetwork/agentkit/compare/main...GentechLabs:agentkit:main
 ```
 
 ### Step 5: Verify the comparison

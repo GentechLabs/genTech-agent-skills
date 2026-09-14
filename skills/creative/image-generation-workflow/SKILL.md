@@ -83,8 +83,8 @@ When the user asks to edit art to feature an established character (HIKARI, KAGE
 
 **Proven workflow:**
 1. **Read the character sheet + visual bible** in the repo:
-   - `/root/ProtoJay4789.github.io/09-Green Room/HIKARI Character Sheet.md`
-   - `/root/ProtoJay4789.github.io/09-Green Room/HIKARI Complete Visual Bible.md`
+   - `/root/repos/gentechlabs.github.io/09-Green Room/HIKARI Character Sheet.md`
+   - `/root/repos/gentechlabs.github.io/09-Green Room/HIKARI Complete Visual Bible.md`
    - (KAGE: `${VAULT_DIR}/music/vanito/kage-character-sheet.png`)
    The visual bible lists LOCKED reference image URLs hosted at `https://vanito.gentechlabs.net/characters/<file>.png` (e.g. `hikari-sakura-outfit-sheet.png`, `hikari-hairstyle-reference.png`).
 2. **Pass the locked reference URLs as `reference_image_urls`** AND restate the exact canonical appearance in the prompt text (hair length/color/tips, bangs, outfit, accessories). The model reinterprets references — it does not copy them, so the prompt must carry the full detail.

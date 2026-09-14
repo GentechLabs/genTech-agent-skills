@@ -14,7 +14,7 @@ Turn raw URLs or screenshots into polished device mockups with consistent brandi
 
 ## Tool Location
 
-`/root/genTech-frame/` — GitHub: `ProtoJay4789/genTech-frame`
+`/root/genTech-frame/` — GitHub: `GentechLabs/genTech-frame`
 
 ## Quick Start
 

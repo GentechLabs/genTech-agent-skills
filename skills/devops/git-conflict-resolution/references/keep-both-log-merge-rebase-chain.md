@@ -35,7 +35,7 @@ grinding through many manual resolutions — the abort discards only the half-ap
 and your committed work is preserved.
 
 ## Real-world (Aug 18, 2026)
-Rebasing `main` onto `origin/main` on the ProtoJay4789.github.io vault produced:
+Rebasing `main` onto `origin/main` on the gentechlabs.github.io vault produced:
 - **Timestamp-only JSON conflicts** (`poe2-dashboard-data.json`, `build-health.json`) —
   resolved by keeping the NEWER timestamp (same spirit as Pitfall 12 header-only pattern)
 - **A keep-both md conflict** in `treasury-completions.md` — old 08-06→08-15 entries +

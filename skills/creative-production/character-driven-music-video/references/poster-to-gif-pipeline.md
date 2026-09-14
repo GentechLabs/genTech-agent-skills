@@ -45,7 +45,7 @@ git commit -m "🎬 Animated album art GIF - <song name>"
 git push origin main
 ```
 
-The raw GitHub URL for the GIF: `https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/music/vanito/<name>.gif`
+The raw GitHub URL for the GIF: `https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/music/vanito/<name>.gif`
 
 ### Cost Summary
 

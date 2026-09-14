@@ -647,7 +647,7 @@ cd /path/to/repo
 python3 -c "import json; json.load(open('DeFi/defi-data.json')); print('VALID')"
 
 # 3. Replace the corrupted file with the clean copy
-cp ${VAULT_DIR}/defi-data.json /root/ProtoJay4789.github.io/DeFi/defi-data.json
+cp ${VAULT_DIR}/defi-data.json /root/repos/gentechlabs.github.io/DeFi/defi-data.json
 
 # 4. Re-commit (amend the failed sync commit)
 git add DeFi/defi-data.json
@@ -767,7 +767,7 @@ A merge resolves the divergence in one pass instead of replaying N commits. If `
 **Symptom:** `gh auth status` shows ✅ logged in, `gh api rate_limit` shows valid quota, but `git push origin main` fails with:
 ```
 remote: Invalid username or token. Password authentication is not supported for Git operations.
-fatal: Authentication failed for 'https://github.com/ProtoJay4789/repo.git'
+fatal: Authentication failed for 'https://github.com/GentechLabs/repo.git'
 ```
 
 **Cause:** The git remote URL has an old/baked-in token that expired, even though `gh` CLI has the current valid token stored in `~/.config/gh/hosts.yml`. Git uses the remote URL's embedded credentials, not the `gh` CLI config.
@@ -786,7 +786,7 @@ gh api rate_limit  # Should show remaining quota
 **Fix — Update remote URL with current token:**
 ```bash
 TOKEN=$(gh auth token)
-git remote set-url origin "https://ProtoJay4789:${TOKEN}@github.com/ProtoJay4789/repo.git"
+git remote set-url origin "https://GentechLabs:${TOKEN}@github.com/GentechLabs/repo.git"
 git push origin main
 ```
 
@@ -796,7 +796,7 @@ TOKEN=$(gh auth token)
 for repo in /root/repos/genTech-agent-kit /root/builds/genTech-agent-kit ${VAULT_DIR}; do
     if [ -d "$repo/.git" ]; then
         cd "$repo"
-        git remote set-url origin "https://ProtoJay4789:${TOKEN}@github.com/ProtoJay4789/$(basename $(git rev-parse --show-toplevel)).git"
+        git remote set-url origin "https://GentechLabs:${TOKEN}@github.com/GentechLabs/$(basename $(git rev-parse --show-toplevel)).git"
         echo "✅ Updated: $repo"
     fi
 done
@@ -840,7 +840,7 @@ cronjob action=create \
 **Bulk PR sweep — prefer REST over GraphQL (proven Aug 6, 2026):** For overnight maintenance ("mark items shipped where PRs merged"), do the whole sweep with the REST API, not `gh pr list`. GraphQL exhausts its bucket fast across many repos; REST has its own bucket and is usually still available. When `gh pr list` returns `GraphQL: API rate limit already exceeded`, switch to REST — it worked with 60/60 remaining while GraphQL was at 0:
 ```bash
 TOKEN=$(gh auth token)
-for repo in ProtoJay4789/repo-a ProtoJay4789/repo-b; do
+for repo in GentechLabs/repo-a GentechLabs/repo-b; do
   curl -s -H "Authorization: token $TOKEN" \
     "https://api.github.com/repos/$repo/pulls?state=all&per_page=10" \
     | python3 -c "import sys,json; d=json.load(sys.stdin); print('(no PRs)' if d==[] else '\n'.join(f\"#{p['number']} [{p['state']}] {p['title']} merged={p.get('merged_at')}\" for p in d))"
@@ -938,7 +938,7 @@ print('Lock released')
 
 ```bash
 # Test gaming hub sync
-cd /root/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 python3 ${PROFILE_DIR}/scripts/gaming-hub-sync.py
 
 # Test hub nightly sync

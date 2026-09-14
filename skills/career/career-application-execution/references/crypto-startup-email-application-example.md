@@ -52,7 +52,7 @@ to multi-agent payment systems.
 Best,
 Jordan Jones
 jordanjones0902@gmail.com
-https://github.com/ProtoJay4789
+https://github.com/GentechLabs
 https://protojay4789.github.io
 @ProtoJay4789
 ```

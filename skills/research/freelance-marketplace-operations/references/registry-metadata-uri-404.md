@@ -8,7 +8,7 @@ JSON is fully populated. The agent is effectively invisible to capability-based 
 ## Root cause
 The registry's `metadata_uri` field points to a URL the registry **cannot fetch
 unauthenticated**. In our case the metadata lived at
-`raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/gentech-avax-metadata.json`
+`raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/gentech-avax-metadata.json`
 which returned **404** to an unauthenticated request. The registry has no auth, so it got
 a 404 and showed blank skills/domains. The metadata file itself was fine — the *hosting*
 was the problem.

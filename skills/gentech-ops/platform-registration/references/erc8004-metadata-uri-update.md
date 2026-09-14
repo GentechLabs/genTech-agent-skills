@@ -5,8 +5,8 @@ even though the metadata JSON is fully populated. Root cause: the on-chain
 `metadata_uri` (aka `tokenURI`) points to a private/rate-limited/404 host, so the
 indexer can't fetch it.
 
-**Why our personal GitHub 404s:** ProtoJay4789 is rate-limited/flagged from
-over-updating. `raw.githubusercontent.com/ProtoJay4789/...` returns 404. Host
+**Why our personal GitHub 404s:** GentechLabs is rate-limited/flagged from
+over-updating. `raw.githubusercontent.com/GentechLabs/...` returns 404. Host
 discovery metadata on our own site (`gentechlabs.net`) — never rate-limited.
 
 ## The two-step fix (verified working)

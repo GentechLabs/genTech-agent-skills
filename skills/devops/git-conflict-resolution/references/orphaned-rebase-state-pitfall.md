@@ -35,7 +35,7 @@ GIT_EDITOR=true git rebase --continue
 git status
 ```
 
-**Real-world example (Jul 12, 2026):** `gaming-hub-sync.py` and `[Jordan] POE2 Build Health — Gaming Hub Sync` both failed because the `ProtoJay4789.github.io` repo had an orphaned rebase with 3 unmerged `.redirect.md` files from a prior vault consolidation push. Resolution: `git checkout --ours` on the 3 redirect files, `git add`, `GIT_EDITOR=true git rebase --continue`, then `git push`.
+**Real-world example (Jul 12, 2026):** `gaming-hub-sync.py` and `[Jordan] POE2 Build Health — Gaming Hub Sync` both failed because the `gentechlabs.github.io` repo had an orphaned rebase with 3 unmerged `.redirect.md` files from a prior vault consolidation push. Resolution: `git checkout --ours` on the 3 redirect files, `git add`, `GIT_EDITOR=true git rebase --continue`, then `git push`.
 
 **Prevention in cron scripts:**
 ```python

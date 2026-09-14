@@ -200,7 +200,7 @@ def check_steam_prices(watchlist_games):
 
 ### MCP Server (SSE Mode — UE5.8 Compatible)
 
-The GenTech Shop also runs as a standalone MCP server at `github.com/ProtoJay4789/genTech-shop`. Supports both stdio (for Claude Desktop) and SSE (for Unreal Engine 5.8).
+The GenTech Shop also runs as a standalone MCP server at `github.com/GentechLabs/genTech-shop`. Supports both stdio (for Claude Desktop) and SSE (for Unreal Engine 5.8).
 
 **MCP tools available:**
 - `gaming_deals` — Steam wishlist price/deal checker

@@ -43,7 +43,7 @@ Live run example (Aug 1, 2026): 50 new agents → 8 triaged leads after the filt
 
 ## Relationship to Agent Kit
 
-The full agent-to-agent module lives in `ProtoJay4789/genTech-agent-kit` under `a2a/`:
+The full agent-to-agent module lives in `GentechLabs/genTech-agent-kit` under `a2a/`:
 - `a2a/discovery/` — the registry monitor above
 - `a2a/workspace/` — Buzz bridge (Hermes profile as native Buzz agent)
 - `a2a/self-audit/` — 4-role harness (Evolution/Critic/Verifier/Gardener) + constitution

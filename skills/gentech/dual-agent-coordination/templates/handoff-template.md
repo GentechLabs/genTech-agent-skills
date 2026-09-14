@@ -13,7 +13,7 @@
 - Previous: `[commit hash]` — [commit message]
 - Before that: `[commit hash]` — [commit message]
 
-### Portfolio (ProtoJay4789.github.io) — if applicable
+### Portfolio (gentechlabs.github.io) — if applicable
 **Status:** [✅ Fully synced / ⚠️ Unpushed commits / ❌ Auth issue]
 - Latest: `[commit hash]` — [commit message]
 - Previous: `[commit hash]` — [commit message]

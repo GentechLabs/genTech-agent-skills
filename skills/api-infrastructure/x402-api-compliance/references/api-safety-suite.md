@@ -1,6 +1,9 @@
 # API Safety Suite — Golden Test Harness for x402 Endpoints
 
-A regression test suite that validates every x402 endpoint every 6 hours. Silent when passing, loud on failure.
+A regression test suite that validates every advertised x402 endpoint every 6 hours. Silent when passing, loud on failure.
+
+**Endpoints are derived from the live `/.well-known/x402` manifest at run time — never hardcoded.**
+A hardcoded path list is how this suite went permanently RED on 7 of 12 checks (2026-09-14).
 
 ## Location
 

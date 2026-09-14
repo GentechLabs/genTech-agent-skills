@@ -6,7 +6,7 @@ trigger: "When creating or updating any cron job that reads data files, API resp
 related_skills:
   - ../stateful-alert-monitoring/SKILL.md  # uses preflight for alert gating
   - ../dca-rebalance-handler/SKILL.md  # needs fresh price data
-version: 1.2.0
+version: 1.3.0
 author: Gentech
 ---
 
@@ -90,7 +90,7 @@ When creating a new cron job that reads data:
 ```python
 import os, time
 
-DASHBOARD_PATH = "/root/ProtoJay4789.github.io/DeFi/defi-data.json"
+DASHBOARD_PATH = "/root/repos/gentechlabs.github.io/DeFi/defi-data.json"
 
 def check_data_age():
     """Returns age in hours, or 999 if missing."""
@@ -866,7 +866,7 @@ def push_to_github():
     if push_rc == 0:
         time.sleep(5)
         deploy_ok, deploy_err = verify_pages_deploy(
-            "ProtoJay4789", "ProtoJay4789.github.io", 
+            "GentechLabs", "gentechlabs.github.io", 
             token, expected_sha, timeout=120
         )
         if not deploy_ok:
@@ -881,7 +881,7 @@ def push_to_github():
 ```bash
 # After a push, check if the Pages build matches your commit
 curl -s -H "Authorization: token $GITHUB_TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/pages/builds?per_page=1" \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/pages/builds?per_page=1" \
   | python3 -c "import json,sys; b=json.load(sys.stdin)[0]; print('Built:', b['commit'][:12], 'Status:', b['status'])"
 
 # Compare with latest local commit
@@ -900,6 +900,32 @@ git rev-parse HEAD | cut -c1-12
 3. **raw.githubusercontent.com** — best-effort, treat 404 as "CDN not propagated" not "data missing"
 
 **Fix in verify_live():** Add a GitHub API verification step as the primary check before falling back to raw CDN. Never report "data missing" based on raw CDN 404 alone.
+
+### Anti-Pattern 14: The Sync Verifies the Files but Not the Prose About the Files
+
+**Bug pattern:** A sync/verification job confirms the artifacts are correct and current, and reports success — while the vault notes *describing* that work still say it is open, unfinished, or awaiting the user. The artifacts are right; the **record** is wrong. A downstream reporting job reads the prose and delivers a dead ask to the user, who is then asked to redo work already completed.
+
+**Real-world example (Sep 14, 2026 — Resume Sync):** The résumé masters were signed off at ~01:30 and propagated to all three live surfaces by the 06:00 sync run, byte-verified. But `11-Mess Hall/considerations.md` and `00-HQ/council-minutes/` still carried the pre-sign-off text: *"3 public repos absent from the résumé… `ra2a` still missing… '15+' vs 64 actual — all need Jordan's sign-off."* Both files are read by the delivering PA brief, so the 11:11 UTC brief printed it as item 3 of WHAT NEEDS HIM TODAY, closing with *"MY TAKE: The résumé first."* Jordan was asked to spend 15 minutes on work finished four hours earlier — and the sync job's own output had said everything was done.
+
+**Why it is insidious:** every individual check passes. Drift detection is clean, the sync is verified, the report is accurate about the artifacts. The failure lives in the seam between "the work is done" and "the record says the work is done" — and it only manifests *downstream*, in a different job's output, hours later. The better the sync job verifies the artifacts, the more confident the prose error looks.
+
+**Fix — closing the flag is part of the sync pass, not a separate chore.** When a task's completion is verified, in the SAME session:
+1. Grep the vault for the prose that flags it open — search the *claim*, not the artifact: `grep -rn "still missing\|absent from\|needs.*sign-off\|awaiting" vault/` scoped to the topic.
+2. Correct each hit to CLOSED with the proof (hashes, commit, date) — do not delete it; the record of "was open, now closed, here's why" is the value.
+3. Re-grep to confirm **zero live** stale claims remain. Exclude struck-through text (`~~…~~`), `_archive/`, and dated snapshots — those are history and must not be rewritten.
+4. Check the *consumers*: any file read by a delivering job (considerations → PA brief, jordan-queue → brief, handoff notes → watchers) needs the correction before its next fire.
+
+**Detection — run against the report surface, not the work surface:**
+```bash
+# Find claims that a task is still open, then check whether it already isn't.
+grep -rn "still missing\|needs.*sign-off\|awaiting\|absent from" "$VAULT" --include=*.md \
+  | grep -v '/_archive/' | grep -v 'brain-snapshot-' | grep -v '~~'
+```
+Any hit whose underlying task is verified complete is a live false ask. Each delivering cron job should treat this as a standing preflight check on its own topic.
+
+**The general rule:** *verifying an artifact is not verifying the record of the artifact.* A vault line describing a task is **not evidence the task is still open** — it is a claim that must be re-checked against the artifact, exactly like any other data the job reads. This is the truth layer applied to the agent's own prose.
+
+**Cross-reference:** `completion-registry` (canonical done-source) and `verify-after-every-action` (verify the effect, not the command) are the same principle at different layers: the command succeeding ≠ the task done; the task done ≠ the record updated.
 
 ## Health Tracking + Workflow Enforcement Layer (NEW — Jul 2026)
 
