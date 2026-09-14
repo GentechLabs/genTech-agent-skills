@@ -20,7 +20,7 @@ OASF metadata must have `skills` and `domains` arrays at the **top level** (not 
   "name": "GenTech Labs",
   "description": "AI agent economy infrastructure...",
   "version": "1.0.0",
-  "author": "ProtoJay4789",
+  "author": "GentechLabs",
   "skills": [/* 18 skills at top level */],
   "domains": [/* 14 domains at top level */],
   "image": "ipfs://<avatar-cid>",

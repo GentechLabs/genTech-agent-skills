@@ -67,7 +67,7 @@ Mark what's filled vs what needs user input. Ask for blanks.
 
 **Good sources of truth:**
 - Live endpoints (api.gentechlabs.net/*)
-- GitHub repos (github.com/ProtoJay4789/*)
+- GitHub repos (github.com/GentechLabs/*)
 - On-chain contracts with explorer links
 - Specific numbers (16+ endpoints, 6 positions, 22/22 tests)
 - Hackathon submissions with dates and results

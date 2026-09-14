@@ -5,14 +5,14 @@ Session-proven on Aug 10, 2026 (Superteam Earn Agentic Engineering tranche 2 + D
 ## 1. The application doc's repo URLs may not match reality
 
 The drafted Superteam application referenced:
-- `github.com/ProtoJay4789/x402-gateway` — DOES NOT EXIST publicly
-- `github.com/ProtoJay4789/goat-agentkit` — DOES NOT EXIST publicly
+- `github.com/GentechLabs/x402-gateway` — DOES NOT EXIST publicly
+- `github.com/GentechLabs/goat-agentkit` — DOES NOT EXIST publicly
 
-The actual, verifiable Solana MVP is **`github.com/ProtoJay4789/agent-economy-solana`** (branch `master`).
+The actual, verifiable Solana MVP is **`github.com/GentechLabs/agent-economy-solana`** (branch `master`).
 
 **Rule:** Never trust repo URLs written in an original application doc when prepping a submission or a later tranche-unlock form. Live-check every referenced repo and substitute the real, cloneable one before the user pastes.
 
-## 2. The `ProtoJay4789` account 404s on unauthenticated API/raw — even for PUBLIC repos
+## 2. The `GentechLabs` account 404s on unauthenticated API/raw — even for PUBLIC repos
 
 Unauthenticated checks that return 404 for public repos on this account:
 - `curl https://api.github.com/repos/ProtoJay4789/<repo>` → 404

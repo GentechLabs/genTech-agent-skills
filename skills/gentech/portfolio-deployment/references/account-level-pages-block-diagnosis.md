@@ -2,13 +2,13 @@
 
 ## Context
 
-ProtoJay4789's GitHub account has a **permanent account-level restriction** that prevents GitHub Pages from deploying. This is NOT a repo config issue — it's an account flag that blocks Actions execution entirely.
+GentechLabs's GitHub account has a **permanent account-level restriction** that prevents GitHub Pages from deploying. This is NOT a repo config issue — it's an account flag that blocks Actions execution entirely.
 
 ## Symptoms
 
 | Symptom | Detail |
 |---------|--------|
-| `https://ProtoJay4789.github.io/` | HTTP 404 (always) |
+| `https://gentechlabs.github.io/` | HTTP 404 (always) |
 | `POST /pages/builds` | Returns `{"status":"queued"}` but build never executes |
 | `GET /pages/builds` | Returns `[]` — **0 builds ever** |
 | `GET /pages` | `status: null`, `build_type: legacy`, `public: true` |
@@ -25,27 +25,27 @@ ProtoJay4789's GitHub account has a **permanent account-level restriction** that
 # 1. Check Pages config
 TOKEN=$(grep 'oauth_token:' ${PROFILE_DIR}/home/.config/gh/hosts.yml | head -1 | awk '{print $2}' | tr -d '"')
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/pages" | \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/pages" | \
   python3 -c "import sys,json; d=json.load(sys.stdin); print(f'build_type: {d.get(\"build_type\")}, source: {d.get(\"source\")}, status: {d.get(\"status\")}')"
 
 # 2. Check build history (0 = never deployed)
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/pages/builds" | \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/pages/builds" | \
   python3 -c "import sys,json; d=json.load(sys.stdin); print(f'builds: {len(d)}')"
 
 # 3. Check Actions permissions
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/actions/permissions" | \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/actions/permissions" | \
   python3 -c "import sys,json; d=json.load(sys.stdin); print(f'enabled: {d.get(\"enabled\")}, allowed: {d.get(\"allowed_actions\")}')"
 
 # 4. Try workflow dispatch (will 422)
 curl -s -X POST -H "Authorization: Bearer $TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/actions/workflows/deploy-portfolio.yml/dispatches" \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/actions/workflows/deploy-portfolio.yml/dispatches" \
   -d '{"ref":"main"}' -w "\nHTTP %{http_code}"
 
 # 5. Verify content exists (authenticated raw)
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/gh-pages/index.html" | head -5
+  "https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/gh-pages/index.html" | head -5
 ```
 
 ## What DOESN'T Work

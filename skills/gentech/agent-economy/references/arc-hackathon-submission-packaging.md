@@ -49,7 +49,7 @@ cd /root/programmable-money-x402 && sed -i 's|8088|8095|' examples/agent_demo.py
 
 ## Org-Mirror Rule (flagged account)
 
-After pushing to `ProtoJay4789/programmable-money-x402`, the web URL 404'd while
+After pushing to `GentechLabs/programmable-money-x402`, the web URL 404'd while
 the API said public. Create under the org + push + verify:
 
 ```bash

@@ -75,7 +75,7 @@ contract = w3.eth.contract(
 # Build transaction
 txn = contract.functions.setTokenURI(
     1770,
-    "https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/gentech-avax-metadata.json"
+    "https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/gentech-avax-metadata.json"
 ).build_transaction({
     "from": account.address,
     "nonce": w3.eth.get_transaction_count(account.address),

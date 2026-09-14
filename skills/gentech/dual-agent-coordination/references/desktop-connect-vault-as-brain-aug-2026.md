@@ -15,7 +15,7 @@ time and fails on the current version gap (VPS was 388 commits behind `main`).
   (user-level systemd) handles it; laptop irrelevant to messaging.
 - **Forge (desktop) = dev-only workbench.** Shares the brain through the **vault
   GitHub repo**, NOT a live socket.
-  - Clone `github.com/ProtoJay4789/ProtoJay4789.github.io.git`
+  - Clone `github.com/GentechLabs/gentechlabs.github.io.git`
   - The repo's **`SETUP.md`** is the Forge onboarding note (role, task loop,
     build-queue rules, queued tasks). Bake instructions into the repo so a fresh
     desktop pull gets them automatically.

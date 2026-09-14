@@ -24,11 +24,11 @@
 ## Character References
 
 Source images for KAGE and HIKARI are in the vault at:
-- `/root/repos/ProtoJay4789.github.io/music/vanito/kage-hikari-reference.jpg`
-- `/root/repos/ProtoJay4789.github.io/music/vanito/kage-seedance-source.jpg`
-- `/root/repos/ProtoJay4789.github.io/music/vanito/hikari-kizuna-no-chikara.png`
-- `/root/repos/ProtoJay4789.github.io/music/vanito/4am-crops/01-kage-closeup.png`
-- `/root/repos/ProtoJay4789.github.io/music/vanito/4am-crops/02-hikari-closeup.png`
+- `/root/repos/gentechlabs.github.io/music/vanito/kage-hikari-reference.jpg`
+- `/root/repos/gentechlabs.github.io/music/vanito/kage-seedance-source.jpg`
+- `/root/repos/gentechlabs.github.io/music/vanito/hikari-kizuna-no-chikara.png`
+- `/root/repos/gentechlabs.github.io/music/vanito/4am-crops/01-kage-closeup.png`
+- `/root/repos/gentechlabs.github.io/music/vanito/4am-crops/02-hikari-closeup.png`
 
 ## Character Design Specs
 

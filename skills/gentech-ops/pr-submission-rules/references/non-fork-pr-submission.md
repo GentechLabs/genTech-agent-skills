@@ -1,7 +1,7 @@
 # Non-Fork PR Submission — Browser Fallback
 
 ## Problem
-GitHub account ProtoJay4789 cannot fork certain repos via the API. The endpoint `POST /repos/{owner}/{repo}/forks` returns "You cannot fork this repository at this time" even for public repos with `allow_forking: true`. This is an account-level restriction.
+GitHub account GentechLabs cannot fork certain repos via the API. The endpoint `POST /repos/{owner}/{repo}/forks` returns "You cannot fork this repository at this time" even for public repos with `allow_forking: true`. This is an account-level restriction.
 
 Creating a manual repo at `github.com/new` and pushing code does NOT create a real GitHub fork. The API returns `"fork": false, "parent": null`, and cross-repo PRs fail with `"field": "head", "code": "invalid"`.
 
@@ -17,7 +17,7 @@ Creating a manual repo at `github.com/new` and pushing code does NOT create a re
 git clone https://github.com/<UPSTREAM_OWNER>/<REPO>.git /tmp/fresh-repo
 cd /tmp/fresh-repo
 git remote rename origin upstream
-git remote add origin https://github.com/ProtoJay4789/<REPO>.git
+git remote add origin https://github.com/GentechLabs/<REPO>.git
 git push -u origin main
 ```
 
@@ -48,7 +48,7 @@ https://github.com/<UPSTREAM_OWNER>/<REPO>/compare/<BASE>...<FORK_OWNER>:<FORK_R
 
 Example (GOATNetwork/agentkit, verified Jul 28 2026):
 ```
-https://github.com/GOATNetwork/agentkit/compare/main...ProtoJay4789:agentkit:main
+https://github.com/GOATNetwork/agentkit/compare/main...GentechLabs:agentkit:main
 ```
 
 Send this link to the user (Jordan). They open it in browser, click "Create Pull Request," and paste the description.

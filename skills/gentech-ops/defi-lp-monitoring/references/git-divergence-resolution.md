@@ -10,7 +10,7 @@ Check for failure after a reader push:
 
 ```bash
 # Check if push was rejected
-cd /root/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 git log --oneline origin/main -1
 git log --oneline HEAD -1
 # If HEAD is ahead but push failed: divergent branches
@@ -115,7 +115,7 @@ git push origin main
 
 ## Why This Happens
 
-The ProtoJay4789.github.io repo receives commits from multiple independent processes:
+The gentechlabs.github.io repo receives commits from multiple independent processes:
 
 | Source | Schedule | Typical File |
 |--------|----------|-------------|

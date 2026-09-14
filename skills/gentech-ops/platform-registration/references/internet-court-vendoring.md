@@ -58,7 +58,7 @@ Structure:
 Add alphabetically by owner name:
 
 ```
-| gentech | [ProtoJay4789/genTech-agent-kit](https://github.com/ProtoJay4789/genTech-agent-kit) | MIT | Copyright (c) 2026 GenTech Labs | gentech-agent-kit |
+| gentech | [GentechLabs/genTech-agent-kit](https://github.com/GentechLabs/genTech-agent-kit) | MIT | Copyright (c) 2026 GenTech Labs | gentech-agent-kit |
 ```
 
 ## Verification

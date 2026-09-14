@@ -139,7 +139,7 @@ Register an AI agent as an on-chain NFT via the ERC-8004 Identity Registry.
 - **Cloudflare Workers KV placeholder:** Never deploy with `id = "your-kv-namespace-id"` — it causes `code: 10042` error. Either create the KV namespace first (`wrangler kv:namespace create "NONCE_STORE"`) or disable the binding entirely with a comment. Graceful degradation pattern: if `env?.NONCE_STORE` is undefined, skip nonce replay protection — core x402 verification still works.
 - **Cloudflare CI worker name mismatch:** GitHub Builds expects `gentechlabs-api` (from repo name), but `wrangler.toml` had `gentechlabs`. The CI auto-overrides but warns: "Worker name mismatch. Overriding using the CI provided Worker name." Match the CI name to avoid confusion.
 - **setTokenURI vs setAgentURI:** `setTokenURI(tokenId, "ipfs://...")` updates the public metadata that AgentScan displays. `setAgentURI(tokenId, "...")` updates internal contract metadata (for custom storage implementations). For AgentScan updates, always use `setTokenURI()`.
-- **AgentScan shows EMPTY skills/domains even when the metadata JSON is fully populated — check the metadata_uri resolves.** The metadata file can have 41 skills + 15 domains + 10 services, but if the on-chain `metadata_uri` points at a URL that 404s (e.g. a `ProtoJay4789.github.io` raw URL on a flagged/private account), AgentScan fetches it, gets 404, and renders the structured fields blank — while the description still shows. **Diagnostic:** `curl -s -o /dev/null -w "%{http_code}" <metadata_uri>` — if not 200, that's the cause, not missing data. **Fix:** host the metadata in a public `Gentech-Labs/<repo>` raw URL (e.g. `https://raw.githubusercontent.com/Gentech-Labs/programmable-money-x402/main/gentech-avax-metadata.json`), then update the on-chain URI to point there. Note: `ProtoJay4789.github.io` raw URLs 404 even when the GitHub API reports the repo public — the flagged-account web-404 quirk applies to raw.githubusercontent too, not just the repo page. Confirmed Aug 7, 2026.
+- **AgentScan shows EMPTY skills/domains even when the metadata JSON is fully populated — check the metadata_uri resolves.** The metadata file can have 41 skills + 15 domains + 10 services, but if the on-chain `metadata_uri` points at a URL that 404s (e.g. a `gentechlabs.github.io` raw URL on a flagged/private account), AgentScan fetches it, gets 404, and renders the structured fields blank — while the description still shows. **Diagnostic:** `curl -s -o /dev/null -w "%{http_code}" <metadata_uri>` — if not 200, that's the cause, not missing data. **Fix:** host the metadata in a public `Gentech-Labs/<repo>` raw URL (e.g. `https://raw.githubusercontent.com/Gentech-Labs/programmable-money-x402/main/gentech-avax-metadata.json`), then update the on-chain URI to point there. Note: `gentechlabs.github.io` raw URLs 404 even when the GitHub API reports the repo public — the flagged-account web-404 quirk applies to raw.githubusercontent too, not just the repo page. Confirmed Aug 7, 2026.
 
 ### 2. Agentscan Ecosystem Research
 
@@ -225,7 +225,7 @@ component. The a2a module fixed this by shipping real scripts + docs per compone
 the submission repo is what judges see — consolidate the real working code into it
 (not stub READMEs), add the buyer-side SDK + demo + playground, verify in the
 consolidated location (free port, tests pass, SDK demo pays all endpoints), then
-org-mirror the repo because `ProtoJay4789/` repos 404 on the web. Full worked
+org-mirror the repo because `GentechLabs/` repos 404 on the web. Full worked
 recipe: `references/arc-hackathon-submission-packaging.md`.
 
 ### 2c. Treasury Defender — Airdrop/Dust-Token Defense (Built Aug 2, 2026)
@@ -586,7 +586,7 @@ Create a concise one-pager (`00-HQ/gentech-one-pager.md`) with these sections:
 
 **Sending the one-pager:**
 - Forward as file from vault: `gentech-one-pager.md`
-- Or share GitHub link: `https://github.com/ProtoJay4789/gentech-vault/blob/main/00-HQ/gentech-one-pager.md`
+- Or share GitHub link: `https://github.com/GentechLabs/gentech-vault/blob/main/00-HQ/gentech-one-pager.md`
 
 **Conversation style with ecosystem partners:**
 - Concise, direct — they respect "builder grind" brevity
@@ -1309,14 +1309,14 @@ Submit GenTech services to GitHub awesome lists, community repos, and ecosystem 
 
 1. **Search for relevant awesome lists**: `site:github.com awesome <topic> <year>` — topics: x402, micropayments, pay-per-call, AI agent tools, MCP servers, crypto APIs, DeFi dashboards, game deals, token security, agent payments, agentic commerce.
 
-2. **Check existing forks for prior work**: `gh repo list ProtoJay4789 --fork --limit 200 --json nameWithOwner` — cross-reference against discovered repos to avoid already-opened PRs.
+2. **Check existing forks for prior work**: `gh repo list GentechLabs --fork --limit 200 --json nameWithOwner` — cross-reference against discovered repos to avoid already-opened PRs.
 
-3. **Check existing PRs**: `gh pr list --repo <owner>/<repo> --author ProtoJay4789 --state all --json number,title,state`
+3. **Check existing PRs**: `gh pr list --repo <owner>/<repo> --author GentechLabs --state all --json number,title,state`
 
 4. **Verify service health before submitting** — run these checks on every candidate service:
    - x402 gateway: `curl -s -o /dev/null -w "%{http_code}" https://api.gentechlabs.net/.well-known/x402` (expect 200)
    - Rugcheck: `curl -s -o /dev/null -w "%{http_code}" https://rugcheck.gentechlabs.net/health` (often 522 — skip if down)
-   - Agent Kit: `curl -s -o /dev/null -w "%{http_code}" https://github.com/Gentech-Labs/genTech-agent-kit` (expect 200 — **NOTE: the personal-account copy `ProtoJay4789/genTech-agent-kit` 404s on the web; the org copy `Gentech-Labs/` is the canonical public one — see pitfall below**)
+   - Agent Kit: `curl -s -o /dev/null -w "%{http_code}" https://github.com/Gentech-Labs/genTech-agent-kit` (expect 200 — **NOTE: the personal-account copy `GentechLabs/genTech-agent-kit` 404s on the web; the org copy `Gentech-Labs/` is the canonical public one — see pitfall below**)
    - Shop: `curl -s -o /dev/null -w "%{http_code}" https://gentechlabs.net/shop` (expect 200)
    **Do NOT submit services returning 5xx/522.** Flag them for Jordan as fix-blocking-listing.
 
@@ -1412,7 +1412,7 @@ symptom → root cause → fix → verification → lesson (Jordan directive, Au
 - `references/8004scan-registry-explorer.md` — 8004scan.io explorer facts: same-registry auto-indexing, chain IDs (1776 = Injective EVM), no-public-REST-API reality, lead triage pattern, a2a module layout (Aug 1, 2026).
 - `references/x402scan-compatibility.md` — x402scan/x402-list checker compatibility: the EIP-712 `extra.name/version` fix for "route not signable" (the 14th compliance check), `/.well-known/x402` canonical discovery, assessment chip semantics, verification recipe (Aug 2026).
 - `references/x402-gateway-verification-loop.md` — **NEW** — Server-side x402 gateway loop: standard `Authorization: x402 <proof>` / `X-Payment` header acceptance (NOT private `x-402-token`), CDP facilitator + HMAC proof verification, 3-tuple backend routing table, "manifest is a promise" rule, paid/underpaid/unpaid verification matrix, and keyless backend data sources (8004scan snake_case fields, Magic Eden no-search-param, DexScreener, Solana RPC). Root cause of $0 traction with 10K visitors — test the FULL payment loop, not just discovery (Aug 2, 2026).
-- `references/bankr-skills-marketplace-listing.md` — **NEW** — Bankr listing via skills marketplace (0% fee, self-hosted) instead of x402 Cloud (5%): SKILL.md publish flow, org-repo master-branch pitfall, `Gentech-Labs/` not `ProtoJay4789/` links, never inline long content in Telegram (Aug 2, 2026).
+- `references/bankr-skills-marketplace-listing.md` — **NEW** — Bankr listing via skills marketplace (0% fee, self-hosted) instead of x402 Cloud (5%): SKILL.md publish flow, org-repo master-branch pitfall, `Gentech-Labs/` not `GentechLabs/` links, never inline long content in Telegram (Aug 2, 2026).
 - `references/scam-token-verification-chainabuse.md` — **NEW** — Verify unsolicited wallet tokens on-chain before declaring scam (homoglyph Cyrillic/dotted chars, zero DexScreener pairs, fake price feed, rule out legit sources in vault), then file a Chainabuse report (toggle support OFF to enable submit, SUBMIT ANONYMOUSLY, SPA click pitfalls) (Aug 2, 2026).
 - `references/treasury-defender-scam-defense.md` — **NEW** — Treasury Defender service (7th paid x402 endpoint, port 8096): homoglyph confusables map, ABI string decode gotcha, safe-burn-never-auto-sign principle, port-conflict drop-in pattern, exact x402 simulation proof format for testing paid endpoints, and the add-a-service full checklist (Aug 2, 2026).
 - `references/api-health-audit.md` — **NEW** — API health audit + placeholder fix: how "live" services return hardcoded zeros, the 5-step audit method, Aug 3 findings table, fix paths, and the deal-tracker `sys.path` sibling-engine wiring pattern (Aug 3, 2026).

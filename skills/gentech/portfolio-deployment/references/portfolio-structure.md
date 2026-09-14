@@ -1,6 +1,6 @@
 # Portfolio Site Structure Reference
 
-**File:** `${VAULT_DIR}/github/ProtoJay4789.github.io/index.html`
+**File:** `${VAULT_DIR}/github/gentechlabs.github.io/index.html`
 
 ## Current Sections (in order)
 
@@ -121,7 +121,7 @@ Used for summary or philosophical statements at the end of sections.
 
 **User:** `Gentech`  
 **Email:** `gentech@protojay4789.github.io`  
-**Remote:** `https://github.com/ProtoJay4789/ProtoJay4789.github.io.git`
+**Remote:** `https://github.com/GentechLabs/gentechlabs.github.io.git`
 
 ## Known Issues
 

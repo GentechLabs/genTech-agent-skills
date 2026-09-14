@@ -1,6 +1,6 @@
 ---
 name: portfolio-deployment
-description: Deploy content from vault to ProtoJay4789.github.io portfolio website
+description: Deploy content from vault to gentechlabs.github.io portfolio website
 ---
 
 # Portfolio Deployment Workflow
@@ -10,13 +10,13 @@ description: Deploy content from vault to ProtoJay4789.github.io portfolio websi
 **Everything below the Aug 3 divider is personal-account (ProtoJay4789) history — still true for that account, no longer the deploy reality.** Current state:
 
 - **Portfolio repo:** `gentechlabs/gentechlabs.github.io` (renamed via API from `gentechlabs/ProtoJay4789.github.io`, Aug 30). Org Pages serves from a repo named `<org>.github.io` — the rename is what made Pages work again.
-- **Local source clone:** `/root/repos/ProtoJay4789.github.io` (branch `gh-pages`, remote has embedded token) — this is the push target for site changes.
+- **Local source clone:** `/root/repos/gentechlabs.github.io` (branch `gh-pages`, remote has embedded token) — this is the push target for site changes.
 - **Deploy:** commit + push to `gh-pages` → verify `curl -sL https://gentechlabs.github.io/ | grep -oE '<title>[^<]+'`.
 - **Live URLs:** portfolio = https://gentechlabs.github.io · résumé = https://gentechlabs.net/resume.pdf (+ `/resume.html` on VPS `/var/www/gentechlabs/`).
 - **Resume/CV always-current:** vault source `10-Labs/Resumes/Jordan_Master_Resume.{md,html,pdf}`; 6-hour **Resume Sync** cron (job `877b19f24f9f`) diffs vault → VPS → portfolio repo, Monday content check flags staleness. Jordan's rule: master resume always hosted + always updated.
 - **gitignore gotcha:** portfolio repo denies `**/*.pdf` — force-add binaries: `git add -f resume.pdf`.
 - **⏳ GitHub rename-limbo (open as of Aug 30):** after the repo rename, root page serves from cache but newly pushed files 404; Pages API shows "already enabled" (409) + empty build history + 403 on build trigger. GitHub finishes provisioning eventually (hours). Fallback while limbo persists: self-host on VPS (gentechlabs.net) and point site links there. Details in `github-repo-migration` skill.
-- **Dead URLs — never print or link:** `protojay4789.github.io`, `github.com/ProtoJay4789` (for work links).
+- **Dead URLs — never print or link:** `protojay4789.github.io`, `github.com/GentechLabs` (for work links).
 
 ## ⚠️ HISTORICAL (Aug 3, 2026): personal-account Pages block — VPS was then the only target
 
@@ -37,7 +37,7 @@ description: Deploy content from vault to ProtoJay4789.github.io portfolio websi
 # 1. Get latest from gh-pages branch (authenticated)
 TOKEN=$(grep 'oauth_token:' ${PROFILE_DIR}/home/.config/gh/hosts.yml | head -1 | awk '{print $2}' | tr -d '"')
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/gh-pages/index.html" \
+  "https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/gh-pages/index.html" \
   > /tmp/portfolio-latest.html
 
 # 2. Push to VPS
@@ -65,7 +65,7 @@ See `references/account-level-pages-block-diagnosis.md` for the complete diagnos
 
 ---
 
-Deploy content from vault (`${VAULT_DIR}/`) to portfolio website (`${VAULT_DIR}/github/ProtoJay4789.github.io/`).
+Deploy content from vault (`${VAULT_DIR}/`) to portfolio website (`${VAULT_DIR}/github/gentechlabs.github.io/`).
 
 ---
 
@@ -106,20 +106,20 @@ Not all deployments modify `index.html`. Sometimes you deploy a new standalone p
 ### Correct File Path
 
 The portfolio repo root is at:
-`${VAULT_DIR}/github/ProtoJay4789.github.io/`
+`${VAULT_DIR}/github/gentechlabs.github.io/`
 
 A file at `repo-root/DeFi/defi-dashboard.html` in the tree must be written to:
-- `${VAULT_DIR}/github/ProtoJay4789.github.io/DeFi/defi-dashboard.html`
+- `${VAULT_DIR}/github/gentechlabs.github.io/DeFi/defi-dashboard.html`
 
-**Do NOT write from the vault root** (e.g., `${VAULT_DIR}/DeFi/defi-dashboard.html`) — git will see the file at path `github/ProtoJay4789.github.io/DeFi/defi-dashboard.html` which GitHub Pages will not serve.
+**Do NOT write from the vault root** (e.g., `${VAULT_DIR}/DeFi/defi-dashboard.html`) — git will see the file at path `github/gentechlabs.github.io/DeFi/defi-dashboard.html` which GitHub Pages will not serve.
 
 ### Verify Correct Path After Adding
 
 ```bash
-cd ${VAULT_DIR}/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/gentechlabs.github.io
 git ls-tree HEAD DeFi/defi-dashboard.html
 # Expected: DeFi/defi-dashboard.html
-# Wrong:    github/ProtoJay4789.github.io/DeFi/defi-dashboard.html
+# Wrong:    github/gentechlabs.github.io/DeFi/defi-dashboard.html
 ```
 
 ### Fallback: GitHub API When Git Push Is Blocked
@@ -131,14 +131,14 @@ The vault's working tree (untracked files from ongoing sessions) frequently bloc
 GH_TOKEN=$(gh auth token 2>/dev/null)
 # Get current SHA
 SHA=$(curl -s -H "Authorization: token $GH_TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/contents/DeFi/file.html" | \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/contents/DeFi/file.html" | \
   python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
 # Base64 encode new content
 B64=$(base64 -w0 /path/to/new/file.html)
 # Update via PUT
 curl -s -X PUT -H "Authorization: token $GH_TOKEN" -H "Content-Type: application/json" \
   -d "$(python3 -c "import json; print(json.dumps({'message':'Update file','content':'$B64','sha':'$SHA'}))")" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/contents/DeFi/file.html"
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/contents/DeFi/file.html"
 ```
 
 **For new files:** Omit `sha` from the JSON payload.
@@ -165,7 +165,7 @@ After deployment, check GitHub Actions for build status:
 ```
 GH_TOKEN=$(gh auth token 2>/dev/null)
 curl -s -H "Authorization: token $GH_TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/actions/runs?per_page=3&event=push" | \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/actions/runs?per_page=3&event=push" | \
   python3 -c "
 import sys, json
 d = json.load(sys.stdin)
@@ -181,17 +181,17 @@ Conclusion: `success` = deployed, `cancelled` = superseded, `failure` = build br
 
 **Level 1 — Git tree (file at correct repo-relative path):**
 ```
-cd ${VAULT_DIR}/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/gentechlabs.github.io
 git ls-tree HEAD DeFi/file.html
 # Expected: DeFi/file.html
-# Wrong:    github/ProtoJay4789.github.io/DeFi/file.html
+# Wrong:    github/gentechlabs.github.io/DeFi/file.html
 ```
 
 **Level 2 — Git blob (content confirmed, UNCACHED — definitive):**
 ```
 GH_TOKEN=$(gh auth token 2>/dev/null)
 curl -s -H "Authorization: token $GH_TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/git/blobs/<SHA>" | \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/git/blobs/<SHA>" | \
   python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['content']).decode()[:200])"
 ```
 
@@ -200,7 +200,7 @@ Navigate URL, check `<title>` in the returned snapshot.
 
 **Level 4 — Raw URL (cache-busting):**
 ```
-curl -s "https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/DeFi/file.html?cb=$(date +%s)" | grep '<title>'
+curl -s "https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/DeFi/file.html?cb=$(date +%s)" | grep '<title>'
 ```
 
 ### Multi-File Dashboard Deployments
@@ -240,7 +240,7 @@ Use search to find markers:
 
 ```python
 # Read portfolio HTML
-with open('${VAULT_DIR}/github/ProtoJay4789.github.io/index.html', 'r') as f:
+with open('${VAULT_DIR}/github/gentechlabs.github.io/index.html', 'r') as f:
     html = f.read()
 
 # Find insertion point (e.g., after "Browse All APIs →")
@@ -307,7 +307,7 @@ with open('index.html', 'w') as f:
 ### 6. Commit and Push
 
 ```bash
-cd ${VAULT_DIR}/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/gentechlabs.github.io
 git add index.html
 git commit -m "Descriptive commit message"
 git push
@@ -321,9 +321,9 @@ git push
 - ✅ Credentials configured
 - Pushes work fine via HTTPS
 
-**Portfolio repo** (`ProtoJay4789.github.io`):
+**Portfolio repo** (`gentechlabs.github.io`):
 - ❌ May not have credentials configured
-- Current remote: `https://github.com/ProtoJay4789/ProtoJay4789.github.io.git`
+- Current remote: `https://github.com/GentechLabs/gentechlabs.github.io.git`
 - Push fails with: `could not read Username`
 
 **Fix options:**
@@ -426,7 +426,7 @@ The portfolio has an automated daily health check at `scripts/portfolio_sync.py`
 
 | Artifact | Path | Purpose |
 |----------|------|---------|
-| Portfolio website | `github/ProtoJay4789.github.io/index.html` | Public showcase |
+| Portfolio website | `github/gentechlabs.github.io/index.html` | Public showcase |
 | One-pager | `00-HQ/gentech-one-pager.md` | Ecosystem introductions |
 | Agent Kit v2 spec | `02-Labs/agent-kit/AGENT-KIT-V2-SPEC.md` | Product documentation |
 | Build queue | `00-HQ/build-queue.md` | Internal roadmap |
@@ -474,7 +474,7 @@ git push
 
 ## Related Files
 
-- Portfolio site: `${VAULT_DIR}/github/ProtoJay4789.github.io/index.html`
+- Portfolio site: `${VAULT_DIR}/github/gentechlabs.github.io/index.html`
 - Vault content: `${VAULT_DIR}/00-HQ/*.md`
 - Reference: See `references/portfolio-structure.md` for full CSS classes
 - **Design strategy:** See `references/portfolio-design-strategy.md` for job-seeking vs founder showcase mode, section ordering, and content rules

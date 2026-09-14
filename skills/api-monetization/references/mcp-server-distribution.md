@@ -8,7 +8,7 @@ Package your API as an MCP server, publish to GitHub, and agents install directl
 
 ```bash
 # No PyPI, no npm, no 2FA — just git
-uvx --from git+https://github.com/ProtoJay4789/cmc-x402-mcp.git cmc-mcp
+uvx --from git+https://github.com/GentechLabs/cmc-x402-mcp.git cmc-mcp
 ```
 
 ## Why This Works
@@ -51,5 +51,5 @@ GitHub repo (public)
 ## Reference Implementation
 
 - `/root/builds/cmc-x402-mcp/` — CMC Gateway as MCP server (6 tools, x402 gated)
-- Install: `uvx --from git+https://github.com/ProtoJay4789/cmc-x402-mcp.git cmc-mcp`
+- Install: `uvx --from git+https://github.com/GentechLabs/cmc-x402-mcp.git cmc-mcp`
 - SKILL.md format at `https://agents.portalhq.io/monad/skills/feed.json`

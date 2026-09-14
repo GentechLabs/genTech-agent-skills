@@ -6,7 +6,7 @@
 
 ## The Race Condition (Root Cause)
 
-Three concurrent processes wrote to `/root/ProtoJay4789.github.io/DeFi/defi-data.json`:
+Three concurrent processes wrote to `/root/repos/gentechlabs.github.io/DeFi/defi-data.json`:
 1. `defi-lp-consolidated.py` (LP monitor) — wrote position data
 2. `run-reader.py` (on-chain reader) — wrote position data with different values
 3. `hub-sync-nightly.py` — rebuilt JSON from scratch, overwriting everything

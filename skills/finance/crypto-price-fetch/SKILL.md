@@ -273,7 +273,7 @@ Both scripts run as `no_agent=True` cron jobs (zero LLM overhead):
 - **GTA Signal** — `0 7,19 * * *` (7 AM and 7 PM ET)
 - **GTA Watcher** — `*/30 * * * *` (every 30 min)
 
-**IMPORTANT — Symlink pitfall:** Cron jobs with `no_agent=True` require scripts in `${PROFILE_DIR}/scripts/`. Symlinks pointing outside this directory are **blocked** by the cron security guard. Always copy files in, or create the symlink from the repo but verify the cron run succeeds. The canonical source is at `github.com/ProtoJay4789/gentech-treasury-trader`. Sync by copying from the repo into the scripts directory after updates.
+**IMPORTANT — Symlink pitfall:** Cron jobs with `no_agent=True` require scripts in `${PROFILE_DIR}/scripts/`. Symlinks pointing outside this directory are **blocked** by the cron security guard. Always copy files in, or create the symlink from the repo but verify the cron run succeeds. The canonical source is at `github.com/GentechLabs/gentech-treasury-trader`. Sync by copying from the repo into the scripts directory after updates.
 
 ### Report Format (Watcher)
 

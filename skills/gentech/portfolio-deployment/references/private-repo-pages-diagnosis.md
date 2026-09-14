@@ -64,7 +64,7 @@ If the account-level Actions block cannot be resolved (user can't find the setti
 
 ```bash
 # 1. Start a Python HTTP server on the repo directory
-cd /root/repos/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 python3 -m http.server 8090 --bind 0.0.0.0
 
 # 2. Add nginx proxy for a subdomain (e.g., vanito.gentechlabs.net)

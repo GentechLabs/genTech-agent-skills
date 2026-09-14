@@ -15,7 +15,7 @@
 
 ## Our Extension
 
-**Repo:** https://github.com/ProtoJay4789/paymenter-x402
+**Repo:** https://github.com/GentechLabs/paymenter-x402
 
 The extension adds "Pay with Crypto (x402)" as a checkout option. When selected, it generates an x402 payment request with a QR code. On confirmation, the invoice is marked paid. Includes Q402 Trust Receipts for cryptographically signed settlement records.
 
@@ -53,7 +53,7 @@ Same extension pattern works for:
 
 ## Submission Checklist
 
-- [ ] Push to GitHub (MIT license) — DONE at ProtoJay4789/paymenter-x402
+- [ ] Push to GitHub (MIT license) — DONE at GentechLabs/paymenter-x402
 - [ ] Submit to Paymenter marketplace at paymenter.org/marketplace
 - [ ] Post in Paymenter Discord community
 - [ ] Cross-post to Pterodactyl community

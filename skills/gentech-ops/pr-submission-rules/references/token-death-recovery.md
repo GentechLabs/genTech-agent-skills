@@ -8,7 +8,7 @@ The `ghp_*` token stored in `secrets/github-token` and `~/.config/gh/hosts.yml` 
 
 > `The token in .../hosts.yml is invalid.`
 
-Worse — the ProtoJay4789 account itself returned 404 from every URL (profile, repos, forks, PRs). This means either:
+Worse — the GentechLabs account itself returned 404 from every URL (profile, repos, forks, PRs). This means either:
 1. The account was deleted or suspended by GitHub
 2. The account was renamed (and we're using the old handle)
 3. The token was revoked and the account is in a restricted state

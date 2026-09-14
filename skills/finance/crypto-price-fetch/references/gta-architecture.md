@@ -1,7 +1,7 @@
 # GTA (Gentech Trading Agent) Architecture
 
 > Full architecture reference for the GTA Signal + Watcher system.
-> Repo: `github.com/ProtoJay4789/gentech-treasury-trader`
+> Repo: `github.com/GentechLabs/gentech-treasury-trader`
 
 ## Overview
 
@@ -55,7 +55,7 @@ JSON bridge between Signal and Watcher:
 - **Canonical source:** `/root/repos/gentech-treasury-trader/src/`
 - **Cron execution copies:** `${PROFILE_DIR}/scripts/`
 - **Position file (runtime):** `${PROFILE_DIR}/scripts/tradesta_position.json`
-- **Repo:** `github.com/ProtoJay4789/gentech-treasury-trader`
+- **Repo:** `github.com/GentechLabs/gentech-treasury-trader`
 
 ## nginx Deployment Pattern
 

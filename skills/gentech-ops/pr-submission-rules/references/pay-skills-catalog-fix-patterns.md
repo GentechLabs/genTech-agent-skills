@@ -99,7 +99,7 @@ When fixing Greptile flags across multiple PR branches on the same fork:
 ### Setup
 ```bash
 cd /tmp/pay-skills
-git remote set-url origin https://github.com/ProtoJay4789/pay-skills-fork.git
+git remote set-url origin https://github.com/GentechLabs/pay-skills-fork.git
 ```
 
 **Pitfall**: Embedded HTTPS tokens in remote URLs (e.g., `https://user:ghp_xxx@github.com/...`) can expire silently. `gh auth` handles token refresh. If a push fails with "Invalid username or token", run `git remote set-url origin https://github.com/<user>/<repo>.git` and retry.
@@ -125,7 +125,7 @@ git checkout <source-branch> -- providers/gentech/games-intel/PAY.md
 ### Finding PR Branches (from outside any git repo)
 ```bash
 gh api search/issues --method GET \
-  -f q='author:ProtoJay4789 type:pr is:open repo:solana-foundation/pay-skills' \
+  -f q='author:GentechLabs type:pr is:open repo:solana-foundation/pay-skills' \
   --jq '.items[] | {number, title, html_url, state, updated_at}'
 ```
 

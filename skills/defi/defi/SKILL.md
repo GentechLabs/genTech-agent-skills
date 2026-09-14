@@ -710,7 +710,7 @@ protocol_handlers = {
 For DeFi monitoring dashboards, use the **HTML + JavaScript + Data Feed** pattern:
 
 **Component Structure**:
-- `/ProtoJay4789.github.io/DeFi/` (GitHub Pages deployment)
+- `/gentechlabs.github.io/DeFi/` (GitHub Pages deployment)
 - HTML dashboard with live data binding
 - JSON data feed (`defi-data.json`) updated periodically
 - CSS animations for pool performance visualization
@@ -725,10 +725,10 @@ For DeFi monitoring dashboards, use the **HTML + JavaScript + Data Feed** patter
 **Deployment Pattern**:
 ```bash
 # Update data feed
-cp vault-data.json /ProtoJay4789.github.io/DeFi/data.json
+cp vault-data.json /gentechlabs.github.io/DeFi/data.json
 
 # Deploy to GitHub Pages
-cd ProtoJay4789.github.io && git add && git commit -m "Update dashboard" && git push
+cd gentechlabs.github.io && git add && git commit -m "Update dashboard" && git push
 ```
 
 **Data Feed Requirements**:
@@ -736,7 +736,7 @@ cd ProtoJay4789.github.io && git add && git commit -m "Update dashboard" && git 
 - Use number types, not strings, for numeric calculations
 - Include real-time updates with simulated data feeds
 
-> **Reference:** `/ProtoJay4789.github.io/DeFi/defi-suite-dashboard.html` for dashboard template
+> **Reference:** `/gentechlabs.github.io/DeFi/defi-suite-dashboard.html` for dashboard template
 
 ---
 

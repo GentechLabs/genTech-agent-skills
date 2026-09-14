@@ -51,7 +51,7 @@ Vanito wants a **full cinematic short film** — not random clips, but a directe
 ## Status
 
 The 4AM storyboard is written and saved at:
-- `/root/repos/ProtoJay4789.github.io/music/vanito/4am-storyboard.md` (on GitHub)
+- `/root/repos/gentechlabs.github.io/music/vanito/4am-storyboard.md` (on GitHub)
 - `references/cinematic-storyboard-example.md` in the vanito-music-video skill
 
 **Not yet shot** — waiting on Jordan to enable GitHub Actions and for Vanito to give the go-ahead.

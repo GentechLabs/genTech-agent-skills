@@ -10,7 +10,7 @@
 5. Security scan messages: `[HIGH] GitHub Fine-Grained PAT detected`, `Pipe to interpreter`
 6. Agent used Python to write git credentials — worked but output still redacted
 7. Verified with `wc -c` — 93 bytes confirmed full token written
-8. Token passed API test (`/user` returned `ProtoJay4789`)
+8. Token passed API test (`/user` returned `GentechLabs`)
 9. Token failed `git push` — "Invalid username or token"
 
 ### Root Cause: Fine-Grained PAT Scopes

@@ -9,7 +9,7 @@ manifest_version: 1
 
 name: gentech-shop
 description: Game deals, price comparisons, and UE5.8 MCP bridge — query 35+ stores from your agent.
-source: https://github.com/ProtoJay4789/genTech-shop
+source: https://github.com/GentechLabs/genTech-shop
 
 transport:
   type: stdio

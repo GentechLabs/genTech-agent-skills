@@ -1,6 +1,6 @@
 # Migrating Repos Off a Flagged Account to a Clean Account
 
-**Proven Aug 24, 2026** — moving repos from `ProtoJay4789` (flagged, throttled to the anonymous 60 req/hr tier) to `GentechLabs` (clean, normal 5000/hr).
+**Proven Aug 24, 2026** — moving repos from `GentechLabs` (flagged, throttled to the anonymous 60 req/hr tier) to `GentechLabs` (clean, normal 5000/hr).
 
 ## Core rule
 Do NOT rely on GitHub's transfer API or the flagged account's own API. A flagged account returns 0 repos anonymously and its API is unreliable/403s. **Use the local clones as ground truth and push them to the clean account directly.**

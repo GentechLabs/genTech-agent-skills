@@ -60,7 +60,7 @@ Funding in last 6 months? Problem space elevator pitch? Why you?). Those are exc
 ## Pitfall: personal-account GitHub links 404 on web (flagged account)
 
 Before the submission we drafted links under `ProtoJay4789/...` (genTech-agent-kit,
-programmable-money-x402, ProtoJay4789.github.io portfolio) — **all 404 on the web**
+programmable-money-x402, gentechlabs.github.io portfolio) — **all 404 on the web**
 even though the GitHub API reports them public. The working public copies live under
 the **Gentech-Labs org** (21+ repos). Rule: before putting ANY link in an application,
 verify it returns 200 with `curl -s -o /dev/null -w "%{http_code}" <url>` — a broken

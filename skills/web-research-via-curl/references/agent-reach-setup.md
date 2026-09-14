@@ -16,7 +16,7 @@ Starred by Jordan at github.com/Panniantong/Agent-Reach (62k ⭐).
 The `GITHUB_TOKEN` env var was stale/expired and overriding the valid stored gh CLI credentials.
 - **Symptom:** `gh auth status` showed "Logged in" but Agent Reach reported "not authenticated"
 - **Root cause:** `$GITHUB_TOKEN` env var takes precedence over stored credentials in `~/.config/gh/hosts.yml`
-- **Fix:** `unset GITHUB_TOKEN` then `gh auth switch --user ProtoJay4789`
+- **Fix:** `unset GITHUB_TOKEN` then `gh auth switch --user GentechLabs`
 - **Verification:** `gh auth status` shows "Active account: true" with valid token scopes
 
 ## YouTube Fix (Jul 29, 2026)

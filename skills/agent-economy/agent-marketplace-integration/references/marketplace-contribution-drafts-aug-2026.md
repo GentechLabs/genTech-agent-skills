@@ -43,6 +43,6 @@ without re-researching.
 
 ## Filing guidance
 - Agoragentic issue is the highest-value: real reproducible platform bug on an actively-maintained
-  repo soliciting test reports. File via `gh issue create` (account ProtoJay4789 is rate-limited/
+  repo soliciting test reports. File via `gh issue create` (account GentechLabs is rate-limited/
   flagged — consider a cleaner account or have Jordan file manually).
 - Agent Bazaar + BountyBook have no GitHub → hand Jordan the drafted X DM / Discord post to send.

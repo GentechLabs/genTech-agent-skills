@@ -131,7 +131,7 @@ Implement a **dashboard lock system** where only one script can write at a time:
 # Use file locking to prevent concurrent writes
 import fcntl
 
-with open('/root/ProtoJay4789.github.io/DeFi/defi-data.json', 'r+') as f:
+with open('/root/repos/gentechlabs.github.io/DeFi/defi-data.json', 'r+') as f:
     fcntl.flock(f.fileno(), fcntl.LOCK_EX)  # Exclusive lock
     
     # Read, modify, write

@@ -16,7 +16,7 @@ When scanning 50+ open PRs (common in 3x daily cron jobs), GitHub API rate limit
 Get the full PR list in one call:
 
 ```bash
-gh api search/issues --method GET -f q='author:ProtoJay4789 type:pr is:open' \
+gh api search/issues --method GET -f q='author:GentechLabs type:pr is:open' \
   --jq '.items[] | {number, title: (.title[:60]), html_url, repository_url, updated_at}' \
   --paginate
 ```
@@ -73,13 +73,13 @@ Cost: 1 GraphQL point per PR. Reserve for 10-20 PRs max per scan.
 
 ## REST-Based Inventory (Preferred Over Search API)
 
-**The GitHub Search API (`gh api search/issues`) blocks user-based queries for ProtoJay4789** — returns HTTP 422 with `"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users."` This is a persistent account-level restriction, not a transient error.
+**The GitHub Search API (`gh api search/issues`) blocks user-based queries for GentechLabs** — returns HTTP 422 with `"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users."` This is a persistent account-level restriction, not a transient error.
 
 **Use the REST API instead — iterate known repos and filter by author:**
 ```bash
 for repo in "owner/repo1" "owner/repo2"; do
   gh api "repos/$repo/pulls?state=open&per_page=10" --jq \
-    '[.[] | select(.user.login == "ProtoJay4789") | {number, title, state, head: .head.ref, updated_at: .updated_at, mergeable: .mergeable}]'
+    '[.[] | select(.user.login == "GentechLabs") | {number, title, state, head: .head.ref, updated_at: .updated_at, mergeable: .mergeable}]'
 done
 ```
 

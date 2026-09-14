@@ -23,7 +23,7 @@
 **Page 2 — Contact:** Jordan Jones, Team (GenTech Labs)
 
 **Page 3 — Previous work:** GenTech Agent Kit v0.3.0 — open-source MCP server with 6 tools. x402 gateway live on 5 chains. ERC-8004 agent identity across 22 chains.
-**Links:** https://github.com/ProtoJay4789/genTech-agent-kit
+**Links:** https://github.com/GentechLabs/genTech-agent-kit
 
 **Page 4 — Project (1-2 sentences):** GenTech Agent Kit — the Agent-to-Agent Economy stack. One command gives any AI agent market data, DeFi intelligence, and x402 payment rails.
 

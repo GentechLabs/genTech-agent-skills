@@ -42,7 +42,7 @@ def check_entry_price_consistency():
     sources = {
         "Position Tracker": '/root/.hermes/scripts/.lfj-position-tracker.json',
         "Config": '/root/.hermes/scripts/.lfj-aae-config.json',
-        "Dashboard": '/root/ProtoJay4789.github.io/DeFi/defi-data.json'
+        "Dashboard": '/root/repos/gentechlabs.github.io/DeFi/defi-data.json'
     }
     
     data = {}

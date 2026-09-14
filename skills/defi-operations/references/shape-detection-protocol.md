@@ -32,7 +32,7 @@ Different efficiency formulas produce wildly different results:
 - Changed `shape: "curve"` → `shape: "bid-ask"`
 
 **✅ Dashboard Data:**
-- Updated `/root/ProtoJay4789.github.io/DeFi/defi-data.json`
+- Updated `/root/repos/gentechlabs.github.io/DeFi/defi-data.json`
 - All instances: `shape: "Curve"` → `shape: "Bid-Ask"`
 - All instances: `shape: "curve"` → `shape: "bid-ask"`
 
@@ -78,7 +78,7 @@ def normalize_shape(shape: str) -> str:
 ```bash
 # Shape consistency verification
 sources=("Config:/root/.hermes/scripts/.lfj-aae-config.json" 
-         "Dashboard:/root/ProtoJay4789.github.io/DeFi/defi-data.json")
+         "Dashboard:/root/repos/gentechlabs.github.io/DeFi/defi-data.json")
 
 for source in "${sources[@]}"; do
     name="${source%%:*}"
@@ -150,6 +150,6 @@ Using the strong analysis model ("Jill") was crucial for catching and resolving 
 
 ## Related Files
 - `/root/.hermes/scripts/.lfj-aae-config.json` - Config source
-- `/root/ProtoJay4789.github.io/DeFi/defi-data.json` - Dashboard source
+- `/root/repos/gentechlabs.github.io/DeFi/defi-data.json` - Dashboard source
 - `${VAULT_DIR}/Strategies/scripts/defi-lp-consolidated.py` - Monitor script
 - `normalize_shape()` function in monitor script

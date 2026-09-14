@@ -73,7 +73,7 @@ Failing to update the global path = cron reports stale data indefinitely.
 |------|------|-----------------|
 | Global config | `/root/.hermes/scripts/.lfj-aae-config.json` | range, shape, position amounts |
 | Global tracker | `/root/.hermes/scripts/.lfj-position-tracker.json` | entry price (fallback) |
-| Dashboard | `/root/ProtoJay4789.github.io/DeFi/defi-data.json` | fee estimates (calibrated) |
+| Dashboard | `/root/repos/gentechlabs.github.io/DeFi/defi-data.json` | fee estimates (calibrated) |
 
 ## Fee Pipeline: Architecture Summary
 
@@ -657,9 +657,9 @@ The on-chain reader (`run-reader.py`) writes a CLEAN `defi-data.json` every 10 m
 | State | `${PROFILE_DIR}/scripts/.lfj-defi-state.json` | Debounce state, fee tracking, edge timers |
 | AAE config (global) | `/root/.hermes/scripts/.lfj-aae-config.json` | Secondary — must be synced with profile |
 | State | `/root/.hermes/scripts/.lfj-defi-state.json` | Debounce state, fee tracking |
-| Dashboard data | `/root/ProtoJay4789.github.io/DeFi/defi-data.json` | Hub data source |
+| Dashboard data | `/root/repos/gentechlabs.github.io/DeFi/defi-data.json` | Hub data source |
 | Rainbow data (scripts) | `${PROFILE_DIR}/scripts/yield-rainbow-data.json` | Local tools read from here |
-| Rainbow data (dashboard) | `/root/ProtoJay4789.github.io/DeFi/rainbow/yield-rainbow-data.json` | Dashboard HTML reads from here |
+| Rainbow data (dashboard) | `/root/repos/gentechlabs.github.io/DeFi/rainbow/yield-rainbow-data.json` | Dashboard HTML reads from here |
 | Reader script | `${VAULT_DIR}/scripts/run-reader.sh` | On-chain reader wrapper |
 | Monitor script | `${PROFILE_DIR}/scripts/defi-lp-consolidated.py` | 10-min cron report + rainbow sync |
 
@@ -1013,7 +1013,7 @@ dashboard['hero']['entryPrice'] = 6.3792     # ✅
    python3 ${PROFILE_DIR}/scripts/test-entry-price-fix.py
    ```
 
-3. **Check dashboard**: Confirm ProtoJay4789.github.io/DeFi shows correct entry price
+3. **Check dashboard**: Confirm gentechlabs.github.io/DeFi shows correct entry price
 
 ### Key Learning
 

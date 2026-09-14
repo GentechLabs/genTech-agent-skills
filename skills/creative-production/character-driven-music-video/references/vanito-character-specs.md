@@ -83,7 +83,7 @@ This is KAGE's "band icon" design from the artist tab on Vanito's hub. Used for 
 - **Mic:** Vintage silver microphone or black mic with silver grille on stand
 - **Personality:** Charismatic, full of confidence, strong person who overcame the past, doesn't want to be bound by anyone
 
-## Hub Assets (All on ProtoJay4789.github.io)
+## Hub Assets (All on gentechlabs.github.io)
 - **KAGE split sheet:** `/music/vanito/scenes/kage-split.png`
 - **HIKARI split sheet:** `/music/vanito/scenes/hikari-split.png`
 - **KAGE official:** `/music/vanito/scenes/kage-official.jpg`
@@ -96,11 +96,11 @@ This is KAGE's "band icon" design from the artist tab on Vanito's hub. Used for 
 - **Yami no Naka De paper ref 1:** `/music/vanito/yami-paper-ref.jpg` — hands with black lace holding crumpled lyrics
 - **Yami no Naka De paper ref 2:** `/music/vanito/yami-paper-v2.jpg` — alternate shot with "闇の中で" footer
 - **Song:** `/music/vanito/kono-sora-no-shita.mp3`
-- **Base URL:** `https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/github/ProtoJay4789.github.io/`
+- **Base URL:** `https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/github/gentechlabs.github.io/`
 
 ## Pusô ng Hub Workflow
 ```bash
-cd ${VAULT_DIR}/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/gentechlabs.github.io
 git add -f music/vanito/<file>
 git commit -m "📄 <description>"
 git pull --rebase origin main  # always pull before push to avoid rejection

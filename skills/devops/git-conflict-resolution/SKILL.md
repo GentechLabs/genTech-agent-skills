@@ -232,7 +232,7 @@ Create `repo-sync-manager.py`:
 ```python
 #!/usr/bin/env python3
 """
-Centralized sync manager for ProtoJay4789.github.io
+Centralized sync manager for gentechlabs.github.io
 Coordinates all automated writers to prevent conflicts.
 """
 import subprocess
@@ -997,5 +997,5 @@ git -c rebase.autoStash=true pull --rebase
 
 ## Reference Materials
 
-- **Case Study:** `references/protojay-github-conflict-case-study.md` — Complete analysis of real-world Git conflicts in ProtoJay4789.github.io repository with 5 concurrent cron jobs, timing overlaps, and concrete fix recommendations
+- **Case Study:** `references/protojay-github-conflict-case-study.md` — Complete analysis of real-world Git conflicts in gentechlabs.github.io repository with 5 concurrent cron jobs, timing overlaps, and concrete fix recommendations
 - **Cron Stash-Pop Recovery:** `references/hub-sync-stash-pop-recovery-pattern.md` — Hands-on recovery from corrupted JSON file (>100 merge conflict markers) committed by nightly hub sync cron job, including diverged branch resolution and prevention techniques

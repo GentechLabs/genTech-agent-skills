@@ -29,7 +29,7 @@ When a repo has high strategic value but you can't PR into it (fork restricted, 
 
 **Real example — Paperclip fork (Jul 27 2026):**
 - Upstream: `paperclipai/paperclip` (74.8K stars, MIT, control plane for AI companies)
-- Fork: `ProtoJay4789/paperclip` — forked April 13, caught up 1,026 commits on Jul 27
+- Fork: `GentechLabs/paperclip` — forked April 13, caught up 1,026 commits on Jul 27
 - Build fix: OpenTelemetry `resourceFromAttributes` deprecated in newer deps — patched locally
 - Plugin target: GenTech Shop panel (build queue + service catalog + ClawWork squad management)
 - Hermes adapter: built-in `hermes_local` and `hermes_gateway` — no plugin install needed

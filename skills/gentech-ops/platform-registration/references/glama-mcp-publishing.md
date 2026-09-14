@@ -21,7 +21,7 @@ Glama (`glama.ai`) is an MCP server directory and quality scoring platform. Serv
 ### 1. Add LICENSE to repo root
 ```bash
 curl -s https://raw.githubusercontent.com/github/choosealicense.com/gh-pages/_licenses/mit.txt | \
-  sed 's/\[year\]/2026/;s/\[fullname\]/ProtoJay4789/' > LICENSE
+  sed 's/\[year\]/2026/;s/\[fullname\]/GentechLabs/' > LICENSE
 git add LICENSE && git commit -m "Add MIT license" && git push
 ```
 
@@ -30,10 +30,10 @@ git add LICENSE && git commit -m "Add MIT license" && git push
 {
   "name": "your-server",
   "description": "One-line what it does.",
-  "author": { "name": "ProtoJay4789", "url": "https://github.com/ProtoJay4789" },
-  "repository": "ProtoJay4789/your-server",
+  "author": { "name": "GentechLabs", "url": "https://github.com/GentechLabs" },
+  "repository": "GentechLabs/your-server",
   "categories": ["Category1", "Category2"],
-  "related": ["ProtoJay4789/related-server"]
+  "related": ["GentechLabs/related-server"]
 }
 ```
 
@@ -41,7 +41,7 @@ git add LICENSE && git commit -m "Add MIT license" && git push
 Badge URLs: `https://glama.ai/mcp/servers/{owner}/{repo}/badges/score.svg`
 
 ```markdown
-[![Glama Score](https://glama.ai/mcp/servers/ProtoJay4789/your-server/badges/score.svg)](https://glama.ai/mcp/servers/ProtoJay4789/your-server)
+[![Glama Score](https://glama.ai/mcp/servers/GentechLabs/your-server/badges/score.svg)](https://glama.ai/mcp/servers/GentechLabs/your-server)
 ```
 
 ### 4. Create Glama release (dashboard only — no API)
@@ -50,8 +50,8 @@ This is manual. Unlocks Server Coherence + Tool Definition Quality scoring.
 
 ### 5. Verify
 ```bash
-curl -s -o /dev/null -w "%{http_code}" https://glama.ai/mcp/servers/ProtoJay4789/your-server/badges/score.svg
-curl -s https://glama.ai/api/mcp/v1/servers/ProtoJay4789/your-server | python3 -m json.tool
+curl -s -o /dev/null -w "%{http_code}" https://glama.ai/mcp/servers/GentechLabs/your-server/badges/score.svg
+curl -s https://glama.ai/api/mcp/v1/servers/GentechLabs/your-server | python3 -m json.tool
 ```
 
 ## Pitfalls

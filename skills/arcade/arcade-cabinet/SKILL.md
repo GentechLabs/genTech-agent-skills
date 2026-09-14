@@ -117,8 +117,8 @@ location /cabinet/{game-name}/ {
 ### 7. Git Push
 
 ```bash
-gh repo create ProtoJay4789/{game-name} --public --description "..."
-git remote add origin https://github.com/ProtoJay4789/{game-name}.git
+gh repo create GentechLabs/{game-name} --public --description "..."
+git remote add origin https://github.com/GentechLabs/{game-name}.git
 git push -u origin main
 ```
 
@@ -333,7 +333,7 @@ document.addEventListener('game:start', async (e) => {
 **Single-file games deploy directly — no Vite build, no nginx edit:**
 ```bash
 # 1. Locate the game (check repo + vault copies)
-ls /root/repos/ProtoJay4789.github.io/games/{game-name}/   # e.g. visual-kei-tap = single index.html
+ls /root/repos/gentechlabs.github.io/games/{game-name}/   # e.g. visual-kei-tap = single index.html
 
 # 2. Create dir + scp to arcade root (NOT /cabinet/ — that's for built Vite apps)
 ssh root@2.24.195.196 'mkdir -p /var/www/arcade/{game-name}'

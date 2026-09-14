@@ -164,14 +164,14 @@ Before submitting to any curated directory, in THIS ORDER, and do NOT proceed pa
 
 4. **Check for existing listing** — `grep -i "gentech\|genTech\|gen_tech\|GenTech"` in the README. If found, **audit and update** instead of adding new (see "Audit Existing Entries" below). If the link is stale, fix it. If the description is outdated, improve it.
 
-5. **Check for existing PRs from our fork** — `gh pr list --head ProtoJay4789:*` (wildcard catches ALL branches, not just default). If any open PR exists, assess whether to update or supersede it rather than creating a duplicate.
+5. **Check for existing PRs from our fork** — `gh pr list --head GentechLabs:*` (wildcard catches ALL branches, not just default). If any open PR exists, assess whether to update or supersede it rather than creating a duplicate.
 
 6. **Check for orphaned branches** — Existing remote branches on the fork may contain work that was committed and pushed but never turned into a PR. This happens when a previous session made changes, pushed to a named branch, but the `gh pr create` step was skipped or failed silently. **This pitfall hit twice in the Jul 19 session alone.** Run:
    ```
    git branch -r | grep -v origin/main | grep -v origin/HEAD
    ```
    For each orphaned branch:
-   - Check if a PR exists for it: `gh pr list --head ProtoJay4789:<branch> --json state,title`
+   - Check if a PR exists for it: `gh pr list --head GentechLabs:<branch> --json state,title`
    - If no PR: examine the branch's diff (`git log upstream/main..origin/<branch>`) and decide whether the content is still current
    - If current: rebase on latest upstream/main and open a PR
    - If stale: delete the remote branch and start fresh
@@ -232,7 +232,7 @@ Before submitting to any curated directory, in THIS ORDER, and do NOT proceed pa
 
 **AgentScan metadata-404 gotcha (Aug 2026):** AgentScan shows `skills: []`, `domains: []`, `capabilities: []` even when the metadata JSON is fully populated, if the `metadata_uri` points to a **private** GitHub repo. AgentScan has no auth, so a private raw URL returns 404 and it can't read the fields. The `classification_source: "ai"` field means AgentScan derives skills/domains from the metadata it can actually fetch — a 404 means blank. Check `metadata_uri` + `last_synced_at` in the AgentScan detail response to diagnose.
 
-**PROVEN FIX (Aug 11, 2026) — re-point the on-chain URI to our own site, not GitHub.** The root cause is often that the on-chain `metadata_uri` points at `raw.githubusercontent.com/ProtoJay4789/...` — the personal GitHub account is **rate-limited/flagged and web-404s**, so AgentScan can never fetch it. GitHub is the wrong host for agent metadata entirely (rate limits + flag risk). The durable fix:
+**PROVEN FIX (Aug 11, 2026) — re-point the on-chain URI to our own site, not GitHub.** The root cause is often that the on-chain `metadata_uri` points at `raw.githubusercontent.com/GentechLabs/...` — the personal GitHub account is **rate-limited/flagged and web-404s**, so AgentScan can never fetch it. GitHub is the wrong host for agent metadata entirely (rate limits + flag risk). The durable fix:
 1. **Host the metadata on our own site** (never rate-limited): `cp gentech-avax-metadata.json /var/www/gentechlabs/.well-known/` → served at `https://gentechlabs.net/.well-known/gentech-avax-metadata.json` (nginx already serves `/.well-known/` from `/var/www/gentechlabs` on both `gentechlabs.net` and `api.gentechlabs.net`). Verify 200 on both.
 2. **Read the current on-chain URI** to confirm the problem: `eth_call` `tokenURI(uint256)` (selector `0xc87b56dd`) on the ERC-8004 registry `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` (same on all chains via CREATE2) against the Avalanche RPC `https://api.avax.network/ext/bc/C/rpc`. Decode the ABI string (offset 32 + length 32 + bytes).
 3. **Re-point via `setAgentURI(agentId, uri)`** on the same registry contract, signed with the owner key read from disk (`/root/.blockrun/jordan-avax-secret`, chmod 600 — never print it). Verify `ownerOf(agentId)` == signer first. ~$0.01 gas on Avalanche. Confirm by re-reading `tokenURI` after the tx confirms.

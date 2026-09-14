@@ -49,7 +49,7 @@ For community directories (cursor.directory/plugins/new):
 |-------|---------|
 | **Name** | GenTech Gateway |
 | **Description** | x402 pay-per-call gateway — 16 endpoints, 5 chains, no API keys |
-| **Source** | github.com/ProtoJay4789/x402-gateway |
+| **Source** | github.com/GentechLabs/x402-gateway |
 | **Tags** | x402, payments, usdc, base, solana, gateway, mcp |
 | **Logo** | Generate via image_generate: clean solid navy circle, bold white G, one cyan accent dot. Must be recognizable at 16x16px. Flat vector, no gradients, no glow. |
 | **Rules** | Spend-safety rule: no unprompted payments, verify before spending, surface limits. |
@@ -77,7 +77,7 @@ Some repos block automated forking (403 from API). Options:
 | HKUDS/OpenSpace | 6.8k | Added to queue: contribute + integrate |
 | Dexter-DAO/dexter-x402-sdk | 3 | PR ready (Zod validation, #36 + #41), fork blocked |
 | GOATNetwork/agentkit | 4⭐ | PR #7 (compliance plugin + ERC-8004 fix) — needs Jordan to submit |
-| InjectiveLabs/iAgent | 50⭐ | x402 middleware built (15/15 tests), pushed to ProtoJay4789/iagent-x402 |
+| InjectiveLabs/iAgent | 50⭐ | x402 middleware built (15/15 tests), pushed to GentechLabs/iagent-x402 |
 | Circle (arc-p2p-payments) | 19⭐ | Evaluated — gasless P2P on Arc, our lane. Added to queue. |
 | Obsidian Mind (breferrari/obsidian-mind) | 3.6k⭐ | Issue #142 opened — proposal for x402 monetization skill |
 | MiroFish (666ghj/MiroFish) | 69k⭐ | Issue #743 opened — proposal for x402 payment layer |

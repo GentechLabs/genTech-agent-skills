@@ -71,11 +71,11 @@ See `references/pr-status-sweep.md` for the full protocol. Key pattern:
 
 ```bash
 # Discover all PRs from any fork name in one call:
-gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("ProtoJay4789")) | {number, state, title: .title[0:60]}'
+gh api repos/<owner>/<repo>/pulls --jq '.[] | select(.head.label | startswith("GentechLabs")) | {number, state, title: .title[0:60]}'
 
 # Confirm a PR exists without knowing the fork name:
 gh api repos/<owner>/<repo>/pulls --method POST \
-  -f head='ProtoJay4789:<branch>' \
+  -f head='GentechLabs:<branch>' \
   -f base='main' \
   -f title='test'
 # Returns 422 "already exists" = PR is real. Returns 201 = just created (don't do this).

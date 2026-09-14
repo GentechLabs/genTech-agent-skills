@@ -22,7 +22,7 @@ Before ANY GitHub operation, verify the authentication token and account are val
 gh auth status 2>&1
 ```
 
-**Expected:** `✓ Logged in to github.com account ProtoJay4789`
+**Expected:** `✓ Logged in to github.com account GentechLabs`
 **Failure signals:**
 - `X Failed to log in` + `The token in ... is invalid.` → Token was revoked or expired
 - `HTTP 401` or `HTTP 403` on any `gh api` call → Token is dead
@@ -34,7 +34,7 @@ When `gh auth status` fails, verify the account still exists by checking the pro
 
 ```bash
 # Use browser or web_extract — bypasses API rate limits
-# https://github.com/ProtoJay4789 should return the profile, not 404
+# https://github.com/GentechLabs should return the profile, not 404
 ```
 
 **If the account returns 404:** The account was deleted, renamed, or suspended. ALL forks, PRs, and repos are gone. Do NOT attempt any GitHub operations — they will all fail.
@@ -57,7 +57,7 @@ Both must contain the same valid token. If one is stale, update both.
 
 **⚠️ Pitfall — Cached API results from a dead token.** The REST API may return PR data even after the token is invalidated (cached from the token's last valid state). This creates phantom PRs in tracking — PRs that appear open in the API response but return 404 when verified via browser. Always verify critical PRs via browser or `web_extract` when the token is suspect. A PR that exists only in API output but not on the web is a ghost.
 
-**⚠️ Pitfall — `gh api repos/ProtoJay4789` returns 404 if no repo named "ProtoJay4789" exists.** This endpoint looks for a REPO, not the user account. It will always 404 if there's no repo with that exact name. To check if the account itself is active, use `gh api user` or `gh api users/ProtoJay4789`. Do NOT confuse a missing repo with a deleted account.
+**⚠️ Pitfall — `gh api repos/GentechLabs` returns 404 if no repo named "GentechLabs" exists.** This endpoint looks for a REPO, not the user account. It will always 404 if there's no repo with that exact name. To check if the account itself is active, use `gh api user` or `gh api users/GentechLabs`. Do NOT confuse a missing repo with a deleted account.
 
 ### 5. Update rotation file on failure
 
@@ -73,7 +73,7 @@ When the session cannot proceed due to token/account issues, update the rotation
 
 ### 6. False-alarm recovery — account was never actually gone
 
-When the pre-flight account check succeeds (`/user` endpoint returns valid ProtoJay4789 data) but the rotation file from a prior run says "ACCOUNT 404" or "account deleted/suspended":
+When the pre-flight account check succeeds (`/user` endpoint returns valid GentechLabs data) but the rotation file from a prior run says "ACCOUNT 404" or "account deleted/suspended":
 
 1. **Do NOT trust the rotation file** — the account was checked with the correct endpoint this run and is alive. Override the stale status.
 2. **Sample-audit known PRs** — pick 5-10 PRs from the seed list that were open in prior runs (e.g., MERGEABLE PRs from large repos). Use the REST API:
@@ -93,21 +93,21 @@ When the pre-flight account check succeeds (`/user` endpoint returns valid Proto
 4. **Proceed with a full inbox scan** — do NOT assume the portfolio didn't change during the false-alarm period. PRs may have been merged, commented on, or conflicted while prior runs skipped them.
 5. **Add a recovery note to the run report** explaining that the prior N runs produced empty/incomplete reports due to the false alarm, so Jordan knows what coverage gap existed.
 
-**Root cause of most false 404 alarms:** The public `/users/ProtoJay4789` endpoint can 404 when rate-limited by unauthenticated requests (GitHub returns 404, not 403, for rate-limited user lookups from unauthenticated contexts). `web_extract(github.com/ProtoJay4789)` from a headless VPS also 404s because GitHub rate-limits anonymous page views. The authenticated `/user` endpoint with a valid token is the only reliable check. Always use `curl -s -H "Authorization: token $(gh auth token)" https://api.github.com/user` as the primary check — fall back to `web_extract` only when the token itself is known to be dead.
+**Root cause of most false 404 alarms:** The public `/users/GentechLabs` endpoint can 404 when rate-limited by unauthenticated requests (GitHub returns 404, not 403, for rate-limited user lookups from unauthenticated contexts). `web_extract(github.com/GentechLabs)` from a headless VPS also 404s because GitHub rate-limits anonymous page views. The authenticated `/user` endpoint with a valid token is the only reliable check. Always use `curl -s -H "Authorization: token $(gh auth token)" https://api.github.com/user` as the primary check — fall back to `web_extract` only when the token itself is known to be dead.
 
 ## Phase 0: Inbox Duty (Mandatory — Always Run First)
 
 Before opening ANY new PR, check our existing PRs for replies:
 
-1. **List all open PRs from ProtoJay4789 — REST-based inventory (preferred):**
+1. **List all open PRs from GentechLabs — REST-based inventory (preferred):**
 
-   ⚠️ **Pitfall — `gh api search/issues` with `author:ProtoJay4789` returns HTTP 422.** The GitHub Search API blocks user-based queries for this account, returning `"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users."` This is a persistent account-level restriction, not a transient error. Do NOT use the search API for user-based PR queries.
+   ⚠️ **Pitfall — `gh api search/issues` with `author:GentechLabs` returns HTTP 422.** The GitHub Search API blocks user-based queries for this account, returning `"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users."` This is a persistent account-level restriction, not a transient error. Do NOT use the search API for user-based PR queries.
 
    **Use the REST API instead — iterate known repos and filter by author:**
    ```bash
    for repo in "owner/repo1" "owner/repo2"; do
      gh api "repos/$repo/pulls?state=open&per_page=10" --jq \
-       '[.[] | select(.user.login == "ProtoJay4789") | {number, title, state, head: .head.ref, updated_at: .updated_at, mergeable: .mergeable}]'
+       '[.[] | select(.user.login == "GentechLabs") | {number, title, state, head: .head.ref, updated_at: .updated_at, mergeable: .mergeable}]'
    done
    ```
    Cost: 1 REST request per repo. 48 repos = 48 requests (~1% of 5,000/hr budget). Well within limits.
@@ -144,16 +144,16 @@ Before opening ANY new PR, check our existing PRs for replies:
    r = terminal(f"gh api repos/{repo}/pulls --jq '[.[] | {{number, title}}]'")
    ```
 
-   For jq filters that also contain double-quoted strings (e.g., `select(.user.login == "ProtoJay4789")`), escape the inner double quotes with backslash:
+   For jq filters that also contain double-quoted strings (e.g., `select(.user.login == "GentechLabs")`), escape the inner double quotes with backslash:
 
    ```python
    # ✅ Verified working (Jul 25 2026):
-   r = terminal(f"gh api 'repos/{repo}/pulls' --jq '[.[] | select(.user.login == \"ProtoJay4789\") | {{number, title, state, mergeable}}]'", timeout=10)
+   r = terminal(f"gh api 'repos/{repo}/pulls' --jq '[.[] | select(.user.login == \"GentechLabs\") | {{number, title, state, mergeable}}]'", timeout=10)
    ```
 
    **Simpler alternative for complex jq:** Call `gh api ... --jq '...'` directly from `terminal()` (outside `execute_code`) when the expression has nested braces — no f-string conflicts. Reserve `execute_code` for loops that need programmatic error handling or retry logic — and when you do use it, test one iteration before running the full batch.
 
-   **Fallback — `gh pr list --head ProtoJay4789:`** only works inside a cloned git repo. Use the REST API above when working outside a repo (e.g., cron jobs, one-shot sessions).
+   **Fallback — `gh pr list --head GentechLabs:`** only works inside a cloned git repo. Use the REST API above when working outside a repo (e.g., cron jobs, one-shot sessions).
 
 2. **For each open PR, check for new comments/reviews, mergeability, AND mergeStateStatus — batch pattern (for 15+ PRs):**
 
@@ -366,7 +366,7 @@ providers/gentech/wallet-analyzer/openapi.json      # only /api/wallet/analyze
 ```
 
 ### 5. Check for existing PR from our fork
-- `gh pr list --head ProtoJay4789:* --json number,title,state`
+- `gh pr list --head GentechLabs:* --json number,title,state`
 - Avoid duplicate submissions
 
 ### 6. Check CI
@@ -390,7 +390,7 @@ providers/gentech/wallet-analyzer/openapi.json      # only /api/wallet/analyze
 
 Before attempting to create a PR, verify the fork is an actual GitHub fork:
 ```bash
-gh api repos/ProtoJay4789/<repo-name> --jq '{fork, parent: .parent.full_name}'
+gh api repos/GentechLabs/<repo-name> --jq '{fork, parent: .parent.full_name}'
 ```
 
 **Expected:** `{"fork": true, "parent": "GOATNetwork/agentkit"}`
@@ -399,36 +399,36 @@ If `fork: false` or the `POST /forks` endpoint returns "You cannot fork this rep
 
 ### 9. Check for fork-name collision
 - Before forking, check if a fork with the upstream's repo name already exists from a different upstream:
-  gh repo list ProtoJay4789 --json name,nameWithOwner --jq '.[] | select(.name == "REPO_NAME") | .nameWithOwner'
+  gh repo list GentechLabs --json name,nameWithOwner --jq '.[] | select(.name == "REPO_NAME") | .nameWithOwner'
 - If a matching-name fork exists from a different upstream, delete it first, or use --fork-name and be prepared for potential PR creation issues.
 
 **⚠️ Pitfall — fork-name collision causes cryptic `gh pr create` failure.**
 When a fork with the same short repo name exists from a DIFFERENT upstream, forking again with the same name returns HTTP 403 ("Name already exists on this account"). Even after deleting it and using `--fork-name`, the NEW fork gets created with a `-gentech` suffix that `gh pr create` refuses to find, returning:
 ```
-GraphQL: Head sha can't be blank, Base sha can't be blank, No commits between UPSTREAM:main and ProtoJay4789:BRANCH, Head ref must be a branch (createPullRequest)
+GraphQL: Head sha can't be blank, Base sha can't be blank, No commits between UPSTREAM:main and GentechLabs:BRANCH, Head ref must be a branch (createPullRequest)
 ```
 
 **Diagnose:**
 ```bash
 # Check if your fork is actually a fork of the TARGET upstream
-gh api repos/ProtoJay4789/REPO_NAME --jq '{fork, parent: .parent.full_name}'
+gh api repos/GentechLabs/REPO_NAME --jq '{fork, parent: .parent.full_name}'
 # If parent != target upstream, you have a stale fork from the wrong source
 ```
 
 **Recovery workflow (discovered Jul 19 2026 on ARUNAGIRINATHAN-K/awesome-ai-agents-2026):**
 ```bash
 # 1. List forks by exact name to find collision
-gh repo list ProtoJay4789 --json name,nameWithOwner --limit 50 -q \
+gh repo list GentechLabs --json name,nameWithOwner --limit 50 -q \
   '.[] | select(.name | startswith("REPO_NAME")) | {fork: .name, upstream: .nameWithOwner}'
 
 # 2. Delete the WRONG fork (from different upstream)
-gh api repos/ProtoJay4789/WRONG_FORK_NAME --method DELETE
+gh api repos/GentechLabs/WRONG_FORK_NAME --method DELETE
 
 # 3. Fork the TARGET repo with a unique name
 gh repo fork TARGET_OWNER/REPO_NAME --fork-name REPO_NAME-unique
 
 # 4. Clone the NEW fork (NOT from any stale directory)
-gh repo clone ProtoJay4789/REPO_NAME-unique /tmp/fresh-clone
+gh repo clone GentechLabs/REPO_NAME-unique /tmp/fresh-clone
 
 # 5. Set up upstream + sync
 cd /tmp/fresh-clone
@@ -559,19 +559,19 @@ The PR auto-updates because the branch name matches the PR's head ref. Then comm
 4. Report it in the daily summary — Jordan scans these
 
 **Build completion reporting** (after all PRs processed):
-- Inventory ALL open ProtoJay4789 PRs via the REST-based repo iteration (see Phase 0 step 1 — iterate the Known PR Targets seed list)
+- Inventory ALL open GentechLabs PRs via the REST-based repo iteration (see Phase 0 step 1 — iterate the Known PR Targets seed list)
 - For each: check mergeable status (MERGEABLE/CONFLICTING/DIRTY/UNKNOWN) with `gh pr view <number> -R <owner/repo> --json mergeable,state`
 - Report as a table: PR #, Repo, Status, Action Taken (rebase/skip/queued), Notes
 - Separately list what was built/shipped this run vs what remains pending
 - The goal: Jordan can scan in 30 seconds and know the state of the entire PR portfolio
 
 **Tracking merged PRs:**
-To find recently merged ProtoJay4789 PRs between scans, use the REST-based repo iteration with a `state=closed` filter and check `merged_at`:
+To find recently merged GentechLabs PRs between scans, use the REST-based repo iteration with a `state=closed` filter and check `merged_at`:
 
 ```bash
 for repo in "owner/repo1" "owner/repo2"; do
   gh api "repos/$repo/pulls?state=closed&per_page=5&sort=updated&direction=desc" --jq \
-    '[.[] | select(.user.login == "ProtoJay4789" and .merged_at != null) | {number, title, html_url, merged_at}]'
+    '[.[] | select(.user.login == "GentechLabs" and .merged_at != null) | {number, title, html_url, merged_at}]'
 done
 ```
 Key fields to report per merged PR: `html_url` (clickable link), `number`, `merged_at`,
@@ -613,7 +613,7 @@ a few minutes on merge events.
 2. **Verify the PR actually exists on GitHub** — `gh pr create` can fail silently (rate limits, fork-name collisions, or the fork was deleted between creation and submission). Check:
    ```bash
    # Verify the fork still exists and is a fork of the right upstream
-   gh api repos/ProtoJay4789/<repo-name> --jq '{fork, parent: .parent.full_name}'
+   gh api repos/GentechLabs/<repo-name> --jq '{fork, parent: .parent.full_name}'
    
    # Verify the PR exists and is open
    gh pr view <number> -R <owner/repo> --json state,mergeable,title --jq '{state, mergeable, title}'
@@ -771,14 +771,14 @@ patch ...  # or edit directly
 
 # 4. Commit and push
 git add projects.yaml
-git commit -m "Add project: ProtoJay4789/genTech-agent-kit"
+git commit -m "Add project: GentechLabs/genTech-agent-kit"
 git push -u origin add-gentech-agent-kit
 
 # 5. Create PR
 gh pr create -R tolkonepiu/best-of-mcp-servers \
-  --head ProtoJay4789:add-gentech-agent-kit \
+  --head GentechLabs:add-gentech-agent-kit \
   --base main \
-  --title "Add project: ProtoJay4789/genTech-agent-kit" \
+  --title "Add project: GentechLabs/genTech-agent-kit" \
   --body "Add to Finance & Fintech section.\n\nDescription of what it does."
 ```
 Result: MERGEABLE with no bot flags on first submission.
@@ -834,7 +834,7 @@ PR Maintainer delivers to HQ every 4 hours. Jordan reads these on Telegram — w
 
 **Format — Jordan scans in 5 seconds:**
 ```
-✅ Account: ProtoJay4789 · 105 repos
+✅ Account: GentechLabs · 105 repos
 
 📬 PR Status:
 • owner/repo#123 — MERGEABLE (no change)

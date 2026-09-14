@@ -64,10 +64,10 @@ Managing multiple family members' hubs, dashboards, and intelligence systems wit
 
 ```bash
 # Build in the GitHub Pages repo (source of truth)
-nano ~/repos/ProtoJay4789.github.io/jordan.html
+nano ~/repos/gentechlabs.github.io/jordan.html
 
 # Deploy to VPS
-sudo cp ~/repos/ProtoJay4789.github.io/jordan.html /var/www/gentechlabs/jordan.html
+sudo cp ~/repos/gentechlabs.github.io/jordan.html /var/www/gentechlabs/jordan.html
 sudo chown www-data:www-data /var/www/gentechlabs/jordan.html
 
 # Verify
@@ -315,8 +315,8 @@ cronjob action=update job_id=a564b3353770 schedule="30 15 * * *"
 **Implementation:**
 ```python
 # Sync script: /root/my-music/vanito-music-sync.py
-HUB_DATA_FILE = "/root/ProtoJay4789.github.io/hub-vanito-data.json"
-GITHUB_MUSIC_JSON = "/root/ProtoJay4789.github.io/Gaming/vanito-music.json"
+HUB_DATA_FILE = "/root/repos/gentechlabs.github.io/hub-vanito-data.json"
+GITHUB_MUSIC_JSON = "/root/repos/gentechlabs.github.io/Gaming/vanito-music.json"
 
 # Read from local hub JSON
 with open(HUB_DATA_FILE, 'r') as f:
@@ -336,9 +336,9 @@ github_data = {
 with open(GITHUB_MUSIC_JSON, 'w') as f:
     json.dump(github_data, f, indent=2)
 
-subprocess.run(['git', 'add', 'Gaming/vanito-music.json', 'hub-vanito-data.json'], cwd='/root/ProtoJay4789.github.io')
-subprocess.run(['git', 'commit', '-m', f"music(vanito): sync from hub - {len(github_data['songs'])} songs"], cwd='/root/ProtoJay4789.github.io')
-subprocess.run(['git', 'push'], cwd='/root/ProtoJay4789.github.io')
+subprocess.run(['git', 'add', 'Gaming/vanito-music.json', 'hub-vanito-data.json'], cwd='/root/repos/gentechlabs.github.io')
+subprocess.run(['git', 'commit', '-m', f"music(vanito): sync from hub - {len(github_data['songs'])} songs"], cwd='/root/repos/gentechlabs.github.io')
+subprocess.run(['git', 'push'], cwd='/root/repos/gentechlabs.github.io')
 ```
 
 **Cronjob:**
@@ -362,7 +362,7 @@ cronjob action=create \
 **Verification Pattern:**
 ```bash
 # Commit and push
-cd /root/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 git add Gaming/vanito-music-dashboard.html hub-vanito.html hub-vanito-data.json
 git commit -m "feat: add music sync for Vanito's hub"
 git push
@@ -439,7 +439,7 @@ async function loadMusic() {
 
 **Fix:** Include data file in git add:
 ```python
-subprocess.run(['git', 'add', 'Gaming/vanito-music.json', 'hub-vanito-data.json'], cwd='/root/ProtoJay4789.github.io')
+subprocess.run(['git', 'add', 'Gaming/vanito-music.json', 'hub-vanito-data.json'], cwd='/root/repos/gentechlabs.github.io')
 ```
 
 ### Pitfall 6: Hardcoded HTML Data Instead of Dynamic Loading (`Gaming/poe2-jordan.html`) showed Level 28 even though `poe2-jordan-monk.json` had Level 31 because HTML had hardcoded `const characters = { "monk-jordan": { level: 28, ... } }` instead of fetching from JSON.
@@ -515,8 +515,8 @@ renderCharacters();
    → TAG:title=Fight Forever Never Quit  (this is the real title)
 
 3. COPY TO HUB — Place in a dedicated directory
-   mkdir -p /root/ProtoJay4789.github.io/music/<person>/
-   cp <audio_path> /root/ProtoJay4789.github.io/music/<person>/<kebabed-title>.mp3
+   mkdir -p /root/repos/gentechlabs.github.io/music/<person>/
+   cp <audio_path> /root/repos/gentechlabs.github.io/music/<person>/<kebabed-title>.mp3
 
 4. CHECK GITIGNORE — The repo likely blocks **/*.mp3
    Add an exception BEFORE the **/*.mp3 rule:
@@ -897,14 +897,14 @@ When generating story scenes to animate:
 2. **Vanito approves** → animate via xAI Grok video (5s, $0.26)
 3. **Show animated preview** → wait for approval
 4. **Save MP4** to `music/vanito/` and embed in hub
-5. **GitHub Pages delay** — use `https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/...` URLs instead of relative paths
+5. **GitHub Pages delay** — use `https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/...` URLs instead of relative paths
 
 ### GitHub Pages Video Delivery
 
 **Rule:** Videos pushed to GitHub Pages have a 30-60s deployment delay. Use raw GitHub CDN for instant delivery:
 
 ```html
-<video src="https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/music/vanito/file.mp4"
+<video src="https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/music/vanito/file.mp4"
   autoplay loop muted playsinline>
 </video>
 ```
@@ -952,7 +952,7 @@ This renders the media directly in the chat instead of a blue hyperlink.
 
 **Fix:** Always run the deploy step after building:
 ```bash
-cp ~/repos/ProtoJay4789.github.io/<name>.html /var/www/gentechlabs/<name>.html
+cp ~/repos/gentechlabs.github.io/<name>.html /var/www/gentechlabs/<name>.html
 chown www-data:www-data /var/www/gentechlabs/<name>.html
 curl -s https://gentechlabs.net/<name>.html | grep "<title>"
 ```
@@ -973,14 +973,14 @@ def ensure_clean_repo_state():
     # Check if repo has divergent branches
     result = subprocess.run(
         ['git', 'fetch', 'origin'],
-        cwd='/root/ProtoJay4789.github.io',
+        cwd='/root/repos/gentechlabs.github.io',
         capture_output=True
     )
 
     # Check if local is behind or divergent
     status = subprocess.run(
         ['git', 'status', '--short', '--branch'],
-        cwd='/root/ProtoJay4789.github.io',
+        cwd='/root/repos/gentechlabs.github.io',
         capture_output=True,
         text=True
     )
@@ -989,7 +989,7 @@ def ensure_clean_repo_state():
         print("Divergent branches detected, resetting to origin/main")
         subprocess.run(
             ['git', 'reset', '--hard', 'origin/main'],
-            cwd='/root/ProtoJay4789.github.io',
+            cwd='/root/repos/gentechlabs.github.io',
             capture_output=True
         )
         return True
@@ -1003,7 +1003,7 @@ ensure_clean_repo_state()
 **Fallback Pattern for Manual Recovery:**
 ```bash
 # When sync script hangs, manually recover
-cd /root/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 
 # Stash any local changes
 git stash push -m "Temporary stash for sync"
@@ -1027,7 +1027,7 @@ GIT_TIMEOUT = 120  # 2 minutes for git fetch/push
 
 subprocess.run(
     ['git', 'push'],
-    cwd='/root/ProtoJay4789.github.io',
+    cwd='/root/repos/gentechlabs.github.io',
     timeout=GIT_TIMEOUT,
     capture_output=True
 )

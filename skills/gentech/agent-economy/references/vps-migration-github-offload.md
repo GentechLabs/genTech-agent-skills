@@ -7,7 +7,7 @@
 
 | Service | From | To | Size |
 |---------|------|----|------|
-| Portfolio site | GitHub Pages (ProtoJay4789.github.io) | VPS (portfolio.gentechlabs.net) | 56 KB |
+| Portfolio site | GitHub Pages (gentechlabs.github.io) | VPS (portfolio.gentechlabs.net) | 56 KB |
 | Music data | GitHub Pages push | VPS static files | 531 MB |
 | Gaming hub data | GitHub Pages push | VPS static files | ~50 MB |
 | Vault backup | GitHub push | VPS backup directory | 1.4 GB |

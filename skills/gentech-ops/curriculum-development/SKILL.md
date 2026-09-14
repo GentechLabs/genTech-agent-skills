@@ -10,7 +10,7 @@ tags: [academy, curriculum, documentation, module, templates, publishing]
 
 ## Purpose
 
-Ship production-grade curriculum modules for the GenTech Academy. Each module is a self-contained directory under `modules/NN-name/` in the `ProtoJay4789/gentech-academy` repo.
+Ship production-grade curriculum modules for the GenTech Academy. Each module is a self-contained directory under `modules/NN-name/` in the `GentechLabs/gentech-academy` repo.
 
 ## Module Structure
 

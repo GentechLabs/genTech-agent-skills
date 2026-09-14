@@ -57,15 +57,15 @@ export function myAction(wallet: WalletProvider): ActionDefinition<Input, Output
    - Add remote: `git remote add fork https://{USER}:{TOKEN}@github.com/{USER}/{REPO}.git`
    - Push branch: `git push -f fork feat/my-feature`
 5. Submit PR via GitHub API: `POST /repos/GOATNetwork/agentkit/pulls`
-   - Set `head: "ProtoJay4789:feat/my-feature"` (using the standalone repo name)
+   - Set `head: "GentechLabs:feat/my-feature"` (using the standalone repo name)
    - Set `base: "main"`
    - Note: May fail with "invalid" head error if the repo isn't a fork. Fallback: manual web UI.
 
 ### Manual PR Submission (when API fails)
 
-1. Go to https://github.com/ProtoJay4789/{standalone-repo}
+1. Go to https://github.com/GentechLabs/{standalone-repo}
 2. Click "Contribute" → "Open Pull Request"
-3. Verify: `GOATNetwork/agentkit` ← `ProtoJay4789:feat/branch-name`
+3. Verify: `GOATNetwork/agentkit` ← `GentechLabs:feat/branch-name`
 4. Paste the PR description
 5. Click "Create Pull Request"
 

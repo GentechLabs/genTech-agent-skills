@@ -6,7 +6,7 @@ description: Budget-aware GitHub operation scheduling. Use whenever GitHub work 
 # GitHub Rate-Limit Scheduler
 
 ## When to use
-- Creating repos, opening PRs, forking, or searching GitHub API on ProtoJay4789
+- Creating repos, opening PRs, forking, or searching GitHub API on GentechLabs
 - Any GitHub work that 403s or exhausts quota
 - Planning GitHub-dependent queue items
 
@@ -34,7 +34,7 @@ description: Budget-aware GitHub operation scheduling. Use whenever GitHub work 
 2. Or tag a build-queue item with `github_op` + `github_repo` — the tick pushes it automatically
 
 ## Why accounts get FLAGGED (GitHub's own documented rules, Apr 2026 ToS)
-GitHub flags an account for automated/inauthentic activity (Acceptable Use §4) and secondary rate-limit abuse. The NEW account (GentechLabs, 5000/hr) MUST NOT repeat what tripped ProtoJay4789:
+GitHub flags an account for automated/inauthentic activity (Acceptable Use §4) and secondary rate-limit abuse. The NEW account (GentechLabs, 5000/hr) MUST NOT repeat what tripped GentechLabs:
 
 **Dangerous automation patterns (what triggers a flag / secondary limit):**
 - **Bulk content creation**: >80 content-generating requests/min, >500/hr (repos, releases, issues, PRs, comments). Repo churn is the #1 flag.
@@ -49,7 +49,7 @@ GitHub flags an account for automated/inauthentic activity (Acceptable Use §4) 
 - Authenticated REST within 5000/hr, spaced, <100 concurrent, <900 pts/min
 - Normal human-ish rhythm: don't create/fork dozens of repos in an hour
 
-**Why ProtoJay4789 likely got flagged:** automated repo/fork churn + concurrent agent calls (multiple crons hitting REST in bursts) = "automated excessive bulk activity / rank abuse." The fix going forward: **gate ALL API write ops through the scheduler queue (1-3/tick, spaced), never fire ad-hoc.**
+**Why GentechLabs likely got flagged:** automated repo/fork churn + concurrent agent calls (multiple crons hitting REST in bursts) = "automated excessive bulk activity / rank abuse." The fix going forward: **gate ALL API write ops through the scheduler queue (1-3/tick, spaced), never fire ad-hoc.**
 
 ## Rules
 - **ALWAYS run GitHub API work through the scheduler queue — never ad-hoc bursts** (this is what got the old account flagged)

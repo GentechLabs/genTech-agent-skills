@@ -48,7 +48,7 @@ For markdown files that link to deployed HTML:
 
 ### ❌ Wrong (unclickable)
 ```
-https://github.com/ProtoJay4789/gentech-vault/blob/main/12-Christel/HUB.md
+https://github.com/GentechLabs/gentech-vault/blob/main/12-Christel/HUB.md
 ```
 Wrapped in code blocks → prevents clicking
 
@@ -95,7 +95,7 @@ When adding a new personal dashboard:
 4. **Sync vault to GitHub**: `cd ${VAULT_DIR} && ob sync`
 5. **Sync GitHub Pages repo**: 
    ```bash
-   cd /root/ProtoJay4789.github.io
+   cd /root/repos/gentechlabs.github.io
    git add .
    git commit -m "feat: add [dashboard name]"
    git push origin main
@@ -108,7 +108,7 @@ When adding a new personal dashboard:
 
 There are TWO repos:
 - **Vault repo**: `gentech-vault` — source files, markdown, raw data
-- **Pages repo**: `ProtoJay4789.github.io` — deployed HTML dashboards
+- **Pages repo**: `gentechlabs.github.io` — deployed HTML dashboards
 
 Both need to be synced when updating dashboards.
 

@@ -254,7 +254,7 @@ If using symlinks (repo code linked into hermes scripts dir), the `__file__` pat
 
 ## Reference Implementation
 
-The full working implementation of this pattern is at `ProtoJay4789/gentech-treasury-trader` on GitHub:
+The full working implementation of this pattern is at `GentechLabs/gentech-treasury-trader` on GitHub:
 
 - `src/tradesta_signal.py` — Signal generator (Fear & Greed + price action → direction + leverage)
 - `src/tradesta_watcher.py` — Position watcher with news awareness and stop-loss monitoring

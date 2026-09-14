@@ -12,7 +12,7 @@
 
 ```
 Personal Account (ProtoJay4789)
-├── Portfolio (ProtoJay4789.github.io)
+├── Portfolio (gentechlabs.github.io)
 ├── Personal projects
 └── Private vaults
 
@@ -72,7 +72,7 @@ gh repo list <org-name> --limit 30
 | gentech-hub | Gentech-Labs |
 | genTech-agent-kit | Gentech-Labs |
 | ... (11 more) | Gentech-Labs |
-| ProtoJay4789.github.io | Stayed personal |
+| gentechlabs.github.io | Stayed personal |
 | gentech-vault | Stayed personal |
 
 ## Outcomes

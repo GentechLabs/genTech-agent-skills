@@ -103,7 +103,7 @@ for person in "${!FAMILY_MEMBERS[@]}"; do
     files=${FAMILY_MEMBERS[$person]}
     
     for file in $files; do
-        check_local_file "/root/ProtoJay4789.github.io/$file"
+        check_local_file "/root/repos/gentechlabs.github.io/$file"
     done
 done
 
@@ -154,11 +154,11 @@ check_url "$GITHUB_PAGES_URL/Cookbook/shopping-list.html" "christel-hub.html"
 
 echo -e "\n${COLOR_YELLOW}=== Data Source Verification ===${COLOR_RESET}"
 echo -e "\n${COLOR_YELLOW}Vanito: Hub Data File${COLOR_RESET}"
-check_local_file "/root/ProtoJay4789.github.io/hub-vanito-data.json"
-if [ -f "/root/ProtoJay4789.github.io/hub-vanito-data.json" ]; then
+check_local_file "/root/repos/gentechlabs.github.io/hub-vanito-data.json"
+if [ -f "/root/repos/gentechlabs.github.io/hub-vanito-data.json" ]; then
     echo "  Validating JSON structure..."
-    if jq -e '.music.songs' "/root/ProtoJay4789.github.io/hub-vanito-data.json" >/dev/null 2>&1; then
-        song_count=$(jq '.music.songs | length' "/root/ProtoJay4789.github.io/hub-vanito-data.json")
+    if jq -e '.music.songs' "/root/repos/gentechlabs.github.io/hub-vanito-data.json" >/dev/null 2>&1; then
+        song_count=$(jq '.music.songs | length' "/root/repos/gentechlabs.github.io/hub-vanito-data.json")
         echo -e "    ${COLOR_GREEN}✓ Valid structure, $song_count songs found${COLOR_RESET}"
     else
         echo -e "    ${COLOR_RED}✗ Invalid structure or missing music.songs${COLOR_RESET}"
@@ -187,7 +187,7 @@ else
 fi
 
 echo "Checking GitHub Pages repo status..."
-cd /root/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 if git status --porcelain | grep -q "\.html\|\.json"; then
     echo -e "    ${COLOR_YELLOW}⚠ Uncommitted changes in GitHub Pages repo${COLOR_RESET}"
     echo "    Run: git add . && git commit && git push"

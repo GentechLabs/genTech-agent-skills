@@ -22,12 +22,12 @@ The vault at `${VAULT_DIR}/` has **four remotes**:
 
 | Remote | URL | Purpose |
 |--------|-----|---------|
-| `origin` | `ProtoJay4789/ProtoJay4789.github.io.git` | Portfolio site (default push target) |
+| `origin` | `GentechLabs/gentechlabs.github.io.git` | Portfolio site (default push target) |
 | `hub` | `ProtoJay4789/ProtoJay4789.github.io.git` | Same as origin (legacy) |
-| `vault` | `ProtoJay4789/gentech-vault.git` | **Forge's push target** |
-| `desmonds` | `ProtoJay4789/desmonds-working-progress-...` | Desmonds project (unrelated) |
+| `vault` | `GentechLabs/gentech-vault.git` | **Forge's push target** |
+| `desmonds` | `GentechLabs/desmonds-working-progress-...` | Desmonds project (unrelated) |
 
-**The problem:** Forge pushes to `vault/main` (gentech-vault repo), but Gentech's default `origin` points to `ProtoJay4789.github.io`. When Forge's commit `83733b7c` landed only on `vault/main`, Gentech couldn't see it via `git pull origin main`. The files existed on GitHub but not in the local working tree.
+**The problem:** Forge pushes to `vault/main` (gentech-vault repo), but Gentech's default `origin` points to `gentechlabs.github.io`. When Forge's commit `83733b7c` landed only on `vault/main`, Gentech couldn't see it via `git pull origin main`. The files existed on GitHub but not in the local working tree.
 
 **Recovery workflow:**
 ```bash

@@ -1,10 +1,10 @@
-# ProtoJay4789.github.io Conflict Case Study
+# gentechlabs.github.io Conflict Case Study
 
 Real-world analysis of Git conflicts in Gentech's automated portfolio and gaming hub repository.
 
 ## Repository Context
 
-**Target Repo:** `/root/repos/ProtoJay4789.github.io`  
+**Target Repo:** `/root/repos/gentechlabs.github.io`  
 **Purpose:** GitHub Pages site hosting portfolio, gaming hub, DeFi dashboards, and music collections  
 **Problem:** Frequent Git conflicts disrupting automated sync operations
 
@@ -270,7 +270,7 @@ cd ${PROFILE_DIR}/cron
 jq -r '.jobs[] | "\(.id) | \(.name) | \(.schedule.display) | \(.script)"' jobs.json | grep -i "hub\|portfolio\|sync\|music"
 
 # Check git log for conflict patterns
-cd /root/repos/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 git log --all --pretty=format:"%ad|%an|%s" --date=iso | head -50
 
 # Find commits within seconds of each other

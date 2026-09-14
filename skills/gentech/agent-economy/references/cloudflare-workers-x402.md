@@ -1,7 +1,7 @@
 # Cloudflare Workers Deployment — x402 APIs
 
 **Date:** June 27, 2026
-**Repo:** `ProtoJay4789.github.io`
+**Repo:** `gentechlabs.github.io`
 **Worker:** `gentechlabs-api` (x402 payment infrastructure)
 
 ---
@@ -66,7 +66,7 @@ Your worker has access to the following bindings:
 
 | Field | Value |
 |-------|-------|
-| **Repository** | `ProtoJay4789.github.io` |
+| **Repository** | `gentechlabs.github.io` |
 | **Project name** | `gentechlabs-api` |
 | **Production branch** | `main` |
 | **Framework preset** | None |
@@ -81,7 +81,7 @@ Your worker has access to the following bindings:
 For replay protection (prevent payment reuse):
 
 ```bash
-cd /root/repos/ProtoJay4789.github.io
+cd /root/repos/gentechlabs.github.io
 npx wrangler kv:namespace create "NONCE_STORE"
 ```
 

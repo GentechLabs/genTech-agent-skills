@@ -70,7 +70,7 @@ Story embedded on hub under Artists tab as a dedicated section between character
 
 ### Video Delivery
 - GitHub Pages has 30-60s deployment delay for new MP4s
-- Use `https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/...` for instant delivery
+- Use `https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/...` for instant delivery
 - Always include `poster` attribute with fallback PNG
 
 ### Gitignore Ordering
@@ -117,7 +117,7 @@ Story embedded on hub under Artists tab as a dedicated section between character
 
 ## Files Created/Modified
 
-### Hub (ProtoJay4789.github.io/main)
+### Hub (gentechlabs.github.io/main)
 - `hub-vanito.html` — major restructure (new story section, rain canvas, video embeds, profile pic animations)
 - `hub-vanito-data.json` — removed Wyvern subtitle
 - `.gitignore` — fixed mp4 ordering

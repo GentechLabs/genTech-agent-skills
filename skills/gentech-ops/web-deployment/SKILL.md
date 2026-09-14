@@ -54,7 +54,7 @@ not as top-level `{name}.html`. nginx `location / { root /var/www/gentechlabs; }
 serves any subpath, so a file at `/var/www/gentechlabs/Gaming/helldivers2.html`
 is live at `https://gentechlabs.net/Gaming/helldivers2.html`. Flow:
 1. Build the HTML + a sibling `.json` data file in the canonical repo
-   (`/root/ProtoJay4789.github.io/<path>`).
+   (`/root/repos/gentechlabs.github.io/<path>`).
 2. `mkdir -p /var/www/gentechlabs/Gaming` and `cp` both files into it
    (no `chown` needed if you write as root and the site is read-only static).
 3. Verify against the **live domain**: `curl -s -o /dev/null -w "%{http_code}"`

@@ -1,7 +1,7 @@
 # Hub Sync Stash Pop Recovery Pattern
 
 **Date:** July 9, 2026  
-**Repo:** ProtoJay4789.github.io  
+**Repo:** gentechlabs.github.io  
 **Corrupted file:** `DeFi/defi-data.json` (>100 conflict markers)  
 **Root cause:** Stash-pop conflict during nightly hub sync cron job
 
@@ -20,7 +20,7 @@
 ```
 Removing stale lock file (age: 6287s)
 HUB SYNC ISSUES:
-  ⚠️ Existing dash parse: Invalid JSON in /root/ProtoJay4789.github.io/DeFi/defi-data.json
+  ⚠️ Existing dash parse: Invalid JSON in /root/repos/gentechlabs.github.io/DeFi/defi-data.json
   🔴 Push failed: git push failed after retries
   ⚠️ Live verification: missing HTTP Error 404: Not Found
 ```
@@ -78,7 +78,7 @@ git push origin main
 # → main -> main
 
 # Verify
-curl -I https://ProtoJay4789.github.io/DeFi/defi-data.json
+curl -I https://gentechlabs.github.io/DeFi/defi-data.json
 # → HTTP 200
 ```
 

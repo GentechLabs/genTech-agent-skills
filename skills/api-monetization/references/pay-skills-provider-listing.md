@@ -119,7 +119,7 @@ Or with grep/sed over binary-safe mode.
 
 ## Workflow for Updating Provider Listings
 
-1. **Clone the forked repo** — `git clone https://github.com/ProtoJay4789/pay-skills.git`
+1. **Clone the forked repo** — `git clone https://github.com/GentechLabs/pay-skills.git`
 2. **Make changes in `providers/gentech/*/PAY.md`**
 3. **Run the static check** — `cd pay-skills && npx pay catalog check` (or verify with `npx pay catalog check --strict`)
 4. **Commit with descriptive message** covering which files changed and why

@@ -1,7 +1,7 @@
 # scroll-world — Band Promo Pages with Higgsfield
 
 **Source:** oso95/scroll-world (3.2k ⭐, MIT) — https://github.com/oso95/scroll-world
-**Fork:** ProtoJay4789/scroll-world
+**Fork:** GentechLabs/scroll-world
 
 ## What it does
 

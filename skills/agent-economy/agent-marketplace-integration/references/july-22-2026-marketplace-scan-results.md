@@ -2,7 +2,7 @@
 
 ## Pay-Skills Catalog (solana-foundation/pay-skills)
 - **Status:** ❌ Not listed
-- **PR #190 (Jul 17):** Never merged — `providers/ProtoJay4789` doesn't exist on `main`
+- **PR #190 (Jul 17):** Never merged — `providers/GentechLabs` doesn't exist on `main`
 - **Action:** Re-fork and re-submit provider files
 - **Catalog size:** 70 providers live
 

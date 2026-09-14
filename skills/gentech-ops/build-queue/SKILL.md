@@ -518,8 +518,8 @@ for path in stale_files:
 - Old markdown queue files in vault subfolders (`00-HQ/`, `10-Labs/`)
 - **Stale JSON queue files** in `scripts/` — `gentech-queue-remote.json` was a stale duplicate from Jul 11 that survived the first consolidation (`find` filter only caught `build-queue*` / `build_queue*`, not `gentech-queue-*`). **Deleted Jul 15, 2026.**
   - The `find` command should now be: `find /root -name "*queue*" -not -path "*/node_modules/*" 2>/dev/null | sort` to catch all queue-related files regardless of naming convention.
-- Their copies in GitHub Pages repos (`ProtoJay4789.github.io/`)
-- Their copies in git clones (`repos/ProtoJay4789.github.io/`)
+- Their copies in GitHub Pages repos (`gentechlabs.github.io/`)
+- Their copies in git clones (`repos/gentechlabs.github.io/`)
 - Portfolio copies (`portfolio/10-Labs/`)
 
 The JSON queue at `scripts/build_queue.json` is the ONLY file that should be edited. All other copies get deprecation-stamped.

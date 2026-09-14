@@ -123,7 +123,7 @@ After deploying a hub update, verify GitHub Pages actually rebuilt:
 ```
 GH_TOKEN=$(gh auth token 2>/dev/null)
 curl -s -H "Authorization: token $GH_TOKEN" \
-  "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/actions/runs?per_page=3&event=push" | \
+  "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/actions/runs?per_page=3&event=push" | \
   python3 -c "
 import sys, json
 d = json.load(sys.stdin)
@@ -181,7 +181,7 @@ curl -s "https://raw.githubusercontent.com/.../defi-data.json" | python3 -m json
 
 **Verification after fix:**
 ```bash
-curl -s "https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/main/DeFi/defi-data.json" | python3 -m json.tool > /dev/null && echo "VALID" || echo "CORRUPTED"
+curl -s "https://raw.githubusercontent.com/GentechLabs/gentechlabs.github.io/main/DeFi/defi-data.json" | python3 -m json.tool > /dev/null && echo "VALID" || echo "CORRUPTED"
 ```
 
 **Prevention:** Add a post-rebase conflict marker scan to the sync script's push pipeline (see `cron-truth-layer` Anti-Pattern 9 — Sequence Vulnerability). The `sanitize_json_text()` function auto-strips markers before they reach the remote.
@@ -305,7 +305,7 @@ vault source → Pages repo (github) → [NOT SERVING for gentechlabs.net]
 ```bash
 # Compare webroot vs repo copy directly:
 diff <(python3 -c "import json; print(json.load(open('/var/www/gentechlabs/defi-data.json'))['lastUpdated'])") \
-     <(python3 -c "import json; print(json.load(open('/root/ProtoJay4789.github.io/DeFi/defi-data.json'))['lastUpdated'])")
+     <(python3 -c "import json; print(json.load(open('/root/repos/gentechlabs.github.io/DeFi/defi-data.json'))['lastUpdated'])")
 # Also confirm the webroot is NOT a git checkout:
 cd /var/www/gentechlabs && git rev-parse --is-inside-work-tree 2>/dev/null || echo "plain webroot — push does NOT update it"
 ```
@@ -391,7 +391,7 @@ def verify_live():
 **Root cause:** Pages uses CDN caching (2-5 min typical) + GitHub Actions build queue.
 
 **Diagnosis:**
-1. Check blob content (definitive, no cache): `curl -s -H "Authorization: token $GH_TOKEN" "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/git/blobs/<SHA>" | python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['content']).decode()[:200])"`
+1. Check blob content (definitive, no cache): `curl -s -H "Authorization: token $GH_TOKEN" "https://api.github.com/repos/GentechLabs/gentechlabs.github.io/git/blobs/<SHA>" | python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['content']).decode()[:200])"`
 2. Check Actions build status (see Step 7 above)
 3. If build completed successfully but Pages still stale → CDN propagation (wait 2-5 min)
 

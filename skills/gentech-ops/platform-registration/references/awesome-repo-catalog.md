@@ -84,7 +84,7 @@ When evaluating an awesome repo, the checklist is:
 3. **Existing presence:** Are we already listed? Check `grep -i "gentech\|gentechlabs\|ProtoJay" README.md`
 4. **Contributing guidelines:** Read CONTRIBUTING.md — do we meet the format/quality requirements?
 5. **Service readiness:** Is our matching service live and functional? (verify via health endpoint / curl)
-6. **PR already exists?** Check `gh pr list --repo owner/repo --head ProtoJay4789:*`
+6. **PR already exists?** Check `gh pr list --repo owner/repo --head GentechLabs:*`
 
 **If all checks pass → Fork, edit, PR, log to pr-portfolio.md**
 **If any check fails → Add to this catalog with the blocking reason**

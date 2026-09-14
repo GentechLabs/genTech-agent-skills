@@ -25,7 +25,7 @@ Jordan's positioning: **smart contracts + security > frontend**. Frontend is com
 - **Cyfrin Updraft** (Patrick Collins / CyfrinAudits) — Solidity course + Security course. Free, self-paced. Completion certificates carry real weight in web3 hiring.
 - **Encode Club bootcamps** — Solana bootcamp + Arc bootcamp. Free, self-paced. Completion certificates.
 - **CompTIA A+** — Already earned. cybersecurity foundation.
-- **Portfolio** — 20 projects, live demos, GitHub Actions deploy (ProtoJay4789.github.io). Primary credential.
+- **Portfolio** — 20 projects, live demos, GitHub Actions deploy (gentechlabs.github.io). Primary credential.
 
 **Positioning narrative:** "I'm a smart contract developer with security audit training, production-grade portfolio projects, and verified credentials from top web3 educators. I build the infrastructure this role would use."
 
@@ -87,7 +87,7 @@ For crypto-native hiring, frame the candidate as:
 # Jordan — AI Agent Builder & Smart Contract Developer
 
 Portfolio: protojay4789.github.io
-GitHub: github.com/ProtoJay4789
+GitHub: github.com/GentechLabs
 Focus: AI agents × blockchain × DeFi
 
 ## What I Build
