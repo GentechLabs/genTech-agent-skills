@@ -51,7 +51,7 @@ Response shape: `result.data[0].url` (some versions `result.url`). Video returns
 
 ## Wallet balance via direct Base RPC (no MCP wallet tool)
 Derive the address from the key in `~/.blockrun/.session` (both `/root/.blockrun/.session`
-and `/root/.hermes/profiles/gentech/home/.blockrun/.session` must match), then query USDC:
+and `${PROFILE_DIR}/home/.blockrun/.session` must match), then query USDC:
 ```bash
 ADDR=$(python3 -c "from eth_account import Account; print(Account.from_key(open('/root/.blockrun/.session').read().strip()).address)")
 # USDC on Base = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, decimals 6

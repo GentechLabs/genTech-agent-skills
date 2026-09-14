@@ -22,7 +22,7 @@ Onboard a new collaborator across all connected platforms in one step. When some
 ## Usage
 
 ```bash
-cd /root/.hermes/profiles/gentech/scripts && python3 onboard.py \
+cd ${PROFILE_DIR}/scripts && python3 onboard.py \
   --name "{name}" \
   --username "@Celinealison92" \
   --telegram_id 7504399137 \

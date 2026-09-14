@@ -25,7 +25,7 @@ mcp_servers:
     args: ["--transport", "stdio"]
     env:
       OPENSPACE_WORKSPACE: /root/OpenSpace
-      OPENSPACE_HOST_SKILL_DIRS: /root/.hermes/profiles/gentech/skills
+      OPENSPACE_HOST_SKILL_DIRS: ${PROFILE_DIR}/skills
       OPENSPACE_CLOUD_MODE: "off"       # local-only; set "live" for cloud
     timeout: 600
     connect_timeout: 30

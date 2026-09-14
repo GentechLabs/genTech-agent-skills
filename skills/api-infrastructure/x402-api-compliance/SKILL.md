@@ -664,7 +664,7 @@ auth is fine, payload shape is wrong. Never guess the envelope — monkeypatch `
 in Node and print the SDK's actual `/verify` body, then replicate it.
 
 **Pitfall — the running gateway holds STALE CDP credentials (a 401 that survives a code fix).**
-The gateway's systemd unit loads env from a file (`EnvironmentFile=/root/.hermes/profiles/gentech/.env`),
+The gateway's systemd unit loads env from a file (`EnvironmentFile=${PROFILE_DIR}/.env`),
 but if the service was started BEFORE the CDP key was rotated, the **running process keeps the old
 key ID + secret in its own `/proc/<pid>/environ`** — different from what the `.env` file now holds.
 The CDP facilitator rejects the stale JWT → `401 Unauthorized` on every `/verify`, and the self-settle
@@ -673,7 +673,7 @@ fix is to **restart the service** so it re-reads the current `.env`:
 ```bash
 # Compare the running process's creds against the .env file
 cat /proc/<pid>/environ | tr '\0' '\n' | grep -E "^CDP_API_KEY_ID=|^CDP_API_KEY_SECRET="
-grep -E "^CDP_API_KEY_ID=|^CDP_API_KEY_SECRET=" /root/.hermes/profiles/gentech/.env
+grep -E "^CDP_API_KEY_ID=|^CDP_API_KEY_SECRET=" ${PROFILE_DIR}/.env
 # If they differ, the process is stale — restart to load current creds
 systemctl restart x402-api
 # Verify the new pid picked up the correct keys, then re-run the self-settle
@@ -1218,7 +1218,7 @@ See `references/x402-pr-methodology.md` for the real PRs submitted and the submi
 - **Reference (Syra)** — `api.syraa.fun/.well-known/x402` — gold standard implementation
 - **CDP Facilitator** — `https://api.cdp.coinbase.com/platform/v2/x402` — production facilitator
 - **x402.org Facilitator** — `https://www.x402.org/facilitator` — testnet facilitator
-- **Platform Directory** — `/root/vaults/gentech/references/platform-directory.md` — x402 ecosystem map: tracked repos, compliance statuses, PR states, tiers, and non-actionable categories. Updated by the Compliance Scout cron. Check before scanning new repos.
+- **Platform Directory** — `${VAULT_DIR}/references/platform-directory.md` — x402 ecosystem map: tracked repos, compliance statuses, PR states, tiers, and non-actionable categories. Updated by the Compliance Scout cron. Check before scanning new repos.
 
 ## Cloudflare WAF bypass for discovery endpoints
 

@@ -124,7 +124,7 @@ Finding: [What changed or didn't change]
 
 ### 7. Save to Vault
 
-- Path: `/root/vaults/gentech/03-Strategies/PROTOCOL-SECURITY-monitor.md`
+- Path: `${VAULT_DIR}/03-Strategies/PROTOCOL-SECURITY-monitor.md`
 - Append with date header; maintain running log
 - Use `mkdir -p` to ensure directory exists
 
@@ -150,4 +150,4 @@ Finding: [What changed or didn't change]
 
 **Key finding:** LayerZero Labs (as a DVN operator) blocked 1/1 configs, but the protocol still allows them. No governance proposal detected. Risk: UNCHANGED.
 
-**Saved to:** `/root/vaults/gentech/03-Strategies/layerzero-dvn-monitor.md`
+**Saved to:** `${VAULT_DIR}/03-Strategies/layerzero-dvn-monitor.md`

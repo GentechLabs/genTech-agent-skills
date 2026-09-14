@@ -118,7 +118,7 @@ print("✅ Config file synced")
 
 ```bash
 # Test monitor output
-python3 /root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py
+python3 ${PROFILE_DIR}/scripts/lp-monitor-v2.py
 
 # Expected: Status should show IN RANGE if price is within new range
 ```
@@ -138,7 +138,7 @@ python3 /root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py
 
 **Usage:**
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/lp-data-sync.py
+python3 ${PROFILE_DIR}/scripts/lp-data-sync.py
 ```
 
 **Features:**

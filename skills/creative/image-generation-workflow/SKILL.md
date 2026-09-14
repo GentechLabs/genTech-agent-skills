@@ -50,7 +50,7 @@ triggers:
    **Fallback — quick one-off host from image_cache** (when nginx root isn't wired up):
    ```bash
    # Hermes-managed background process (NOT nohup — Hermes rejects shell-level wrappers):
-   # terminal(background=true): cd /root/.hermes/profiles/gentech/image_cache && python3 -m http.server <fresh-high-port> --bind 0.0.0.0
+   # terminal(background=true): cd ${PROFILE_DIR}/image_cache && python3 -m http.server <fresh-high-port> --bind 0.0.0.0
    ```
    Pick a fresh high port (e.g. 879x) — don't assume a port is free. Verify BOTH locally and from the public IP before generating:
    ```bash
@@ -85,7 +85,7 @@ When the user asks to edit art to feature an established character (HIKARI, KAGE
 1. **Read the character sheet + visual bible** in the repo:
    - `/root/ProtoJay4789.github.io/09-Green Room/HIKARI Character Sheet.md`
    - `/root/ProtoJay4789.github.io/09-Green Room/HIKARI Complete Visual Bible.md`
-   - (KAGE: `/root/vaults/gentech/music/vanito/kage-character-sheet.png`)
+   - (KAGE: `${VAULT_DIR}/music/vanito/kage-character-sheet.png`)
    The visual bible lists LOCKED reference image URLs hosted at `https://vanito.gentechlabs.net/characters/<file>.png` (e.g. `hikari-sakura-outfit-sheet.png`, `hikari-hairstyle-reference.png`).
 2. **Pass the locked reference URLs as `reference_image_urls`** AND restate the exact canonical appearance in the prompt text (hair length/color/tips, bangs, outfit, accessories). The model reinterprets references — it does not copy them, so the prompt must carry the full detail.
 3. **Confirm the outfit variant** — HIKARI has TWO canonical looks:
@@ -130,7 +130,7 @@ When the user asks to edit an existing image ("keep the picture the same, just c
 
 **Check before editing:**
 ```bash
-grep -A2 '^image_gen:' /root/.hermes/profiles/gentech/config.yaml
+grep -A2 '^image_gen:' ${PROFILE_DIR}/config.yaml
 # if 'model:' is missing → it's running Klein 9B (reinterprets scenes)
 ```
 

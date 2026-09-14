@@ -6,7 +6,7 @@ Use this reference when `00-BRIEFING.md` file is missing and wake-up protocol fa
 ## Quick Creation Command
 ```bash
 # Create the briefing file in the correct location
-cat > /root/vaults/gentech/00-BRIEFING.md << 'EOF'
+cat > ${VAULT_DIR}/00-BRIEFING.md << 'EOF'
 ---
 name: GenTech BRIEFING
 version: 2.0.0

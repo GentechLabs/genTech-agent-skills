@@ -31,4 +31,4 @@
 
 ## Source
 - GitHub: https://github.com/travala/travel-mcp
-- Spec: /root/vaults/gentech/Strategies/travala-mcp-integration-spec.md
+- Spec: ${VAULT_DIR}/Strategies/travala-mcp-integration-spec.md

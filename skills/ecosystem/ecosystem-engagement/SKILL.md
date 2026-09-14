@@ -255,7 +255,7 @@ After all pending repos are checked, the rotation resets and starts over. This p
 
 ## PR Portfolio Verification
 
-When maintaining a PR portfolio (e.g. `/root/vaults/gentech/10-Labs/pr-portfolio.md`), entries can become aspirational — PRs that were *intended* to be created but never actually submitted due to rate limits, fork failures, or other issues. Always verify before reporting.
+When maintaining a PR portfolio (e.g. `${VAULT_DIR}/10-Labs/pr-portfolio.md`), entries can become aspirational — PRs that were *intended* to be created but never actually submitted due to rate limits, fork failures, or other issues. Always verify before reporting.
 
 ### PR Existence Verification
 

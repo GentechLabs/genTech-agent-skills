@@ -532,7 +532,7 @@ renderCharacters();
    git push
 
 7. SAVE LYRICS — Also save transcribed lyrics to vault
-   /root/vaults/gentech/Travels/music/<person>-<kebabed-title>.txt
+   ${VAULT_DIR}/Travels/music/<person>-<kebabed-title>.txt
 ```
 
 **Key gotchas:**

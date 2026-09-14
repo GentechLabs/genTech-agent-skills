@@ -18,7 +18,7 @@ When you update the primary model (e.g., `hermes config set model deepseek-v4-fl
 hermes config show | grep "Auxiliary Models" -A 10
 
 # See what's actually in the config
-sed -n '/^auxiliary:/,/^[a-z]/p' /root/.hermes/profiles/gentech/config.yaml | grep -E "(provider|model):" | head -20
+sed -n '/^auxiliary:/,/^[a-z]/p' ${PROFILE_DIR}/config.yaml | grep -E "(provider|model):" | head -20
 ```
 
 ## Update Pattern
@@ -77,7 +77,7 @@ for model in web_extract compression skills_hub approval mcp triage_specifier cu
 done
 
 echo "Done. Verifying..."
-sed -n '/^auxiliary:/,/^[a-z]/p' /root/.hermes/profiles/gentech/config.yaml | grep -E "(provider|model):" | head -20
+sed -n '/^auxiliary:/,/^[a-z]/p' ${PROFILE_DIR}/config.yaml | grep -E "(provider|model):" | head -20
 ```
 
 ## Verification
@@ -86,7 +86,7 @@ After updating, verify all auxiliary models are consistent:
 
 ```bash
 # Check the auxiliary section structure
-sed -n '/^auxiliary:/,/^[a-z]/p' /root/.hermes/profiles/gentech/config.yaml | head -60
+sed -n '/^auxiliary:/,/^[a-z]/p' ${PROFILE_DIR}/config.yaml | head -60
 ```
 
 Expected output should show all auxiliary models using the same provider:
@@ -112,13 +112,13 @@ If `hermes config set` commands fail to update the auxiliary section (as seen in
 
 1. Find the auxiliary section start line:
 ```bash
-grep -n "^auxiliary:" /root/.hermes/profiles/gentech/config.yaml
+grep -n "^auxiliary:" ${PROFILE_DIR}/config.yaml
 ```
 
 2. Find the next top-level section after auxiliary:
 ```bash
 # Assuming auxiliary starts at line 201
-sed -n '202,$p' /root/.hermes/profiles/gentech/config.yaml | grep -n "^[a-z]" | head -1
+sed -n '202,$p' ${PROFILE_DIR}/config.yaml | grep -n "^[a-z]" | head -1
 ```
 
 3. Reassemble: lines 1-N (before auxiliary) + new auxiliary block + lines M-EOF (after auxiliary)

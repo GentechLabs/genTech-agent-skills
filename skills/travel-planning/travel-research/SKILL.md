@@ -197,7 +197,7 @@ Jordan: Solo trip, CVG → Angeles City (8 days) + Cambodia (4 days), Aug/Sep 20
 ### File Structure
 
 ```
-/root/vaults/gentech/HQ/01-Travel/
+${VAULT_DIR}/HQ/01-Travel/
 ├── Philippines/
 │   ├── 2026-Solo-Trip-Angeles-City-Cambodia.md (full plan)
 │   └── 2026-Birthday-Trip-Pampanga.md (updated status)

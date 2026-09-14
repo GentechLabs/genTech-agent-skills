@@ -40,8 +40,8 @@ Each script could potentially overwrite data from other scripts, creating a **ra
 
 The monitor script exists in **two locations**:
 
-1. `/root/vaults/gentech/Strategies/scripts/defi-lp-consolidated.py` (vault)
-2. `/root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py` (profile)
+1. `${VAULT_DIR}/Strategies/scripts/defi-lp-consolidated.py` (vault)
+2. `${PROFILE_DIR}/scripts/defi-lp-consolidated.py` (profile)
 
 The **cron job runs from the profile path**. If you fix the vault version but not the profile version, the fix never takes effect.
 
@@ -153,7 +153,7 @@ After ANY manual dashboard fix:
 
 ```bash
 # Monitor for regression
-python3 /root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py
+python3 ${PROFILE_DIR}/scripts/defi-lp-consolidated.py
 # Check output: Shape should remain BID-ASK
 ```
 

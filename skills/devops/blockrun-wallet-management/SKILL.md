@@ -26,7 +26,7 @@ The wallet private key is stored at `~/.blockrun/.session` (a 66-char hex string
 
 **⚠️ Dual-session-file pitfall:** There can be TWO `.session` files:
 - `/root/.blockrun/.session` — the original, created on first BlockRun use
-- `/root/.hermes/profiles/gentech/home/.blockrun/.session` — a profile-specific copy
+- `${PROFILE_DIR}/home/.blockrun/.session` — a profile-specific copy
 
 The MCP server reads the **profile-specific copy** (`~/.hermes/profiles/gentech/home/.blockrun/.session`). If this file was created fresh (e.g. after a Hermes update or MCP server restart), it will have a **different private key** than the original, resulting in a different wallet address.
 

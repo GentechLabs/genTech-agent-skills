@@ -5,7 +5,7 @@
 
 ## Usage
 ```bash
-python3 /root/vaults/gentech/10-Labs/deal-tracker/weekly_report.py
+python3 ${VAULT_DIR}/10-Labs/deal-tracker/weekly_report.py
 ```
 
 ## Output Format

@@ -41,4 +41,4 @@ The market has two distinct regimes. Each demands a different liquidity shape. T
 
 ## Vault Strategy Doc
 
-Full spec: `/root/vaults/gentech/03-Strategies/aae-regime-switching.md`
+Full spec: `${VAULT_DIR}/03-Strategies/aae-regime-switching.md`

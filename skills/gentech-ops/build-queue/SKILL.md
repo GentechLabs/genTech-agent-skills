@@ -264,7 +264,7 @@ cd /path/to/your/vault && python3 scripts/run_build_queue.py
 
 ## Queue Format (`build_queue.json`)
 
-The canonical queue lives at `/root/vaults/gentech/scripts/build_queue.json`.
+The canonical queue lives at `${VAULT_DIR}/scripts/build_queue.json`.
 See **Queue Format v2** above for the current format and fields.
 
 ### Cost Field
@@ -503,7 +503,7 @@ Stamp stale markdown copies with a redirect header so no agent or human reads th
 > ⚠️ **DEPRECATED — Build Queue moved to JSON**
 > The canonical build queue is now at `scripts/build_queue.json`.
 > All `N` markdown copies are stale — do not edit or reference this file.
-> Run `python3 /root/.hermes/profiles/gentech/scripts/build_queue_tick.py` to regenerate the Forge handoff.
+> Run `python3 ${PROFILE_DIR}/scripts/build_queue_tick.py` to regenerate the Forge handoff.
 
 Scripted application:
 ```python
@@ -618,21 +618,21 @@ PHASE 3: REPORT
    work a group already marked done. This is the "we're cooking with V4" loop.
    ```
    # 1a. Read every group's completion returns
-   search_files("*.md", path="/root/vaults/gentech/01-HANDOFFS/*-to-gentech/", target="files")
-   read_file("/root/vaults/gentech/01-HANDOFFS/labs-completions.md")
-   read_file("/root/vaults/gentech/01-HANDOFFS/treasury-completions.md")
-   read_file("/root/vaults/gentech/01-HANDOFFS/forge-completions.md")
-   read_file("/root/vaults/gentech/01-HANDOFFS/entertainment-completions.md")
-   read_file("/root/vaults/gentech/01-HANDOFFS/hq-completions.md")
+   search_files("*.md", path="${VAULT_DIR}/01-HANDOFFS/*-to-gentech/", target="files")
+   read_file("${VAULT_DIR}/01-HANDOFFS/labs-completions.md")
+   read_file("${VAULT_DIR}/01-HANDOFFS/treasury-completions.md")
+   read_file("${VAULT_DIR}/01-HANDOFFS/forge-completions.md")
+   read_file("${VAULT_DIR}/01-HANDOFFS/entertainment-completions.md")
+   read_file("${VAULT_DIR}/01-HANDOFFS/hq-completions.md")
    # 1b. Extract the #<id> shipped tokens and mark those queue items shipped/skip them
    ```
    Any item ID found in a `*-completions.md` file (or `<lane>-to-gentech/` return notes) is
    DONE — set its queue status to `shipped`, note the lane + date, and skip it. Run the
    `group-returns-scanner.py` first to get this as structured JSON:
    ```
-   python3 /root/.hermes/profiles/gentech/scripts/group-returns-scanner.py
+   python3 ${PROFILE_DIR}/scripts/group-returns-scanner.py
    ```
-2. **Load queue** — Read `/root/vaults/gentech/scripts/build_queue.json`
+2. **Load queue** — Read `${VAULT_DIR}/scripts/build_queue.json`
 3. **Find first pending** — Items with `"status": "pending"`, sorted by `priority` ascending
 4. **Check item** — If `assigned_to` is not you (and not `auto`), skip. If `needs_jordan` is `true`, flag as Jordan action.
 5. **Develop** — Phase 1 on cheap model

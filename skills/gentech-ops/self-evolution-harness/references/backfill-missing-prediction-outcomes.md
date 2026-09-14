@@ -16,26 +16,26 @@ Each prediction in `predictions.md` has a `METRIC` field — a shell command tha
 
 **Build queue changes:**
 ```bash
-jq '.items | length' /root/vaults/gentech/scripts/build_queue.json
-jq '.summary.blocked' /root/vaults/gentech/scripts/build_queue.json
+jq '.items | length' ${VAULT_DIR}/scripts/build_queue.json
+jq '.summary.blocked' ${VAULT_DIR}/scripts/build_queue.json
 ```
 
 **Credential health probes:**
 ```bash
-grep -c '^\[2026-07-26' /root/.hermes/profiles/gentech/harness/facts/credential-health.log
-grep 'pay=' /root/.hermes/profiles/gentech/harness/facts/credential-health.log | tail -1
-grep 'q402=' /root/.hermes/profiles/gentech/harness/facts/credential-health.log | tail -1
+grep -c '^\[2026-07-26' ${PROFILE_DIR}/harness/facts/credential-health.log
+grep 'pay=' ${PROFILE_DIR}/harness/facts/credential-health.log | tail -1
+grep 'q402=' ${PROFILE_DIR}/harness/facts/credential-health.log | tail -1
 ```
 
 **Script changes:**
 ```bash
-grep -c 'hermes-harness' /root/.hermes/profiles/gentech/harness/scripts/*.sh
-bash /root/.hermes/profiles/gentech/harness/scripts/credential-health.sh 2>&1 | grep -q 'FATAL'
+grep -c 'hermes-harness' ${PROFILE_DIR}/harness/scripts/*.sh
+bash ${PROFILE_DIR}/harness/scripts/credential-health.sh 2>&1 | grep -q 'FATAL'
 ```
 
 **Git state:**
 ```bash
-cd /root/.hermes/profiles/gentech/harness && git log --oneline | head -3
+cd ${PROFILE_DIR}/harness && git log --oneline | head -3
 ```
 
 ## Outcome Format

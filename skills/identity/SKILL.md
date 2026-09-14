@@ -42,7 +42,7 @@ What We Did Today ✅
 - On-chain script updated
 
 The Only Thing Left (when you're at laptop):
-cd /root/vaults/gentech/scripts
+cd ${VAULT_DIR}/scripts
 python3 update_erc8004_metadata.py
 
 That's it.

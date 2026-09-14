@@ -50,5 +50,5 @@
 
 ## API Key Location
 - Env var: `ELEVENLABS_API_KEY`
-- Vault: `/root/vaults/gentech/.env` and `secrets.env`
-- **Loading:** `export $(grep ELEVENLABS_API_KEY /root/.hermes/profiles/gentech/.env | xargs)`
+- Vault: `${VAULT_DIR}/.env` and `secrets.env`
+- **Loading:** `export $(grep ELEVENLABS_API_KEY ${PROFILE_DIR}/.env | xargs)`

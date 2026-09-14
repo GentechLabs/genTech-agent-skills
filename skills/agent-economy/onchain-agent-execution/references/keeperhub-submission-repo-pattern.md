@@ -9,7 +9,7 @@ needs TWO deliverables beyond the working transaction:
 
 ## Public repo — critical gap
 
-The submission code often lives only inside the private vault git (`/root/vaults/gentech`).
+The submission code often lives only inside the private vault git (`${VAULT_DIR}`).
 Judges can't see it. Create a clean **public** repo and push the submission there.
 
 **Use the Gentech-Labs org, not Jordan's flagged personal account** (ProtoJay4789 is

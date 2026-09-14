@@ -155,7 +155,7 @@ Agents sell "range migration as a service" — not just monitoring, but autonomo
 
 ## Reference Implementation
 
-**Signal layer code:** `/root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py`
+**Signal layer code:** `${PROFILE_DIR}/scripts/lp-monitor-v2.py`
 - `check_debounce()` function: Alert escalation + silence rules
 - `suggest_new_range()` function: Shape/range optimization recommendations
 
@@ -164,4 +164,4 @@ Agents sell "range migration as a service" — not just monitoring, but autonomo
 python3 /tmp/test_lp_alert.py
 ```
 
-**Future API location:** `/root/.hermes/profiles/gentech/scripts/defi-yield-api.py`
+**Future API location:** `${PROFILE_DIR}/scripts/defi-yield-api.py`

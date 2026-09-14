@@ -1,7 +1,7 @@
 # CMC Watchlist Management
 
 ## Script Location
-`/root/.hermes/profiles/gentech/scripts/cmc-watchlist.py`
+`${PROFILE_DIR}/scripts/cmc-watchlist.py`
 
 Global cron copy: `/root/.hermes/scripts/cmc-watchlist.py`
 
@@ -48,12 +48,12 @@ CG_IDS = {
 
 ## Data Sources
 - **Prices**: CMC API (primary), CoinGecko (fallback)
-- **API Key**: Loaded from `/root/.hermes/scripts/cmc_config.json` (primary). Falls back to `$CMC_API_KEY` environment variable (stored in both `/root/.hermes/profiles/gentech/.env` and `/root/.hermes/.env`).
+- **API Key**: Loaded from `/root/.hermes/scripts/cmc_config.json` (primary). Falls back to `$CMC_API_KEY` environment variable (stored in both `${PROFILE_DIR}/.env` and `/root/.hermes/.env`).
 
 ### API Key Setup
 When Jordan provides a new CMC API key:
 1. Write to `/root/.hermes/scripts/cmc_config.json` in format `{"coinmarketcap_api_key": "xxx"}`
-2. Append to `/root/.hermes/profiles/gentech/.env` as `CMC_API_KEY=xxx`
+2. Append to `${PROFILE_DIR}/.env` as `CMC_API_KEY=xxx`
 3. Append to `/root/.hermes/.env` as `CMC_API_KEY=xxx`
 4. Verify with a quick CMC API call: fetch quotes for 1-2 known coins and check prices look right
 

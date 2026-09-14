@@ -11,7 +11,7 @@ The entry price field conflict has been successfully fixed:
    - ✅ Contains single `entry_price: 6.711891576895444`
    - ❌ No longer contains `entry_avax_price` field (removed during fix)
 
-2. **`/root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py`**
+2. **`${PROFILE_DIR}/scripts/defi-lp-consolidated.py`**
    - ✅ Updated to prioritize `entry_price` field with fallback
    - Fixed 2 instances of field reading logic
 
@@ -23,7 +23,7 @@ The entry price field conflict has been successfully fixed:
 
 ```bash
 # Test the validator script (if available)
-python3 /root/.hermes/profiles/gentech/skills/defi/defi/scripts/entry-price-field-validator.py
+python3 ${PROFILE_DIR}/skills/defi/defi/scripts/entry-price-field-validator.py
 
 # Verify IL calculation
 python3 -c "

@@ -12,7 +12,7 @@ Real-world analysis of Git conflicts in Gentech's automated portfolio and gaming
 
 ### 1. Gaming Hub Sync (ID: 1e8d33a03513)
 - **Schedule:** `0 */6 * * *` (Every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC)
-- **Script:** `/root/.hermes/profiles/gentech/scripts/gaming-hub-sync.py`
+- **Script:** `${PROFILE_DIR}/scripts/gaming-hub-sync.py`
 - **Function:** Syncs POE2 build data from vault to GitHub Pages
 - **Files Modified:** `Gaming/*.json` (9 files)
 - **Status:** Enabled, 42 completions
@@ -20,7 +20,7 @@ Real-world analysis of Git conflicts in Gentech's automated portfolio and gaming
 
 ### 2. POE2 Build Health Sync (ID: 02461aa0a77b)
 - **Schedule:** `0 9 * * *` (Daily at 09:00 UTC)
-- **Script:** `/root/.hermes/profiles/gentech/scripts/gaming-hub-sync.py` (**SAME SCRIPT!**)
+- **Script:** `${PROFILE_DIR}/scripts/gaming-hub-sync.py` (**SAME SCRIPT!**)
 - **Function:** Monitors Path of Exile 2 patches and syncs with gaming hub
 - **Files Modified:** `Gaming/*.json` (same files as #1)
 - **Status:** Enabled, 14 completions
@@ -28,7 +28,7 @@ Real-world analysis of Git conflicts in Gentech's automated portfolio and gaming
 
 ### 3. Hub Nightly Sync (ID: d8d1c3adbbb4)
 - **Schedule:** `0 20 * * *` (Daily at 20:00 UTC)
-- **Script:** `/root/.hermes/profiles/gentech/scripts/hub-sync-nightly.py`
+- **Script:** `${PROFILE_DIR}/scripts/hub-sync-nightly.py`
 - **Function:** Syncs on-chain DeFi data to JSON files
 - **Files Modified:** 
   - `DeFi/defi-data.json`
@@ -226,10 +226,10 @@ def pre_sync_pull():
 
 ## Files to Modify
 
-1. `/root/.hermes/profiles/gentech/cron/jobs.json` - Reschedule jobs
-2. `/root/.hermes/profiles/gentech/scripts/gaming-hub-sync.py` - Add locking + retry
-3. `/root/.hermes/profiles/gentech/scripts/hub-sync-nightly.py` - Add locking + retry
-4. `/root/.hermes/profiles/gentech/scripts/portfolio_sync.py` - Add backoff
+1. `${PROFILE_DIR}/cron/jobs.json` - Reschedule jobs
+2. `${PROFILE_DIR}/scripts/gaming-hub-sync.py` - Add locking + retry
+3. `${PROFILE_DIR}/scripts/hub-sync-nightly.py` - Add locking + retry
+4. `${PROFILE_DIR}/scripts/portfolio_sync.py` - Add backoff
 5. `/root/my-music/vanito-music-sync.py` - Add locking + retry
 
 ## Expected Impact
@@ -266,7 +266,7 @@ def pre_sync_pull():
 
 ```bash
 # List all cron jobs that write to this repo
-cd /root/.hermes/profiles/gentech/cron
+cd ${PROFILE_DIR}/cron
 jq -r '.jobs[] | "\(.id) | \(.name) | \(.schedule.display) | \(.script)"' jobs.json | grep -i "hub\|portfolio\|sync\|music"
 
 # Check git log for conflict patterns
@@ -278,8 +278,8 @@ git log --all --pretty=format:"%h|%ad|%an|%s" --date=iso | \
   awk 'NR>1 {diff=$2-prev; if(diff<60) print prev_time" → "$2" | "$3" | "$4} {prev=$2; prev_time=$2}'
 
 # Check for duplicate scripts
-jq -r '.jobs[] | .script' /root/.hermes/profiles/gentech/cron/jobs.json | sort | uniq -d
+jq -r '.jobs[] | .script' ${PROFILE_DIR}/cron/jobs.json | sort | uniq -d
 
 # Visualize schedule overlaps
-jq -r '.jobs[] | "\(.schedule.display) | \(.name)"' /root/.hermes/profiles/gentech/cron/jobs.json | sort
+jq -r '.jobs[] | "\(.schedule.display) | \(.name)"' ${PROFILE_DIR}/cron/jobs.json | sort
 ```

@@ -57,7 +57,7 @@ Every 30 minutes the tick script generates two documents in `Gentech/handoffs/ge
 
 ### Workflow
 
-1. Read `/root/vaults/gentech/scripts/build_queue.json`
+1. Read `${VAULT_DIR}/scripts/build_queue.json`
 2. Focus on items with `assigned_to: "gentech"` and `status` not in `["shipped", "blocked", "cancelled"]`
 3. Skip items `assigned_to: "forge"` and `assigned_to: "jordan"`
 4. Per item: **develop → verify → ship** (see `build-queue-processor` skill)

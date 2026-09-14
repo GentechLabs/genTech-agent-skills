@@ -171,7 +171,7 @@ curl -s "https://raw.githubusercontent.com/.../defi-data.json" | python3 -m json
 ```
 1. git fetch origin
 2. git reset --hard origin/main            # Match remote exactly
-3. cp /root/vaults/gentech/defi-data.json DeFi/defi-data.json  # Vault is clean
+3. cp ${VAULT_DIR}/defi-data.json DeFi/defi-data.json  # Vault is clean
 4. python3 -m json.tool DeFi/defi-data.json  # Verify valid
 5. git commit -m "fix: Repair defi-data.json (N merge conflict markers)"
 6. git push origin main
@@ -531,14 +531,14 @@ echo "Hub Audit Report - $(date)" > /tmp/hub-audit-report.md
 # Run all checks on VPS hub files
 for hub in hub.html jordan.html vanito.html; do
     echo "Checking $hub" >> /tmp/hub-audit-report.md
-    bash /root/.hermes/profiles/gentech/skills/gentech-hub/hub-audit/scripts/check-hub-tags.sh "/var/www/gentechlabs/$hub" >> /tmp/hub-audit-report.md 2>/dev/null || echo "Tag check skipped" >> /tmp/hub-audit-report.md
-    bash /root/.hermes/profiles/gentech/skills/gentech-hub/hub-audit/scripts/check-hub-data.sh "/var/www/gentechlabs/$hub" >> /tmp/hub-audit-report.md 2>/dev/null || echo "Data check skipped" >> /tmp/hub-audit-report.md
+    bash ${PROFILE_DIR}/skills/gentech-hub/hub-audit/scripts/check-hub-tags.sh "/var/www/gentechlabs/$hub" >> /tmp/hub-audit-report.md 2>/dev/null || echo "Tag check skipped" >> /tmp/hub-audit-report.md
+    bash ${PROFILE_DIR}/skills/gentech-hub/hub-audit/scripts/check-hub-data.sh "/var/www/gentechlabs/$hub" >> /tmp/hub-audit-report.md 2>/dev/null || echo "Data check skipped" >> /tmp/hub-audit-report.md
 done
 
 # Check data file permissions
 ls -la /var/www/gentechlabs/hub-vanita-data.json >> /tmp/hub-audit-report.md 2>/dev/null || echo "hub-vanita-data.json: MISSING" >> /tmp/hub-audit-report.md
 
-mv /tmp/hub-audit-report.md /root/vaults/gentech/11-Mess Hall/hub-audit-$(date +%Y%m%d).md
+mv /tmp/hub-audit-report.md ${VAULT_DIR}/11-Mess Hall/hub-audit-$(date +%Y%m%d).md
 ```
 
 ## Linked Files

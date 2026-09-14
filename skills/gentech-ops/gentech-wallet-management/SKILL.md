@@ -54,7 +54,7 @@ console.log('ADDRESS: ' + getOrCreateWallet().address);
 curl -s http://127.0.0.1:8402/health | python3 -c "import sys,json; print(json.load(sys.stdin)['wallet'])"
 ```
 
-This reads the key from `/root/.hermes/profiles/gentech/home/.openclaw/blockrun/wallet.key`.
+This reads the key from `${PROFILE_DIR}/home/.openclaw/blockrun/wallet.key`.
 
 ## Balance Check (Base Chain)
 
@@ -82,13 +82,13 @@ console.log(w.privateKey);
 
 ### Step 2: Backup current wallet.key
 ```bash
-cp /root/.hermes/profiles/gentech/home/.openclaw/blockrun/wallet.key \
-   /root/.hermes/profiles/gentech/home/.openclaw/blockrun/wallet.key.gta.bak
+cp ${PROFILE_DIR}/home/.openclaw/blockrun/wallet.key \
+   ${PROFILE_DIR}/home/.openclaw/blockrun/wallet.key.gta.bak
 ```
 
 ### Step 3: Write F8 private key
 ```bash
-echo "<F8_PRIVATE_KEY>" > /root/.hermes/profiles/gentech/home/.openclaw/blockrun/wallet.key
+echo "<F8_PRIVATE_KEY>" > ${PROFILE_DIR}/home/.openclaw/blockrun/wallet.key
 ```
 
 ### Step 4: Restart proxy
@@ -104,8 +104,8 @@ sleep 3 && curl -s http://127.0.0.1:8402/health
 
 ### Revert to GTA
 ```bash
-cp /root/.hermes/profiles/gentech/home/.openclaw/blockrun/wallet.key.gta.bak \
-   /root/.hermes/profiles/gentech/home/.openclaw/blockrun/wallet.key
+cp ${PROFILE_DIR}/home/.openclaw/blockrun/wallet.key.gta.bak \
+   ${PROFILE_DIR}/home/.openclaw/blockrun/wallet.key
 systemctl restart clawrouter-proxy
 ```
 

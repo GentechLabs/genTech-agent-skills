@@ -61,7 +61,7 @@ Update: `entry_avax_price`, `range_low`, `range_high`, `shape`, `strategy`, `ava
 
 **⚠️ Copy main to profile after updating:**
 ```bash
-cp /root/.hermes/scripts/.lfj-position-tracker.json /root/.hermes/profiles/gentech/scripts/
+cp /root/.hermes/scripts/.lfj-position-tracker.json ${PROFILE_DIR}/scripts/
 ```
 
 ## Step 4b: Update Dashboard Files
@@ -80,13 +80,13 @@ cp /root/.hermes/scripts/.lfj-position-tracker.json /root/.hermes/profiles/gente
 
 ### 5a. Update run-reader.sh shape default (CRITICAL)
 ```bash
-grep 'SHAPE=' /root/vaults/gentech/scripts/run-reader.sh
+grep 'SHAPE=' ${VAULT_DIR}/scripts/run-reader.sh
 ```
 Must match current shape. If wrong, reader overwrites defi-data.json with wrong shape.
 
 ### 5b. Check hardcoded ranges in scripts
 ```bash
-grep -n "range_low\|range_high\|RANGE_LOW\|RANGE_HIGH"   /root/vaults/gentech/03-Strategies/scripts/lp-*.py
+grep -n "range_low\|range_high\|RANGE_LOW\|RANGE_HIGH"   ${VAULT_DIR}/03-Strategies/scripts/lp-*.py
 ```
 
 ### 5c. Check Cron Job Prompts
@@ -106,7 +106,7 @@ Configs updated: {count} files | Trackers: {count} files
 ## Step 7: Verify Cron Reads Correct Data
 
 ```bash
-cd /root/.hermes/profiles/gentech/scripts && python3 defi-lp-consolidated.py 2>&1 | head -20
+cd ${PROFILE_DIR}/scripts && python3 defi-lp-consolidated.py 2>&1 | head -20
 ```
 
 Expected: Report shows new range, new shape, correct efficiency.

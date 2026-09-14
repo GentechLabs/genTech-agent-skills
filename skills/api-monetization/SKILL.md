@@ -653,7 +653,7 @@ When you already have a running `api.gentechlabs.net` gateway (a single FastAPI 
 wire the new service INTO the existing gateway. This is faster and keeps everything under
 one merchant. Proven Aug 2026 with `lineage_guard` (DataHub blast-radius agent).
 
-**The 4 edits (all in `/root/vaults/gentech/10-Labs/x402-gateway/server.py` + manifest):**
+**The 4 edits (all in `${VAULT_DIR}/10-Labs/x402-gateway/server.py` + manifest):**
 
 1. **Backend route** in `BACKEND_ROUTES` — maps service key → (backend base, public path prefix, backend path prefix):
    ```python

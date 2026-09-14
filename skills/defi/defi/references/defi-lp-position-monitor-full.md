@@ -51,7 +51,7 @@ curl -sS -o /tmp/cmc_prices.json "https://pro-api.coinmarketcap.com/v1/cryptocur
 ```
 - Save JSON to `/tmp/cmc_prices.json` then parse (avoids `curl | python` security blocks).
 - Use when both CoinGecko and Binance fail or when a CMC key is available.
-- **Key discovery**: Extract `CMC_API_KEY` from `/root/vaults/gentech/00-System/secrets.env` if not already in the shell environment. Do not assume env vars survive across cron sessions.
+- **Key discovery**: Extract `CMC_API_KEY` from `${VAULT_DIR}/00-System/secrets.env` if not already in the shell environment. Do not assume env vars survive across cron sessions.
 - More reliable than CoinGecko for high-frequency cron jobs.
 
 ### 4. DexScreener (free, no key — pool data)
@@ -68,7 +68,7 @@ curl -sS -o /tmp/dex_pool.json "https://api.dexscreener.com/latest/dex/pairs/ava
 1. **Fetch watchlist prices** (Cascading fallbacks)
    - Try CoinGecko first. If 429 or failure, fallback to **Binance Public API**.
    - If Binance also fails and a CMC key exists, fallback to **CoinMarketCap**.
-   - **Key discovery**: Extract `CMC_API_KEY` from `/root/vaults/gentech/00-System/secrets.env` if not already in the shell environment. Do not assume env vars survive across cron sessions.
+   - **Key discovery**: Extract `CMC_API_KEY` from `${VAULT_DIR}/00-System/secrets.env` if not already in the shell environment. Do not assume env vars survive across cron sessions.
    - Flag 1.5%+ 24h moves. Skip smaller changes in the report.
 
 2. **Fetch pool data** (DexScreener)
@@ -99,7 +99,7 @@ curl -sS -o /tmp/dex_pool.json "https://api.dexscreener.com/latest/dex/pairs/ava
    - Record: `Tier: X`, `Status: ✅ Stable / ⚠️ Review Needed`, `Next Tier: Y`.
 
 6. **Write vault entry (only if not skipped)**
-   - File: `/root/vaults/gentech/03-Projects/DeFi/LFJ-AVAX-USDC.md`
+   - File: `${VAULT_DIR}/03-Projects/DeFi/LFJ-AVAX-USDC.md`
    - Append using ISO 8601 datestamp header (YYYY-MM-DD).
    - Template below.
 
@@ -133,7 +133,7 @@ curl -sS -o /tmp/dex_pool.json "https://api.dexscreener.com/latest/dex/pairs/ava
 ## DeFi Milestone Tracker File
 
 Create a separate tracker file at:
-`/root/vaults/gentech/03-Projects/DeFi/DeFi-Milestone-Tracker.md`
+`${VAULT_DIR}/03-Projects/DeFi/DeFi-Milestone-Tracker.md`
 
 Include:
 - Tier table (Tier, Label, Daily Target, Status)
@@ -184,8 +184,8 @@ Use the system cron or Hermes cron jobs. On each run, always execute skip-logic 
 | File | Purpose |
 |---|---|
 | `/root/.hermes/scripts/.lfj-aae-config.json` | Pool address, DeFi milestones, DCA config, alert rules |
-| `/root/vaults/gentech/03-Projects/DeFi/LFJ-AVAX-USDC.md` | Live telemetry vault |
-| `/root/vaults/gentech/03-Projects/DeFi/DeFi-Milestone-Tracker.md` | Strategic goals + rebalance history |
+| `${VAULT_DIR}/03-Projects/DeFi/LFJ-AVAX-USDC.md` | Live telemetry vault |
+| `${VAULT_DIR}/03-Projects/DeFi/DeFi-Milestone-Tracker.md` | Strategic goals + rebalance history |
 
 ## Pitfalls
 
@@ -216,6 +216,6 @@ Use the system cron or Hermes cron jobs. On each run, always execute skip-logic 
 
 🎯 DeFi Milestone: Scout ($3/day) | IL <2% ✅
 
-📝 Vault: /root/vaults/gentech/03-Projects/DeFi/LFJ-AVAX-USDC.md
-🎯 DeFi Tracker: /root/vaults/gentech/03-Projects/DeFi/DeFi-Milestone-Tracker.md
+📝 Vault: ${VAULT_DIR}/03-Projects/DeFi/LFJ-AVAX-USDC.md
+🎯 DeFi Tracker: ${VAULT_DIR}/03-Projects/DeFi/DeFi-Milestone-Tracker.md
 ```

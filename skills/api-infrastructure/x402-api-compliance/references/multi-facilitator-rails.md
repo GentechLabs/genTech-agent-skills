@@ -16,7 +16,7 @@ Live-probed `/supported` on all four facilitators while flipping the GenTech gat
 1. **ASCII-only challenge envelope.** Dexter SDK v5 base64-encodes the payment envelope with `btoa()` → any non-Latin-1 char (em dash U+2014 in `resource.description`, USD₮0 symbol) throws `"Invalid character"` and the buyer dies mid-handshake. Every string inside the 402 challenge must be pure ASCII (`USDT0` not `USD₮0`, `-` not `—`). Comments in server code can stay UTF-8 — only wire payloads matter.
 2. **`accepts[0]`-blind clients.** Some clients take the first option without negotiating. Order rails **Base first** (every facilitator settles it), then X Layer, Algorand, Avalanche, Solana. Control via env: `X402_NETWORKS="base,xlayer,algorand,avalanche,solana"`.
 3. **OKX single-rail mode is a toggle, not a default.** `X_OKX_COMPLIANT=1` forces a single X Layer USDT0 challenge (OKX A2MCP validator requirement). Leave `0` for public discovery; flip to `1` only while re-running OKX validation, then flip back.
-4. **Self-pay rejection.** CDP returns `self_send_not_allowed` when buyer == payTo. Test settles MUST use a different buyer wallet (GenTech: arb wallet 0x3d117B…eCb buys, signer 0x7ebff…96a sells — key at `/root/.hermes/profiles/gentech/secure/gentech-arb-wallet.json`).
+4. **Self-pay rejection.** CDP returns `self_send_not_allowed` when buyer == payTo. Test settles MUST use a different buyer wallet (GenTech: arb wallet 0x3d117B…eCb buys, signer 0x7ebff…96a sells — key at `${PROFILE_DIR}/secure/gentech-arb-wallet.json`).
 5. **npm resolution trap.** package.json declaring `@dexterai/x402@^5.4.2` still resolved to a stale v3.9.0 in `/root/node_modules` when no local install existed. Run `npm install @dexterai/x402@^5.4.2` inside the gateway dir. v5 API: `createBudgetAccount({budget:{total}, evmPrivateKey, maxAmountAtomic, verbose})` → `agent.fetch(url)`; `createX402Client`/`wrapFetch` do NOT exist in v5; `payAndFetch(TARGET, opts, {evm: wallet}, {maxAmountAtomic})` works.
 6. **Extensionless twin files.** nginx serves `/.well-known/x402` from the extensionless file `/var/www/gentechlabs/.well-known/x402`; `x402.json` is a SEPARATE file. Updating only one leaves a stale discovery doc live. Update BOTH + `chown www-data:www-data`.
 7. **`/tmp` can fill the disk** (hermes sandboxes + build debris). If execute_code starts failing with `[Errno 28]`, switch to terminal and `du -sh /tmp/*` → rm the big stale dirs. 15G of stale builds broke all sandboxed execution once.
@@ -35,7 +35,7 @@ curl -s https://facilitator.payai.network/supported | python3 -c "import json,sy
 # 3) End-to-end settle with a real buyer wallet (~$0.005): node dexter-final.mjs (in gateway dir)
 
 # 4) Confirm the revenue ledger ticked:
-python3 /root/.hermes/profiles/gentech/scripts/revenue-monitor.py | grep -A5 'x402 Revenue'
+python3 ${PROFILE_DIR}/scripts/revenue-monitor.py | grep -A5 'x402 Revenue'
 ```
 
 ## Debug sequence that worked (Aug 30, 2026)

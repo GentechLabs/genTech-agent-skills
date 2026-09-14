@@ -22,7 +22,7 @@ cp -r /path/to/vault/10-Labs/skills-distribution/<category>/<skill-name> \
       ~/.hermes/profiles/<profile>/skills/<category>/
 ```
 
-On the VPS, the vault is at `/root/vaults/gentech/`. On Jordan's desktop,
+On the VPS, the vault is at `${VAULT_DIR}/`. On Jordan's desktop,
 clone the vault (GentechLabs/gentech-vault) or pull the folder via Obsidian
 sync.
 
@@ -44,8 +44,8 @@ folder into ALL VPS profiles (gentech, gizmo, pixel, gentech-treasury),
 preserving the category subdir. Run it after any skill change here:
 
 ```bash
-python3 /root/vaults/gentech/00-System/agent-profiles/fleet_skills_sync.py --check  # dry-run
-python3 /root/vaults/gentech/00-System/agent-profiles/fleet_skills_sync.py          # apply
+python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_skills_sync.py --check  # dry-run
+python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_skills_sync.py          # apply
 ```
 
 **Provider-agnostic rule (Jordan, Sep 8):** skills are tied to MODELS, not

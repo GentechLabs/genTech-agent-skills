@@ -44,8 +44,8 @@ Doctor (0.1.10+): checks Node version, installs the Hermes gateway plugin, start
 - **ExecStart must use the REAL okx-a2a path** — `which okx-a2a` on the box. The `n`-managed path (`/usr/local/n/versions/node/22.14.0/bin`) can go stale after node upgrades; this box's binary is at `/usr/local/node22/bin/okx-a2a`.
 - **`--ai-provider hermes` (or `OKX_A2A_AI_PROVIDER=hermes`) is REQUIRED under systemd.** Without it the CLI prompts interactively for a provider; systemd has no TTY, so the unit exits 1 with `Error: No AI provider is configured. Run okx-a2a daemon start --ai-provider <...> or set OKX_A2A_AI_PROVIDER.`
 - **`Type=forking` + `PIDFile` + `--no-autostart`.** The CLI's `daemon start` forks a child writer and the parent exits. With `Type=simple`, systemd sees the parent exit, marks the unit dead, and SIGTERMs the whole cgroup — killing the forked child. Use `Type=forking` with `PIDFile=/root/.okx-agent-task/run/listener.pid` so systemd tracks the actual daemon.
-- **`onchainos` must be on PATH.** The daemon spawns `onchainos agent get ...` for identity refresh; if it's `ENOENT` in the unit's environment, every sync tick fails. On the GenTech VPS it lives at `/root/.hermes/profiles/gentech/home/.local/bin/onchainos` — add that dir to `Environment=PATH=`.
-- **`HOME` matters for the session AND for the PIDFile path.** The daemon resolves `~/.onchainos/session.json` from HOME. If the valid session lives under a profile home (e.g. `/root/.hermes/profiles/gentech/home/.onchainos/session.json`) but the unit runs with `HOME=/root`, the CLI reports "session expired" even though the cert is valid. Set `Environment=HOME=...` to the profile home. **Gotcha: the pidfile path follows HOME.** Once HOME is the profile home, the daemon writes its listener pid/log to `<HOME>/.okx-agent-task/` — the unit's `PIDFile=` MUST point there too, or systemd fails with `Can't open PID file /root/.okx-agent-task/run/listener.pid (yet?) after start` right after "started pid=...". On the GenTech VPS that means `PIDFile=/root/.hermes/profiles/gentech/home/.okx-agent-task/run/listener.pid`. (Alternatively re-login via the OTP flow below to regenerate the session.)
+- **`onchainos` must be on PATH.** The daemon spawns `onchainos agent get ...` for identity refresh; if it's `ENOENT` in the unit's environment, every sync tick fails. On the GenTech VPS it lives at `${PROFILE_DIR}/home/.local/bin/onchainos` — add that dir to `Environment=PATH=`.
+- **`HOME` matters for the session AND for the PIDFile path.** The daemon resolves `~/.onchainos/session.json` from HOME. If the valid session lives under a profile home (e.g. `${PROFILE_DIR}/home/.onchainos/session.json`) but the unit runs with `HOME=/root`, the CLI reports "session expired" even though the cert is valid. Set `Environment=HOME=...` to the profile home. **Gotcha: the pidfile path follows HOME.** Once HOME is the profile home, the daemon writes its listener pid/log to `<HOME>/.okx-agent-task/` — the unit's `PIDFile=` MUST point there too, or systemd fails with `Can't open PID file /root/.okx-agent-task/run/listener.pid (yet?) after start` right after "started pid=...". On the GenTech VPS that means `PIDFile=${PROFILE_DIR}/home/.okx-agent-task/run/listener.pid`. (Alternatively re-login via the OTP flow below to regenerate the session.)
 
 ```bash
 # Find the actual okx-a2a path
@@ -60,13 +60,13 @@ After=network.target
 Type=forking
 ExecStart=/usr/local/node22/bin/okx-a2a daemon start --ai-provider hermes --no-autostart
 ExecStop=/usr/local/node22/bin/okx-a2a daemon stop
-PIDFile=/root/.hermes/profiles/gentech/home/.okx-agent-task/run/listener.pid
+PIDFile=${PROFILE_DIR}/home/.okx-agent-task/run/listener.pid
 Restart=on-failure
 RestartSec=5
 User=root
-Environment=HOME=/root/.hermes/profiles/gentech/home
+Environment=HOME=${PROFILE_DIR}/home
 Environment=OKX_A2A_AI_PROVIDER=hermes
-Environment=PATH=/root/.hermes/profiles/gentech/home/.local/bin:/usr/local/node22/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PATH=${PROFILE_DIR}/home/.local/bin:/usr/local/node22/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 [Install]
 WantedBy=multi-user.target
@@ -80,8 +80,8 @@ systemctl start okx-a2a.service
 **Verifying the daemon is actually healthy — 4/4 clients:**
 ```bash
 systemctl is-active okx-a2a.service      # should be "active (running)", not "activating"
-cat /root/.hermes/profiles/gentech/home/.okx-agent-task/run/listener.pid | xargs ps -p -o pid,etime,cmd   # daemon child alive
-tail /root/.hermes/profiles/gentech/home/.okx-agent-task/logs/listener.log
+cat ${PROFILE_DIR}/home/.okx-agent-task/run/listener.pid | xargs ps -p -o pid,etime,cmd   # daemon child alive
+tail ${PROFILE_DIR}/home/.okx-agent-task/logs/listener.log
 # → "identity initialized: 0x... (agentId=NNNN)" per agent, then "initialized N/N clients in total"
 #   and "conversations synced" + "message listener started"
 ```
@@ -103,8 +103,8 @@ Work through these in order (each was a real, separate failure mode):
 | `status=203/EXEC` | ExecStart path doesn't exist (stale `n`-managed path after node upgrade) | `which okx-a2a`, update unit to the real path |
 | `status=1/FAILURE`, `Error: No AI provider is configured` | CLI prompts interactively; no TTY under systemd | `--ai-provider hermes` or `OKX_A2A_AI_PROVIDER=hermes` env |
 | "Deactivated successfully" right after "started pid=..." | `Type=simple` + forking daemon: parent exits → systemd kills the child cgroup | `Type=forking` + `PIDFile=/root/.okx-agent-task/run/listener.pid` + `--no-autostart` |
-| `spawn onchainos ENOENT` in listener.log | onchainos not on the unit's PATH | Add `/root/.hermes/profiles/gentech/home/.local/bin` (or wherever `which onchainos` says) to `Environment=PATH=` |
-| `onchainos session expired, taking all local clients offline` | HOME mismatch: daemon reads `/root/.onchainos` (audit log only) while valid session is in the profile home | Set `Environment=HOME=/root/.hermes/profiles/gentech/home` OR re-login (below) |
+| `spawn onchainos ENOENT` in listener.log | onchainos not on the unit's PATH | Add `${PROFILE_DIR}/home/.local/bin` (or wherever `which onchainos` says) to `Environment=PATH=` |
+| `onchainos session expired, taking all local clients offline` | HOME mismatch: daemon reads `/root/.onchainos` (audit log only) while valid session is in the profile home | Set `Environment=HOME=${PROFILE_DIR}/home` OR re-login (below) |
 | `stale pid=NNN` in `daemon status` | leftover lock/pid from a prior doctor-started daemon | Confirm the real daemon child is alive via `ps`; stale pid in the lock file is cosmetic |
 
 **A stale `daemon.lock` may be a DIRECTORY** (`rm: cannot remove ... Is a directory`) — that is the daemon's lock convention, not a bug. Don't try to remove it; just restart the unit.

@@ -27,7 +27,7 @@
 Located at `/etc/nginx/sites-available/gentech`
 
 ### Main site (gentechnlabs.net)
-- Serves Jordan's Hub from `/root/vaults/gentech/Profiles/hub.html`
+- Serves Jordan's Hub from `${VAULT_DIR}/Profiles/hub.html`
 - Health check at `/health`
 
 ### API server (api.gentechnlabs.net)

@@ -339,7 +339,7 @@ Fear & Greed, BTC dominance, Fed/regulatory headlines.
 | Job ID | Name | Schedule | Script | Purpose |
 |--------|------|----------|--------|---------|
 | `92c52122abab` | LP Monitor v2 | `3,13,23,33,43,53 12-22 * * *` | `lp-monitor-v2.py` | Config-first, dashboard-free monitoring. Reports 2x/hour in normal conditions, immediate alerts on low efficiency or out-of-range. Truly silent during quiet hours (11 PM – 6 AM ET). |
-| `d8d1c3adbbb4` | Hub Nightly Sync | `0 20 * * *` | `hub-sync-nightly.py` | Non-position data only (narrative, rainbow) |
+| `d8d1c3adbbb4` | Hub Nightly Sync | `30 20 * * *` (live, verified Sep 13 2026) | `hub-sync-nightly.py` | Non-position data only (narrative, rainbow) — ⚠️ **DISABLED** as of Sep 13 2026 |
 
 **Removed jobs (Jun 30, 2026):**
 - `2600f8fc0f0e` — Old LP monitor (read from dashboard, got corrupted data)
@@ -371,11 +371,11 @@ Hub fetch & renders (HTML/CSS)
 **Hub sync problem (discovered Jun 28, 2026):**
 - `hub-sync-nightly.py` was BUILDING entire JSON from scratch, overwriting correct on-chain data
 - `defi-lp-consolidated.py` had correct data but wasn't writing to JSON properly
-- Position tracker path bug in `run-reader.sh` pointed to wrong location (`/root/.hermes/scripts/` instead of `/root/.hermes/profiles/gentech/scripts/`)
+- Position tracker path bug in `run-reader.sh` pointed to wrong location (`/root/.hermes/scripts/` instead of `${PROFILE_DIR}/scripts/`)
 - Result: Hub showed wrong shape (bid-ask vs curve), zero efficiency, stale amounts
 
 **Fix implementation:**
-1. `run-reader.sh` — Fixed position tracker path to `/root/.hermes/profiles/gentech/scripts/.lfj-position-tracker.json`
+1. `run-reader.sh` — Fixed position tracker path to `${PROFILE_DIR}/scripts/.lfj-position-tracker.json`
 2. `hub-sync-nightly.py` — Changed to READ from existing JSON instead of OVERWRITING:
    ```python
    # Load existing dashboard data as the base (preserve everything)
@@ -574,9 +574,9 @@ def validate_shape_consistency():
 **Pitfall: Three-Config-File Race Condition (Jun 30, 2026)**
 - THREE copies of `.lfj-aae-config.json` exist with DIFFERENT data:
   1. `/root/.hermes/scripts/.lfj-aae-config.json` — CORRECT (bid-ask, $6.3792, range 6.3656–6.5856)
-  2. `/root/.hermes/profiles/gentech/scripts/.lfj-aae-config.json` — STALE (curve, $6.13, range 6.2771–6.4812)
-  3. `/root/.hermes/profiles/gentech/home/.hermes/scripts/.lfj-aae-config.json` — STALE (bid-ask but wrong range/entry)
-- `HERMES_HOME` env var resolves to `/root/.hermes/profiles/gentech` in cron context, NOT `/root/.hermes`
+  2. `${PROFILE_DIR}/scripts/.lfj-aae-config.json` — STALE (curve, $6.13, range 6.2771–6.4812)
+  3. `${PROFILE_DIR}/home/.hermes/scripts/.lfj-aae-config.json` — STALE (bid-ask but wrong range/entry)
+- `HERMES_HOME` env var resolves to `${PROFILE_DIR}` in cron context, NOT `/root/.hermes`
 - Scripts using `os.environ.get("HERMES_HOME")` read the STALE profile copy, not the correct one
 - Multiple cron jobs (LP monitor + on-chain reader) write to the same dashboard JSON, creating a race condition that overwrites correct data within seconds
 - **Permanent fix:** Created `lp-monitor-v2.py` — a clean, self-contained script that:
@@ -676,8 +676,8 @@ When the user shows a screenshot of their LP position (from LFJ/Trader Joe mobil
 **Pitfall: Cron Script Location Mismatch (Jun 30, 2026)**
 - Cron jobs may use scripts in different locations than those being edited
 - Multiple script copies can exist:
-  - Vault scripts: `/root/vaults/gentech/Strategies/scripts/defi-lp-consolidated.py`
-  - Profile scripts: `/root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py`
+  - Vault scripts: `${VAULT_DIR}/Strategies/scripts/defi-lp-consolidated.py`
+  - Profile scripts: `${PROFILE_DIR}/scripts/defi-lp-consolidated.py`
   - Cron-specific scripts may be in other profile directories
 - If manual script run shows correct output but cron output shows old behavior → wrong script version is being executed
 - Fix: Identify the ACTUAL script path cron uses (check job config or audit with GLM-5.2), then edit the script in the cron execution path
@@ -685,7 +685,7 @@ When the user shows a screenshot of their LP position (from LFJ/Trader Joe mobil
 
 **Visual upgrade for all GenTech cron outputs** — matches Hermes dashboard style.
 
-**Theme module:** `/root/.hermes/profiles/gentech/scripts/cron_theme.py`
+**Theme module:** `${PROFILE_DIR}/scripts/cron_theme.py`
 
 **Design elements:**
 - Notched corners (`╭ ╮ ╰ ╯`) — Hermes-style frames
@@ -845,9 +845,9 @@ daily_fees = volume_24h × fee_rate × (position_value / TVL) × concentration_m
 
 **Fallback:** When DexScreener returns zero volume, use a flat yield rate (`lp_value × 0.004`).
 
-**Pitfall (Jul 3, 2026):** The cron script was updated in the profile path (`/root/.hermes/profiles/gentech/scripts/`) but the global path (`/root/.hermes/scripts/`) had the stale version. Cron resolves relative scripts from the profile path, but other tools may read from the global path. Always sync BOTH copies after changes:
+**Pitfall (Jul 3, 2026):** The cron script was updated in the profile path (`${PROFILE_DIR}/scripts/`) but the global path (`/root/.hermes/scripts/`) had the stale version. Cron resolves relative scripts from the profile path, but other tools may read from the global path. Always sync BOTH copies after changes:
 ```bash
-cp /root/.hermes/profiles/gentech/scripts/*.py /root/.hermes/scripts/
+cp ${PROFILE_DIR}/scripts/*.py /root/.hermes/scripts/
 ```
 
 ### ATH Fee Tracking (User Preference)

@@ -62,7 +62,7 @@ def check(name, target, stype):
 
 ## Implementation
 
-Full production script at `/root/.hermes/profiles/gentech/scripts/port-health-monitor.py`:
+Full production script at `${PROFILE_DIR}/scripts/port-health-monitor.py`:
 - 7 backend ports (8090, 8088, 8080, 8082, 8084, 8086, 3099)
 - 5 public URLs (main site, demo, yield, arb, portfolio)
 - DNS-only subdomains handled as optional (no false alarm if DNS not configured yet)

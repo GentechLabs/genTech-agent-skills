@@ -93,7 +93,7 @@ When you find a new ecosystem validation:
 
 ## See Also
 
-- `/root/vaults/gentech/00-HQ/travala-mcp-integration-strategy.md` — Full integration strategy
-- `/root/vaults/gentech/00-HQ/okx-hackathon-winning-strategy.md` — How to use validation in hackathon
-- `/root/vaults/gentech/00-HQ/build-queue.md` — Item 19: Gentech Travel Agent (Travala MCP integration)
+- `${VAULT_DIR}/00-HQ/travala-mcp-integration-strategy.md` — Full integration strategy
+- `${VAULT_DIR}/00-HQ/okx-hackathon-winning-strategy.md` — How to use validation in hackathon
+- `${VAULT_DIR}/00-HQ/build-queue.md` — Item 19: Gentech Travel Agent (Travala MCP integration)
 - `https://x402.org/` — x402 foundation members (Cloudflare, Stripe, Coinbase, etc.)

@@ -161,7 +161,7 @@ avax_change = ((avax_price - last_price) / last_price) * 100
 
 ### Buy Zone Integration
 
-After fetching prices, the CMC watchlist script (`/root/.hermes/profiles/gentech/scripts/cmc-watchlist.py`) maps each asset to its zone and outputs a report if movement exceeds the 1.5% threshold. See `references/cmc-watchlist-management.md` for the current watchlist, add/remove workflow, and script sync procedure.
+After fetching prices, the CMC watchlist script (`${PROFILE_DIR}/scripts/cmc-watchlist.py`) maps each asset to its zone and outputs a report if movement exceeds the 1.5% threshold. See `references/cmc-watchlist-management.md` for the current watchlist, add/remove workflow, and script sync procedure.
 
 ## GTA Watcher — Agent Co-Pilot (every 30 min)
 
@@ -273,7 +273,7 @@ Both scripts run as `no_agent=True` cron jobs (zero LLM overhead):
 - **GTA Signal** — `0 7,19 * * *` (7 AM and 7 PM ET)
 - **GTA Watcher** — `*/30 * * * *` (every 30 min)
 
-**IMPORTANT — Symlink pitfall:** Cron jobs with `no_agent=True` require scripts in `/root/.hermes/profiles/gentech/scripts/`. Symlinks pointing outside this directory are **blocked** by the cron security guard. Always copy files in, or create the symlink from the repo but verify the cron run succeeds. The canonical source is at `github.com/ProtoJay4789/gentech-treasury-trader`. Sync by copying from the repo into the scripts directory after updates.
+**IMPORTANT — Symlink pitfall:** Cron jobs with `no_agent=True` require scripts in `${PROFILE_DIR}/scripts/`. Symlinks pointing outside this directory are **blocked** by the cron security guard. Always copy files in, or create the symlink from the repo but verify the cron run succeeds. The canonical source is at `github.com/ProtoJay4789/gentech-treasury-trader`. Sync by copying from the repo into the scripts directory after updates.
 
 ### Report Format (Watcher)
 
@@ -329,7 +329,7 @@ if "error_code" in data and data["error_code"] == 1001:
 ### 5. API Key Management
 CoinMarketCap requires an API key. The fetcher gracefully falls back to other sources if the key is missing or the API fails.
 
-**CMC Key Path Mismatch (discovered 2026-06-08):** The vault uses `HQ/` not `00-HQ/` on disk. Correct path: `/root/vaults/gentech/HQ/config/cmc-api-key.env`. Scripts should try multiple paths. See `references/cmc-watchlist-management.md` for current config.
+**CMC Key Path Mismatch (discovered 2026-06-08):** The vault uses `HQ/` not `00-HQ/` on disk. Correct path: `${VAULT_DIR}/HQ/config/cmc-api-key.env`. Scripts should try multiple paths. See `references/cmc-watchlist-management.md` for current config.
 
 ### 6. Error Handling
 All external calls are wrapped in try/except blocks. The fetcher returns None if all sources fail, allowing the caller to handle missing data gracefully.

@@ -42,8 +42,8 @@ Works with any bin-based concentrated liquidity AMM:
 ## Usage
 
 ```bash
-python3 /root/.hermes/profiles/gentech/scripts/lp-shape-detector.py
-python3 /root/.hermes/profiles/gentech/scripts/lp-shape-detector.py --json
+python3 ${PROFILE_DIR}/scripts/lp-shape-detector.py
+python3 ${PROFILE_DIR}/scripts/lp-shape-detector.py --json
 ```
 
 ## Detection Algorithm
@@ -86,7 +86,7 @@ The shape detector can be called before efficiency calculations:
 ```python
 import subprocess
 result = subprocess.run(
-    ["python3", "/root/.hermes/profiles/gentech/scripts/lp-shape-detector.py", "--json"],
+    ["python3", "${PROFILE_DIR}/scripts/lp-shape-detector.py", "--json"],
     capture_output=True, text=True
 )
 # Parse JSON output for shape classification

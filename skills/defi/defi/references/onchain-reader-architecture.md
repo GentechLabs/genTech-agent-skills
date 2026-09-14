@@ -25,7 +25,7 @@ Layer 3: Unified Output
 ## Working Implementation (Node.js + viem)
 
 **Location:** `/root/projects/lp-reader/reader.mjs`
-**Cron wrapper:** `/root/vaults/gentech/scripts/run-reader.sh`
+**Cron wrapper:** `${VAULT_DIR}/scripts/run-reader.sh`
 **Schedule:** Every 3 hours via Hermes cron
 **Agent Kit doc:** `/root/projects/genTech-agent-kit/docs/ONCHAIN-LP-READER.md`
 
@@ -129,7 +129,7 @@ https://api.routescan.io/v2/network/mainnet/evm/{CHAIN_ID}/etherscan/api?
 4. **Price from bin formula** — The exponential formula `price = (1+binStep/10000)^(activeId-2^23)` produces wrong values for V2.1 pools. Use DexScreener for reliable USD price. For visualization, use linear bin-to-price mapping.
 5. **Multicall batch size** — viem defaults work. For 400+ calls, split into batches of 50-100.
 6. **Python vs Node.js** — Python stdlib works for simple reads but lacks multicall. Node.js + viem is significantly faster for bin scanning (30 bins in ~2s vs ~30s sequential).
-7. **Dashboard data path** — The reader MUST write to the same directory the HTML fetches from. Mismatch between root vault (`/root/vaults/gentech/defi-data.json`) and `DeFi/` folder caused stale dashboard data on GitHub Pages.
+7. **Dashboard data path** — The reader MUST write to the same directory the HTML fetches from. Mismatch between root vault (`${VAULT_DIR}/defi-data.json`) and `DeFi/` folder caused stale dashboard data on GitHub Pages.
 
 ## Dashboard Visualization (Bar Chart Style)
 

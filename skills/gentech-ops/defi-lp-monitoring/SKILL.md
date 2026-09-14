@@ -62,7 +62,7 @@ HOME_SCRIPTS = "/root/.hermes/scripts"
 ```
 
 This is a deliberate design choice to avoid overwrite conflicts. **When fixing config after a rebalance:**
-- ✅ Update profile config: `/root/.hermes/profiles/gentech/scripts/.lfj-aae-config.json`
+- ✅ Update profile config: `${PROFILE_DIR}/scripts/.lfj-aae-config.json`
 - ✅ **ALSO** update global config: `/root/.hermes/scripts/.lfj-aae-config.json`
 - ✅ **ALSO** update both position tracker paths
 
@@ -205,7 +205,7 @@ def calc_efficiency(price, range_low, range_high, shape):
 
 **Files updated (Jul 4, 2026):**
 - `/root/.hermes/scripts/lp-position-reader.py` — bin-weighted calculation
-- `/root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py` — bin-weighted calculation
+- `${PROFILE_DIR}/scripts/lp-monitor-v2.py` — bin-weighted calculation
 
 ## Data Source Priority (Jordan's Rule, Jun 24, 2026)
 
@@ -248,7 +248,7 @@ When Jordan rebalances (detected by on-chain reader or screenshot):
 
 ## Dual-Path Sync (Profile vs Global)
 
-**Pitfall:** Hermes runs from `/root/.hermes/profiles/gentech/` but the position tracker also exists at `/root/.hermes/scripts/`. Jordan's manual rebalances update the GLOBAL path, but cron scripts read from the PROFILE path. If they drift, the monitor reports stale ranges and false "OUT OF RANGE" alerts.
+**Pitfall:** Hermes runs from `${PROFILE_DIR}/` but the position tracker also exists at `/root/.hermes/scripts/`. Jordan's manual rebalances update the GLOBAL path, but cron scripts read from the PROFILE path. If they drift, the monitor reports stale ranges and false "OUT OF RANGE" alerts.
 
 **Fix:** The `sync_tracker()` and `sync_config()` helper functions in `defi-lp-consolidated.py` write to BOTH paths simultaneously:
 ```python
@@ -334,7 +334,7 @@ When enough of those line up, flip the switch. Until then, Curve is the right ca
 
 ### Strategy Document
 
-Full spec saved at: `/root/vaults/gentech/03-Strategies/aae-regime-switching.md`
+Full spec saved at: `${VAULT_DIR}/03-Strategies/aae-regime-switching.md`
 
 ### Tactical Retreat — Active Defense Loop
 
@@ -650,18 +650,18 @@ The on-chain reader (`run-reader.py`) writes a CLEAN `defi-data.json` every 10 m
 
 | File | Location | Purpose |
 |------|----------|---------|
-| Position tracker (profile) | `/root/.hermes/profiles/gentech/scripts/.lfj-position-tracker.json` | Primary — cron scripts read from HERE |
+| Position tracker (profile) | `${PROFILE_DIR}/scripts/.lfj-position-tracker.json` | Primary — cron scripts read from HERE |
 | Position tracker (global) | `/root/.hermes/scripts/.lfj-position-tracker.json` | Secondary — must be synced with profile |
-| AAE config (profile) | `/root/.hermes/profiles/gentech/scripts/.lfj-aae-config.json` | Full position config |
+| AAE config (profile) | `${PROFILE_DIR}/scripts/.lfj-aae-config.json` | Full position config |
 | AAE config (global) | `/root/.hermes/scripts/.lfj-aae-config.json` | Secondary — must be synced with profile |
-| State | `/root/.hermes/profiles/gentech/scripts/.lfj-defi-state.json` | Debounce state, fee tracking, edge timers |
+| State | `${PROFILE_DIR}/scripts/.lfj-defi-state.json` | Debounce state, fee tracking, edge timers |
 | AAE config (global) | `/root/.hermes/scripts/.lfj-aae-config.json` | Secondary — must be synced with profile |
 | State | `/root/.hermes/scripts/.lfj-defi-state.json` | Debounce state, fee tracking |
 | Dashboard data | `/root/ProtoJay4789.github.io/DeFi/defi-data.json` | Hub data source |
-| Rainbow data (scripts) | `/root/.hermes/profiles/gentech/scripts/yield-rainbow-data.json` | Local tools read from here |
+| Rainbow data (scripts) | `${PROFILE_DIR}/scripts/yield-rainbow-data.json` | Local tools read from here |
 | Rainbow data (dashboard) | `/root/ProtoJay4789.github.io/DeFi/rainbow/yield-rainbow-data.json` | Dashboard HTML reads from here |
-| Reader script | `/root/vaults/gentech/scripts/run-reader.sh` | On-chain reader wrapper |
-| Monitor script | `/root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py` | 10-min cron report + rainbow sync |
+| Reader script | `${VAULT_DIR}/scripts/run-reader.sh` | On-chain reader wrapper |
+| Monitor script | `${PROFILE_DIR}/scripts/defi-lp-consolidated.py` | 10-min cron report + rainbow sync |
 
 ## Rainbow Band Classification
 
@@ -696,7 +696,7 @@ If you're modifying the script and need to add diagnostic output, use `print(msg
 
 ## Training Data Collection
 
-Every rebalance and significant observation should be logged to `/root/vaults/gentech/defi-training-data.json`. This feeds the GenTech DeFi model training pipeline.
+Every rebalance and significant observation should be logged to `${VAULT_DIR}/defi-training-data.json`. This feeds the GenTech DeFi model training pipeline.
 
 **When to log:**
 - After every rebalance (new sample with shape, range, position, fees)
@@ -960,7 +960,7 @@ SILENCE_DURATION_MINUTES = 60   # stay silent for 1 hour after
 
 ### Files Updated (Jul 4, 2026)
 
-- `/root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py` — smart debounce + suggestions
+- `${PROFILE_DIR}/scripts/lp-monitor-v2.py` — smart debounce + suggestions
 - `/root/.hermes/scripts/lp-monitor-v2.py` — global copy for cron
 - `/root/.hermes/scripts/lp-position-reader.py` — bin-weighted efficiency
 - Commit: "feat: smart LP alerts — range migration suggestions"
@@ -1000,7 +1000,7 @@ dashboard['hero']['entryPrice'] = 6.3792     # ✅
 
 1. **Update ALL sources consistently**:
    ```bash
-   python3 /root/.hermes/profiles/gentech/scripts/entry-price-fix.py \
+   python3 ${PROFILE_DIR}/scripts/entry-price-fix.py \
      --range-low 6.XXXX \
      --range-high 6.XXXX \
      --shape curve \
@@ -1010,7 +1010,7 @@ dashboard['hero']['entryPrice'] = 6.3792     # ✅
 
 2. **Verify consistency**:
    ```bash
-   python3 /root/.hermes/profiles/gentech/scripts/test-entry-price-fix.py
+   python3 ${PROFILE_DIR}/scripts/test-entry-price-fix.py
    ```
 
 3. **Check dashboard**: Confirm ProtoJay4789.github.io/DeFi shows correct entry price
@@ -1054,11 +1054,11 @@ Use the Gentech Verify Everything system for consistent verification:
 
 ```bash
 # After fixing entry price
-python3 /root/.hermes/profiles/gentech/scripts/gentech-verify.py cron-job \
-  "/root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py"
+python3 ${PROFILE_DIR}/scripts/gentech-verify.py cron-job \
+  "${PROFILE_DIR}/scripts/defi-lp-consolidated.py"
 
 # After fixing GitHub pages  
-python3 /root/.hermes/profiles/gentech/scripts/gentech-verify.py github-page \
+python3 ${PROFILE_DIR}/scripts/gentech-verify.py github-page \
   "docs/index.html"
 ```
 
@@ -1168,8 +1168,8 @@ tasks:
 - **Bid-ask imbalance false positive** — The monitor flags "96% USDC = IMBALANCED" but for bid-ask shapes, heavy USDC at the upper range is CORRECT (you've been selling rips). The monitor now reads shape from AAE config and suppresses the alert for bid-ask/spot. If someone re-enables the old check, bid-ask will false-alarm again.
 - **Jordan expects screenshots to match reports** — When Jordan sends LFJ screenshots, the pipeline data MUST match. If the monitor says $0.42/day but LFJ shows $0.84/day, that's a sync gap. Always cross-check against LFJ data before reporting.
 - **Automated shape detector overwrites manual fixes** — The `lp-shape-detector.py` script analyzes on-chain bin distribution and classifies shape, then writes to `defi-data.json`. This can overwrite manual config updates if it detects the wrong shape. If you manually fix the dashboard shape to "bid-ask" but the detector classifies it as "curve" (incorrectly), it will revert your changes on next run. **Fix: Implement config-first architecture — auto-detection only if config says "unknown" or "curve".** See `references/config-first-architecture-pattern.md` for the implementation pattern and `references/automated-script-overwrite-incident.md` for the Jun 30, 2026 incident where 18 dashboard-writing scripts caused data reversion.
-- **Cron script location mismatch** — There are TWO versions of the monitor script: `/root/vaults/gentech/Strategies/scripts/defi-lp-consolidated.py` (vault) and `/root/.hermes/profiles/gentech/scripts/defi-lp-consolidated.py` (profile). The cron job runs from the **profile path**. If you fix the vault version but not the profile version, the cron still uses the broken code. **Always edit both files or the fix won't take effect.**
-- **Multi-copy defi-data.json sync** — There are 9 copies of `defi-data.json` across repos, vault, and portfolio directories. When fixing fee data or milestones, grep for all copies: `grep -r 'dailyFees' /root/*/DeFi/defi-data.json /root/vaults/gentech/DeFi/defi-data.json` then `cp` from the canonical copy (the GitHub Pages repo) to all others. The repos copy at `/root/repos/ProtoJay4789.github.io/DeFi/defi-data.json` is the most commonly stale one because it's a mirror not synced by normal workflows.
+- **Cron script location mismatch** — There are TWO versions of the monitor script: `${VAULT_DIR}/Strategies/scripts/defi-lp-consolidated.py` (vault) and `${PROFILE_DIR}/scripts/defi-lp-consolidated.py` (profile). The cron job runs from the **profile path**. If you fix the vault version but not the profile version, the cron still uses the broken code. **Always edit both files or the fix won't take effect.**
+- **Multi-copy defi-data.json sync** — There are 9 copies of `defi-data.json` across repos, vault, and portfolio directories. When fixing fee data or milestones, grep for all copies: `grep -r 'dailyFees' /root/*/DeFi/defi-data.json ${VAULT_DIR}/DeFi/defi-data.json` then `cp` from the canonical copy (the GitHub Pages repo) to all others. The repos copy at `/root/repos/ProtoJay4789.github.io/DeFi/defi-data.json` is the most commonly stale one because it's a mirror not synced by normal workflows.
 - **`~` path expansion with custom HOME** — When `HERMES_HOME` is set, `os.path.expanduser("~")` returns that path, not `/root`. Use absolute paths for critical files.
 - **GitHub raw file caching** — After pushing updated defi-data.json, the raw GitHub URL may serve stale content for 1-5 minutes. Add `?v=<timestamp>` to bypass.
 - **On-chain reader overwrites manual updates** — The reader runs every 10 minutes and writes to defi-data.json. If you manually update defi-data.json but don't update the position tracker, the reader reverts your changes on next run.

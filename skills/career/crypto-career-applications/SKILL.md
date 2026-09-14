@@ -359,7 +359,7 @@ if match: print(match.group(1))
 - Hibachi Growth Intern JD (College.xyz, May 2026)
 - User's portfolio: https://protojay4789.github.io/
 - GitHub: https://github.com/protojay4789
-- GenTech vault: `/root/vaults/gentech/03-Projects/AAE/` (milestone tracker, regime classifier)
+- GenTech vault: `${VAULT_DIR}/03-Projects/AAE/` (milestone tracker, regime classifier)
 
 ---
 

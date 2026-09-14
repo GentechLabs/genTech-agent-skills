@@ -27,7 +27,7 @@ else:
 
 **Check:**
 ```bash
-git -C /root/.hermes/profiles/gentech/harness status 2>&1
+git -C ${PROFILE_DIR}/harness status 2>&1
 ```
 
 **Expected:** Shows branch and clean working tree.
@@ -35,7 +35,7 @@ git -C /root/.hermes/profiles/gentech/harness status 2>&1
 
 **Init (one-time):**
 ```bash
-cd /root/.hermes/profiles/gentech/harness
+cd ${PROFILE_DIR}/harness
 git init
 git add -A
 git commit -m "harness baseline evolve-N"

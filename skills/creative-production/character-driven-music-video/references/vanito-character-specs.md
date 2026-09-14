@@ -100,7 +100,7 @@ This is KAGE's "band icon" design from the artist tab on Vanito's hub. Used for 
 
 ## Pusô ng Hub Workflow
 ```bash
-cd /root/vaults/gentech/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/ProtoJay4789.github.io
 git add -f music/vanito/<file>
 git commit -m "📄 <description>"
 git pull --rebase origin main  # always pull before push to avoid rejection

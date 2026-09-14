@@ -36,7 +36,7 @@ Vault (build queue, PR portfolio)
 ## ElevenLabs Narration
 
 Uses Jordan's ElevenLabs API key (Creator plan, $22/mo). Key stored at:
-`/root/.hermes/profiles/gentech/config/elevenlabs.env`
+`${PROFILE_DIR}/config/elevenlabs.env`
 
 **Default voice:** `YoYo` (cloned, ID: `xQbwtCgzouB5QdCSd0Z7`) — smooth, informal, for content pipeline narration.
 
@@ -63,7 +63,7 @@ python3 scripts/content-pipeline.py --preview
 npx remotion studio --no-open
 
 # Step 3: Narrate with ElevenLabs
-ELEVENLABS_API_KEY=$(grep ELEVENLABS_API_KEY /root/.hermes/profiles/gentech/config/elevenlabs.env | cut -d= -f2) \
+ELEVENLABS_API_KEY=$(grep ELEVENLABS_API_KEY ${PROFILE_DIR}/config/elevenlabs.env | cut -d= -f2) \
   python3 scripts/elevenlabs-narrate.py
 
 # Step 4: Render final video

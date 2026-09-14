@@ -1,7 +1,7 @@
 # Agentic Finance Landscape — Competitive Intelligence
 
 **Source:** @CambrianNetwork via @MiloOnChains (June 4, 2026)
-**Full file:** `/root/vaults/gentech/03-Strategies/agentic-finance-landscape.md`
+**Full file:** `${VAULT_DIR}/03-Strategies/agentic-finance-landscape.md`
 
 ## The Four Categories
 

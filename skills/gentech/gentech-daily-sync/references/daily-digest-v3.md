@@ -78,26 +78,26 @@ Group-to-topic mapping (for structuring output, NOT for querying session_search)
 
 ### Step 1: Read yesterday's daily note
 ```bash
-cat /root/vaults/gentech/Daily/$(date -d yesterday +%Y-%m-%d).md
+cat ${VAULT_DIR}/Daily/$(date -d yesterday +%Y-%m-%d).md
 ```
 This is the single richest source. It lists every topic discussed, files created, and decisions made. Parse into group buckets (HQ/Strategies/Labs/Entertainment).
 
 ### Step 2: Read status board + queue
 ```bash
-cat /root/vaults/gentech/HQ/STATUS-BOARD.md
-cat /root/vaults/gentech/HQ/jordan-queue.md
+cat ${VAULT_DIR}/HQ/STATUS-BOARD.md
+cat ${VAULT_DIR}/HQ/jordan-queue.md
 ```
 Cross-reference with daily note. Status board shows blockers and deadlines. Queue shows what needs Jordan.
 
 ### Step 3: Check for sweep report
 ```bash
-cat /root/vaults/gentech/Mess-Hall/sweep-report-$(date -d yesterday +%Y-%m-%d).md
+cat ${VAULT_DIR}/Mess-Hall/sweep-report-$(date -d yesterday +%Y-%m-%d).md
 ```
 Sweep reports flag stale items, cross-file contradictions, and urgency markers.
 
 ### Step 4: Filesystem scan for all modified files
 ```bash
-cd /root/vaults/gentech && find . -name "*.md" -mtime -1 -not -path "./.obsidian/*" | sort
+cd ${VAULT_DIR} && find . -name "*.md" -mtime -1 -not -path "./.obsidian/*" | sort
 ```
 Catches anything the daily note missed — hackathon drafts, AAE assessments, gaming updates.
 

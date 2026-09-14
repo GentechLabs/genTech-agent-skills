@@ -37,9 +37,9 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/root/.hermes/profiles/gentech/home
+WorkingDirectory=${PROFILE_DIR}/home
 ExecStart=/usr/local/node22/bin/npx @blockrun/clawrouter --port 8402
-Environment=HOME=/root/.hermes/profiles/gentech/home
+Environment=HOME=${PROFILE_DIR}/home
 Restart=always
 RestartSec=5
 # HOME must point at the profile home so the wallet mnemonic is found
@@ -109,7 +109,7 @@ STRING**, which `get_fallback_chain` does NOT parse — `hermes fallback list` t
 list, use the config module directly:
 
 ```bash
-/usr/local/lib/hermes-agent/venv/bin/python -c "
+${INSTALL_DIR}/venv/bin/python -c "
 from hermes_cli.config import load_config, save_config
 cfg = load_config()
 cfg['fallback_providers'] = [{'provider':'clawrouter','model':'blockrun/auto','base_url':'http://127.0.0.1:8402/v1'}]
@@ -132,11 +132,11 @@ gateway restart — it does NOT live in config.yaml. To clear it back to the glo
 ClawRouter path:
 
 ```bash
-/usr/local/lib/hermes-agent/venv/bin/python -c "
+${INSTALL_DIR}/venv/bin/python -c "
 from gateway.session import SessionStore
 from pathlib import Path
 import gateway.config as gc
-store = SessionStore(Path('/root/.hermes/profiles/gentech/sessions'), gc.GatewayConfig())
+store = SessionStore(Path('${PROFILE_DIR}/sessions'), gc.GatewayConfig())
 key = 'agent:main:telegram:group:-1003863540828:7105876857'  # <session_key>
 print('current:', store.get_model_override(key))
 store.set_model_override(key, None)   # None clears the persisted override

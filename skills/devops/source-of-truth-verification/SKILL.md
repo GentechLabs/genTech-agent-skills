@@ -111,7 +111,7 @@ Resolved in one command:
 
 ```
 readlink /proc/219465/cwd
-→ /root/vaults/gentech/10-Labs/x402-gateway
+→ ${VAULT_DIR}/10-Labs/x402-gateway
 ```
 
 ### False capability claim

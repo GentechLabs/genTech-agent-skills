@@ -41,8 +41,8 @@ The old path `Gentech/handoffs/gentech-to-forge/` is dead code from the vault co
 
 ## Script Location & Cron Wiring
 
-- **Cron copy:** `/root/.hermes/profiles/gentech/scripts/nightly-maintenance.py` (the cron reads from Hermes profile scripts)
-- **Vault copy:** `/root/vaults/gentech/scripts/nightly-maintenance.py` (for git tracking)
+- **Cron copy:** `${PROFILE_DIR}/scripts/nightly-maintenance.py` (the cron reads from Hermes profile scripts)
+- **Vault copy:** `${VAULT_DIR}/scripts/nightly-maintenance.py` (for git tracking)
 - **Cron job ID:** `f1fa47f76045`
 - **Schedule:** `0 4 * * *` (midnight ET)
 - **Mode:** `no_agent=True` (pure script, no LLM)
@@ -51,15 +51,15 @@ The old path `Gentech/handoffs/gentech-to-forge/` is dead code from the vault co
 
 When changing the maintenance script:
 
-1. Edit the Hermes profile copy: `/root/.hermes/profiles/gentech/scripts/nightly-maintenance.py`
-2. Copy to vault for git tracking: `cp /root/.hermes/profiles/gentech/scripts/nightly-maintenance.py /root/vaults/gentech/scripts/`
+1. Edit the Hermes profile copy: `${PROFILE_DIR}/scripts/nightly-maintenance.py`
+2. Copy to vault for git tracking: `cp ${PROFILE_DIR}/scripts/nightly-maintenance.py ${VAULT_DIR}/scripts/`
 3. The cron references it by filename — no cron update needed if filename stays the same
 
 ## Verification
 
 ```bash
 # Test the script locally
-python3 /root/.hermes/profiles/gentech/scripts/nightly-maintenance.py
+python3 ${PROFILE_DIR}/scripts/nightly-maintenance.py
 
 # Check cron fires correctly
 cronjob(action='list')

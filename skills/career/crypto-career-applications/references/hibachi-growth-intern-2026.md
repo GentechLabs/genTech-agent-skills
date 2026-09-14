@@ -27,7 +27,7 @@
 
 | Requirement | User Asset | Evidence |
 |------------|------------|----------|
-| SQL/Python expertise | AAE Milestone Tracker + Regime Classifier | `/root/vaults/gentech/03-Strategies/scripts/` — Python automation of on-chain data at scale |
+| SQL/Python expertise | AAE Milestone Tracker + Regime Classifier | `${VAULT_DIR}/03-Strategies/scripts/` — Python automation of on-chain data at scale |
 | DeFi ecosystem knowledge | AgentEscrow (Avalanche) + AAE Dashboard | Live mainnet deployment + real user yield tracking |
 | Growth engineering mindset | Hackathon velocity (3 concurrent) | ETHGlobal Open Agents + Solana Frontier + Kite AI |
 | Remote-flex availability | Amazon flex worker | Can schedule around internship, no relocation needed |

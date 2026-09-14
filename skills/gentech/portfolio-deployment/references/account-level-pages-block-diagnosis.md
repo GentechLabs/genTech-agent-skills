@@ -23,7 +23,7 @@ ProtoJay4789's GitHub account has a **permanent account-level restriction** that
 
 ```bash
 # 1. Check Pages config
-TOKEN=$(grep 'oauth_token:' /root/.hermes/profiles/gentech/home/.config/gh/hosts.yml | head -1 | awk '{print $2}' | tr -d '"')
+TOKEN=$(grep 'oauth_token:' ${PROFILE_DIR}/home/.config/gh/hosts.yml | head -1 | awk '{print $2}' | tr -d '"')
 curl -s -H "Authorization: Bearer $TOKEN" \
   "https://api.github.com/repos/ProtoJay4789/ProtoJay4789.github.io/pages" | \
   python3 -c "import sys,json; d=json.load(sys.stdin); print(f'build_type: {d.get(\"build_type\")}, source: {d.get(\"source\")}, status: {d.get(\"status\")}')"

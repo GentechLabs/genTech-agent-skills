@@ -35,7 +35,7 @@ description: Deploy content from vault to ProtoJay4789.github.io portfolio websi
 
 ```bash
 # 1. Get latest from gh-pages branch (authenticated)
-TOKEN=$(grep 'oauth_token:' /root/.hermes/profiles/gentech/home/.config/gh/hosts.yml | head -1 | awk '{print $2}' | tr -d '"')
+TOKEN=$(grep 'oauth_token:' ${PROFILE_DIR}/home/.config/gh/hosts.yml | head -1 | awk '{print $2}' | tr -d '"')
 curl -s -H "Authorization: Bearer $TOKEN" \
   "https://raw.githubusercontent.com/ProtoJay4789/ProtoJay4789.github.io/gh-pages/index.html" \
   > /tmp/portfolio-latest.html
@@ -57,7 +57,7 @@ ssh root@2.24.195.196 "cp /var/www/portfolio/index.html /var/www/portfolio/index
 
 ### GitHub Repo Status
 
-The repo at `/root/repos/ProtoJay4789.github.io/` is a **secondary mirror only** — it holds the source but cannot deploy. The `gh-pages` branch has correct content (verified via authenticated raw.githubusercontent.com), but GitHub will never serve it. The old vault path `/root/vaults/gentech/github/ProtoJay4789.github.io/` no longer exists.
+The repo at `/root/repos/ProtoJay4789.github.io/` is a **secondary mirror only** — it holds the source but cannot deploy. The `gh-pages` branch has correct content (verified via authenticated raw.githubusercontent.com), but GitHub will never serve it. The old vault path `${VAULT_DIR}/github/ProtoJay4789.github.io/` no longer exists.
 
 ### Full Diagnosis Reference
 
@@ -65,7 +65,7 @@ See `references/account-level-pages-block-diagnosis.md` for the complete diagnos
 
 ---
 
-Deploy content from vault (`/root/vaults/gentech/`) to portfolio website (`/root/vaults/gentech/github/ProtoJay4789.github.io/`).
+Deploy content from vault (`${VAULT_DIR}/`) to portfolio website (`${VAULT_DIR}/github/ProtoJay4789.github.io/`).
 
 ---
 
@@ -106,17 +106,17 @@ Not all deployments modify `index.html`. Sometimes you deploy a new standalone p
 ### Correct File Path
 
 The portfolio repo root is at:
-`/root/vaults/gentech/github/ProtoJay4789.github.io/`
+`${VAULT_DIR}/github/ProtoJay4789.github.io/`
 
 A file at `repo-root/DeFi/defi-dashboard.html` in the tree must be written to:
-- `/root/vaults/gentech/github/ProtoJay4789.github.io/DeFi/defi-dashboard.html`
+- `${VAULT_DIR}/github/ProtoJay4789.github.io/DeFi/defi-dashboard.html`
 
-**Do NOT write from the vault root** (e.g., `/root/vaults/gentech/DeFi/defi-dashboard.html`) — git will see the file at path `github/ProtoJay4789.github.io/DeFi/defi-dashboard.html` which GitHub Pages will not serve.
+**Do NOT write from the vault root** (e.g., `${VAULT_DIR}/DeFi/defi-dashboard.html`) — git will see the file at path `github/ProtoJay4789.github.io/DeFi/defi-dashboard.html` which GitHub Pages will not serve.
 
 ### Verify Correct Path After Adding
 
 ```bash
-cd /root/vaults/gentech/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/ProtoJay4789.github.io
 git ls-tree HEAD DeFi/defi-dashboard.html
 # Expected: DeFi/defi-dashboard.html
 # Wrong:    github/ProtoJay4789.github.io/DeFi/defi-dashboard.html
@@ -181,7 +181,7 @@ Conclusion: `success` = deployed, `cancelled` = superseded, `failure` = build br
 
 **Level 1 — Git tree (file at correct repo-relative path):**
 ```
-cd /root/vaults/gentech/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/ProtoJay4789.github.io
 git ls-tree HEAD DeFi/file.html
 # Expected: DeFi/file.html
 # Wrong:    github/ProtoJay4789.github.io/DeFi/file.html
@@ -219,7 +219,7 @@ When a dashboard loads data from multiple JSON files (rainbow, rotation, macro),
 
 ```python
 # Read the source content (e.g., case studies, one-pager)
-with open('/root/vaults/gentech/00-HQ/case-studies.md', 'r') as f:
+with open('${VAULT_DIR}/00-HQ/case-studies.md', 'r') as f:
     content = f.read()
 ```
 
@@ -240,7 +240,7 @@ Use search to find markers:
 
 ```python
 # Read portfolio HTML
-with open('/root/vaults/gentech/github/ProtoJay4789.github.io/index.html', 'r') as f:
+with open('${VAULT_DIR}/github/ProtoJay4789.github.io/index.html', 'r') as f:
     html = f.read()
 
 # Find insertion point (e.g., after "Browse All APIs →")
@@ -307,7 +307,7 @@ with open('index.html', 'w') as f:
 ### 6. Commit and Push
 
 ```bash
-cd /root/vaults/gentech/github/ProtoJay4789.github.io
+cd ${VAULT_DIR}/github/ProtoJay4789.github.io
 git add index.html
 git commit -m "Descriptive commit message"
 git push
@@ -446,7 +446,7 @@ The portfolio has an automated daily health check at `scripts/portfolio_sync.py`
 
 # 1. Search for "agent stack" across vault
 import os
-for root, dirs, files in os.walk('/root/vaults/gentech'):
+for root, dirs, files in os.walk('${VAULT_DIR}'):
     for file in files:
         if file.endswith('.md') or file.endswith('.html'):
             path = os.path.join(root, file)
@@ -474,8 +474,8 @@ git push
 
 ## Related Files
 
-- Portfolio site: `/root/vaults/gentech/github/ProtoJay4789.github.io/index.html`
-- Vault content: `/root/vaults/gentech/00-HQ/*.md`
+- Portfolio site: `${VAULT_DIR}/github/ProtoJay4789.github.io/index.html`
+- Vault content: `${VAULT_DIR}/00-HQ/*.md`
 - Reference: See `references/portfolio-structure.md` for full CSS classes
 - **Design strategy:** See `references/portfolio-design-strategy.md` for job-seeking vs founder showcase mode, section ordering, and content rules
 - **Link delivery pattern:** See `web-deployment` skill's "Deliver the Link" section for the verified pattern (build first, verify, send link as its own message — never bury at end of status recap)

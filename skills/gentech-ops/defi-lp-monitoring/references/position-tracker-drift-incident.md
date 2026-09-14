@@ -16,7 +16,7 @@ Position tracker (`.lfj-position-tracker.json`) was never updated after Jordan's
 
 ```python
 # Check current tracker state
-cat /root/.hermes/profiles/gentech/scripts/.lfj-position-tracker.json
+cat ${PROFILE_DIR}/scripts/.lfj-position-tracker.json
 
 # Expected after curve rebalance:
 {
@@ -43,7 +43,7 @@ cd /root/projects/lp-reader && node reader.mjs --wallet 0x7ebff... --shape curve
 2. Updated BOTH tracker paths:
 ```bash
 # Profile path (cron reads from here)
-/root/.hermes/profiles/gentech/scripts/.lfj-position-tracker.json
+${PROFILE_DIR}/scripts/.lfj-position-tracker.json
 
 # Global path (must stay synced)
 /root/.hermes/scripts/.lfj-position-tracker.json

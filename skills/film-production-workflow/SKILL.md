@@ -186,12 +186,12 @@ When Vanito says "fill in the gap between X to Y seconds":
 
 ### 1. BlockRun wallet swap (funds "missing" after top-up)
 A fresh Hermes profile can create a NEW BlockRun key at
-`/root/.hermes/profiles/gentech/home/.blockrun/.session` while the FUNDED wallet key lives at
+`${PROFILE_DIR}/home/.blockrun/.session` while the FUNDED wallet key lives at
 `/root/.blockrun/.session`. `blockrun_wallet` then reports $0.00 even after a top-up, because the
 MCP signs with the new (empty) key.
 FIX:
 ```bash
-cp /root/.blockrun/.session /root/.hermes/profiles/gentech/home/.blockrun/.session
+cp /root/.blockrun/.session ${PROFILE_DIR}/home/.blockrun/.session
 ```
 Then verify `blockrun_wallet(action=status)` shows the funded address `0xebc8c...`.
 

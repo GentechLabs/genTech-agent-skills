@@ -113,5 +113,5 @@ Don't rebuild what exists. Before building a meter, inventory the fleet:
   `api.gentechlabs.net`) provides metering/settlement.
 - **Billing panels** (Paymenter/WHMCS/Blesta) are back-office, separate layer.
 The meter is the thin seam that joins connector + rail so they cooperate rather
-than conflict. Check `/root/vaults/gentech/09-Green Room/specs/openconnector-spike.md`
+than conflict. Check `${VAULT_DIR}/09-Green Room/specs/openconnector-spike.md`
 for the full spike log.

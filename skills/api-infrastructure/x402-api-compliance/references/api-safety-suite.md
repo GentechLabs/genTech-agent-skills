@@ -4,7 +4,7 @@ A regression test suite that validates every x402 endpoint every 6 hours. Silent
 
 ## Location
 
-- Suite: `/root/.hermes/profiles/gentech/scripts/api-safety-suite/run_safety_suite.py`
+- Suite: `${PROFILE_DIR}/scripts/api-safety-suite/run_safety_suite.py`
 - Cron: job_id `59283121321a`, schedule `0 2,8,14,20 * * *`
 - Context consumer: x402 Compliance Scout (`f2105e16a83b`) receives results via `context_from`
 

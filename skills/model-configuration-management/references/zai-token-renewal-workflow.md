@@ -29,7 +29,7 @@ Log in → Navigate to API Keys section → Generate new token
 
 ### Step 2: Agent Adds to `.env`
 
-The `.env` file is at: `/root/.hermes/profiles/gentech/.env`
+The `.env` file is at: `${PROFILE_DIR}/.env`
 
 **Critical:** The env var MUST be named `ZAI_API_KEY` (not `GLM_API_KEY`):
 
@@ -94,10 +94,10 @@ After restart, verify the config is correct:
 
 ```bash
 # Check env var is set
-grep -E '^ZAI_API_KEY' /root/.hermes/profiles/gentech/.env
+grep -E '^ZAI_API_KEY' ${PROFILE_DIR}/.env
 
 # Check providers section references it
-grep -A5 '^zai:' /root/.hermes/profiles/gentech/config.yaml
+grep -A5 '^zai:' ${PROFILE_DIR}/config.yaml
 ```
 
 **Expected output:**

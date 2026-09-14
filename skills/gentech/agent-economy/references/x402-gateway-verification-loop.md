@@ -26,7 +26,7 @@ but never complete a payment.
    `BACKEND_ROUTES` only mapped old keys to wrong paths, and 4 of 6 services
    had NO backend at all (returned stubs after payment).
 
-## The Fix Pattern (in `/root/vaults/gentech/10-Labs/x402-gateway/server.py`)
+## The Fix Pattern (in `${VAULT_DIR}/10-Labs/x402-gateway/server.py`)
 
 ### 1. Accept standard proof headers
 
@@ -113,7 +113,7 @@ just header presence.
 ## Log It
 
 Full symptom→cause→fix→verification→lesson entry in
-`/root/vaults/gentech/11-Mess Hall/infrastructure-issues-playbook.md`
+`${VAULT_DIR}/11-Mess Hall/infrastructure-issues-playbook.md`
 (Issue #4 = gateway couldn't accept standard payments; Issue #5 = phantom
 endpoints). Jordan's directive: every infra issue gets logged there so we
 diagnose recurring problems in minutes and help partners faster.

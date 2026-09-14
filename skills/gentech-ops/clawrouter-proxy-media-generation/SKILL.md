@@ -28,7 +28,7 @@ tags: [media, video, image, proxy, clawrouter, seedance, gpt-image-2, wallet]
 The `duration` field is ignored. Every Seedance clip is ~5s. Chain multiple clips via ffmpeg concat.
 
 ### 2. Proxy delivers video-only — NO audio
-Output contains video track only. Audio MUST be added separately. Source from `/root/vaults/gentech/music/`.
+Output contains video track only. Audio MUST be added separately. Source from `${VAULT_DIR}/music/`.
 
 ### 3. Check balance BEFORE every generation
 Wallet low = misleading payment errors. Always run `node bal.mjs` first.

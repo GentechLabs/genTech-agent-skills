@@ -5,8 +5,8 @@ Cloned Jocelyn's voice from Telegram voice messages. Key learnings below.
 
 ## Order of Operations for First-Time Voice Cloning
 
-1. Collaborator sends voice message in Telegram → OGG file lands in `/root/.hermes/profiles/gentech/audio_cache/`
-2. Find it: `ls -lt /root/.hermes/profiles/gentech/audio_cache/*.ogg | head -5`
+1. Collaborator sends voice message in Telegram → OGG file lands in `${PROFILE_DIR}/audio_cache/`
+2. Find it: `ls -lt ${PROFILE_DIR}/audio_cache/*.ogg | head -5`
 3. Check duration: `ffprobe -v quiet -show_format /path/to/file.ogg` — should be 30-60s
 4. Clone: POST to ElevenLabs `/v1/voices/add` with the OGG file
 5. Save voice ID to `.env`

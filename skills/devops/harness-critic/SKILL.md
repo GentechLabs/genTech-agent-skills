@@ -168,7 +168,7 @@ Without a `.git` directory, measurement #1 (recommendation stagnation via git di
 
 ### Harness path ambiguity (FIXED Jul 29, 2026)
 
-**CORRECTED 2026-07-31:** the LIVE harness is `/root/.hermes/profiles/gentech/harness/` — that is the `Workdir` of all four harness crons (verify with `hermes cron list | grep -A6 Harness`). `/root/.hermes/harness/` is an ORPHAN tree (own git, own facts/, last written 2026-07-30 08:00Z by a stray `0 8 * * *` trigger). Never audit the orphan. Ground-truth the path from the cron `Workdir` field, not from any skill file.
+**CORRECTED 2026-07-31:** the LIVE harness is `${PROFILE_DIR}/harness/` — that is the `Workdir` of all four harness crons (verify with `hermes cron list | grep -A6 Harness`). `/root/.hermes/harness/` is an ORPHAN tree (own git, own facts/, last written 2026-07-30 08:00Z by a stray `0 8 * * *` trigger). Never audit the orphan. Ground-truth the path from the cron `Workdir` field, not from any skill file.
 
 ### Stale state files
 State files like `harness-state.md` and `prediction-outcomes.md` can fall behind the actual cycle. The Critic should check mtime vs last cycle timestamp and flag any file that hasn't been updated in >1 cycle.

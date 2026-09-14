@@ -18,7 +18,7 @@ This reference document was written before the build queue was migrated to a dua
 
 ## ⚠️ Multi-Remote Vault Sync — Known Pitfall (Jul 2026)
 
-The vault at `/root/vaults/gentech/` has **four remotes**:
+The vault at `${VAULT_DIR}/` has **four remotes**:
 
 | Remote | URL | Purpose |
 |--------|-----|---------|
@@ -132,7 +132,7 @@ Estimated: 3-5 hours total
 
 ```bash
 # After major changes
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 ob sync
 ```
 
@@ -170,7 +170,7 @@ Forge: Syncs vault: ob sync
 ### Step 4: Progress Tracking
 ```bash
 # Jordan checks progress
-cd /root/vaults/gentech && ob sync
+cd ${VAULT_DIR} && ob sync
 cat 10-Labs/build-queue.md
 
 # Sees updated checkboxes and notes
@@ -345,7 +345,7 @@ Forge reports: "Started Cloudflare setup, waitlist signed up ✓"
 
 **Step 5: Jordan Reviews Progress**
 ```bash
-Jordan syncs: cd /root/vaults/gentech && ob sync
+Jordan syncs: cd ${VAULT_DIR} && ob sync
 Jordan reads: cat 10-Labs/build-queue.md
 Jordan sees: - [x] Sign up for waitlist ✓
 ```
@@ -405,7 +405,7 @@ cat 10-Labs/active-projects/cloudflare-gateway/setup-notes.md
 ### Check Progress Over Time
 ```bash
 # See recent changes
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git log --oneline --since="1 day ago" 10-Labs/
 
 # Show differences

@@ -34,7 +34,7 @@ Never escalate, switch providers, or tell the user a provider is down based on s
 The read_file tool guard blocks `auth.json` (credential store), but terminal can read it:
 
 ```bash
-cd /root/.hermes/profiles/gentech && python3 -c "
+cd ${PROFILE_DIR} && python3 -c "
 import json
 d = json.load(open('auth.json'))
 for prov, creds in d.get('credential_pool', {}).items():

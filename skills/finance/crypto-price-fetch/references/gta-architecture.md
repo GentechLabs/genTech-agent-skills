@@ -53,8 +53,8 @@ JSON bridge between Signal and Watcher:
 ## File Locations
 
 - **Canonical source:** `/root/repos/gentech-treasury-trader/src/`
-- **Cron execution copies:** `/root/.hermes/profiles/gentech/scripts/`
-- **Position file (runtime):** `/root/.hermes/profiles/gentech/scripts/tradesta_position.json`
+- **Cron execution copies:** `${PROFILE_DIR}/scripts/`
+- **Position file (runtime):** `${PROFILE_DIR}/scripts/tradesta_position.json`
 - **Repo:** `github.com/ProtoJay4789/gentech-treasury-trader`
 
 ## nginx Deployment Pattern
@@ -112,7 +112,7 @@ When consolidating standalone no_agent scripts into GTA:
 - 📦 CMC Watchlist → planned for GTA Signal "assets on watch"
 - 📦 Revenue Monitor → planned for GTA Watcher P&L section
 
-**Cron security pitfall:** `no_agent=True` cron jobs validate that the script path resolves inside `/root/.hermes/profiles/gentech/scripts/`. Symlinks pointing outside are blocked. Always copy files in directly. Sync from the repo after updates.
+**Cron security pitfall:** `no_agent=True` cron jobs validate that the script path resolves inside `${PROFILE_DIR}/scripts/`. Symlinks pointing outside are blocked. Always copy files in directly. Sync from the repo after updates.
 
 ## Q402 Integration Status
 

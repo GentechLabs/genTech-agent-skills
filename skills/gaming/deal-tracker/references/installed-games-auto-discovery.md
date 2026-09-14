@@ -111,7 +111,7 @@ Need two environment variables:
 - `STEAM_API_KEY` — Get from https://steamcommunity.com/dev/apikey
 - `STEAM_ID` — User's Steam profile ID (64-bit)
 
-Store in `/root/.hermes/profiles/gentech/.env`:
+Store in `${PROFILE_DIR}/.env`:
 ```
 STEAM_API_KEY=your_api_key_here
 STEAM_ID=your_steam_id_here

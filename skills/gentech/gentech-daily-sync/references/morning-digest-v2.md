@@ -15,7 +15,7 @@ Cross-group conversation synthesis delivered to HQ (`telegram:-1003863540828`) a
 - **If all vault fallbacks are empty**, fall back to **direct session file scanning**:
   ```python
   import json, glob
-  for f in sorted(glob.glob('/root/.hermes/profiles/gentech/sessions/YYYYMMDD_*.jsonl')):
+  for f in sorted(glob.glob('${PROFILE_DIR}/sessions/YYYYMMDD_*.jsonl')):
       user_msgs = []
       with open(f) as fh:
           for line in fh:

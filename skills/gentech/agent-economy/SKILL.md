@@ -1188,7 +1188,7 @@ When major players adopt your technology stack (x402, ERC-8004, MCP), it's proof
 4. Extract patterns (commission models, reputation tracking, payment flows)
 5. Reference in submissions (hackathons, grants, partnerships)
 
-**See:** `/root/vaults/gentech/00-HQ/travala-mcp-integration-strategy.md` for full strategy
+**See:** `${VAULT_DIR}/00-HQ/travala-mcp-integration-strategy.md` for full strategy
 
 ### 11. Deep Dive Assessment Framework (Jul 5, 2026)
 
@@ -1209,7 +1209,7 @@ Systematic buildability evaluation for new ideas. See `references/deep-dive-asse
 
 **Pitfalls:** Don't skip hypothesis step. Don't gloss over blockers. Always present 2-3 options. Don't skip critical questions. Don't overpromise timelines.
 
-**See:** `/root/vaults/gentech/11-Mess Hall/2026-07-05-agent-finance-intermediary-deep-dive.md` for a complete example.
+**See:** `${VAULT_DIR}/11-Mess Hall/2026-07-05-agent-finance-intermediary-deep-dive.md` for a complete example.
 
 ---
 
@@ -1331,7 +1331,7 @@ Submit GenTech services to GitHub awesome lists, community repos, and ecosystem 
 3. Commit and push: `git add <file> && git commit -m "Add GenTech <Service>" && git push origin main`
 4. Create PR with quality checklist: `gh pr create --repo <owner>/<repo> --title "Add GenTech <Service>" --body "<quality checklist>"`
 5. For awesome-mcp-servers, append `🤖🤖🤖` to PR title for automated fast-track
-6. Log to PR portfolio: `/root/vaults/gentech/10-Labs/pr-portfolio.md`
+6. Log to PR portfolio: `${VAULT_DIR}/10-Labs/pr-portfolio.md`
 
 #### High-Value Targets by Category
 
@@ -1372,7 +1372,7 @@ Submit GenTech services to GitHub awesome lists, community repos, and ecosystem 
 
 ## Marketplace / Listing Registry (MANDATORY CHECK)
 
-`/root/vaults/gentech/11-Mess Hall/marketplace-listings-registry.md` — the
+`${VAULT_DIR}/11-Mess Hall/marketplace-listings-registry.md` — the
 single list of every marketplace/website/protocol where GenTech is listed
 (x402-list, 8004scan, Agentic.Market, GitHub org/personal, etc.). Jordan
 directive (Aug 2026): on ANY service change (new endpoint, price, brand,
@@ -1382,7 +1382,7 @@ silently skip a platform. New listing → append a row.
 ## Infrastructure Issues Playbook (MANDATORY CHECK)
 
 Before debugging any gateway/connection/compliance problem, read
-`/root/vaults/gentech/11-Mess Hall/infrastructure-issues-playbook.md` — it's
+`${VAULT_DIR}/11-Mess Hall/infrastructure-issues-playbook.md` — it's
 the canonical log of issues we've already diagnosed (x402 EIP-712 domain
 params, GitHub flagged-account 404s, Nous balance misreads). Same symptom →
 same fix, minutes not days. When we help other teams become x402-compliant,

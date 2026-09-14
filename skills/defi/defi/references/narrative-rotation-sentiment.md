@@ -1,6 +1,6 @@
 # Narrative Rotation + Sentiment — Quick Reference
 
-Script: `/root/.hermes/profiles/gentech/scripts/narrative-rotation.py`
+Script: `${PROFILE_DIR}/scripts/narrative-rotation.py`
 Cron: `7ec71332b97c` — Sundays 7:30 PM UTC, delivers to Strategies group
 JSON output: `/root/ProtoJay4789.github.io/DeFi/rainbow/rotation-data.json`
 

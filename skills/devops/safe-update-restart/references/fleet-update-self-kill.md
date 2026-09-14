@@ -9,7 +9,7 @@ pixel**. The last profile(s) in the list stay on old code. Pixel's own handoff h
 about this exact failure mode.
 
 ## Root cause
-All profiles share ONE Hermes install at `/usr/local/lib/hermes-agent`, but each
+All profiles share ONE Hermes install at `${INSTALL_DIR}`, but each
 profile's gateway is a SEPARATE process. When the script (running from, say, the gentech
 gateway) calls `hermes gateway restart --profile gentech` on **its own** gateway, that
 restart SIGTERMs the gateway process AND its child processes — which is the script
@@ -62,13 +62,13 @@ a one-shot cron after the fleet updater self-killed on gentech.
 
 ```bash
 # 1. write a restart script
-cat > /root/.hermes/profiles/gentech/scripts/restart-gizmo-pixel.sh <<'EOF'
+cat > ${PROFILE_DIR}/scripts/restart-gizmo-pixel.sh <<'EOF'
 #!/bin/bash
 sleep 2
 systemctl --user restart hermes-gateway-gizmo.service && echo "gizmo OK $(date)" >> /tmp/gateway-restart.log
 systemctl --user restart hermes-gateway-pixel.service && echo "pixel OK $(date)" >> /tmp/gateway-restart.log
 EOF
-chmod +x /root/.hermes/profiles/gentech/scripts/restart-gizmo-pixel.sh
+chmod +x ${PROFILE_DIR}/scripts/restart-gizmo-pixel.sh
 # 2. schedule a one-shot no_agent cron pointing at that script (script=restart-gizmo-pixel.sh),
 #    fire it, then remove the cron after it runs.
 ```

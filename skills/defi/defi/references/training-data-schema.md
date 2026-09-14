@@ -4,7 +4,7 @@ Used by the GenTech DeFi model training pipeline. Every LP observation gets logg
 
 ## Location
 
-`/root/vaults/gentech/defi-training-data.json`
+`${VAULT_DIR}/defi-training-data.json`
 
 ## Schema
 

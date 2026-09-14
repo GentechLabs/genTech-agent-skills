@@ -126,7 +126,7 @@ data['gate_summary']['autonomous'] = autonomous
 When `git push vault` is rejected because the remote is ahead (concurrent pushes from other agents or Jordan):
 
 ```bash
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git fetch vault
 git pull --rebase vault main
 # If rebase conflicts on build_queue.json, resolve with theirs:

@@ -102,8 +102,8 @@ row count == JSON item count.
 ### 6. Verify + sync
 ```bash
 # file is a BARE ARRAY — iterate it directly (Aug 29 verified)
-python3 -c "import json; ids=[i['id'] for i in json.load(open('/root/vaults/gentech/scripts/build_queue.json'))]; assert ids==list(range(1,len(ids)+1)), 'IDs not sequential'; print(len(ids), 'items, sequential OK')"
-cd /root/vaults/gentech && ob sync
+python3 -c "import json; ids=[i['id'] for i in json.load(open('${VAULT_DIR}/scripts/build_queue.json'))]; assert ids==list(range(1,len(ids)+1)), 'IDs not sequential'; print(len(ids), 'items, sequential OK')"
+cd ${VAULT_DIR} && ob sync
 ```
 
 ## Pitfalls

@@ -65,7 +65,7 @@ hermes cron list | grep -i "script location\|\.sh\|\.py\|/root/" | grep -E "^[[:
 
 **Verify each referenced file exists:**
 ```bash
-ls -la /root/.hermes/profiles/gentech/scripts/  # former default location
+ls -la ${PROFILE_DIR}/scripts/  # former default location
 ls -la /root/my-music/                           # music sync location
 ls -la /root/repos/hermes-brain/scripts/          # backup location
 ```
@@ -84,7 +84,7 @@ cronjob action=update job_id=<id> prompt="...actual script path..."
 **Pitfall:** The job shows `last_status: ok` even when the path is bad, because the agent ran its full lifecycle (looked for file, didn't find it, returned a no-op result). This makes stale path errors invisible on the cron dashboard. Check agent logs for `No such file or directory` when status is `ok` but expected output is missing:
 
 ```bash
-grep "vanito-music-sync\|No such file" /root/.hermes/profiles/gentech/logs/agent.log
+grep "vanito-music-sync\|No such file" ${PROFILE_DIR}/logs/agent.log
 ```
 
 ### Step 1: List All Jobs with Schedules + Deliveries

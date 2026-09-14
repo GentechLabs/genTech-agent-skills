@@ -1,6 +1,6 @@
 # Portfolio Site Structure Reference
 
-**File:** `/root/vaults/gentech/github/ProtoJay4789.github.io/index.html`
+**File:** `${VAULT_DIR}/github/ProtoJay4789.github.io/index.html`
 
 ## Current Sections (in order)
 

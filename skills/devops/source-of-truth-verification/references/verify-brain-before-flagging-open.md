@@ -12,7 +12,7 @@ Before ANY cron or agent flags an opportunity as open/apply-now/needs-signup —
 "blocker" involving money/keys/wallets — search the vault brain for that name first:
 
 ```bash
-grep -rn -i "<opportunity-or-program-name>" /root/vaults/gentech/ \
+grep -rn -i "<opportunity-or-program-name>" ${VAULT_DIR}/ \
   --include="*.md" -l | grep -E "09-Green Room|HQ/jordan-queue|01-HANDOFFS|10-Labs"
 ```
 

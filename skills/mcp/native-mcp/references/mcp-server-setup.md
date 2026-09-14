@@ -34,7 +34,7 @@ hermes mcp add <name> <url> --transport http
 **Step A: Create Config Snippet**
 
 ```bash
-cd /root/.hermes/profiles/gentech
+cd ${PROFILE_DIR}
 cat >> config-mcp-<name>.yaml << 'EOF'
 mcp_servers:
   <name>:

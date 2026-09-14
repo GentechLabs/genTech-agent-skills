@@ -15,7 +15,7 @@ perfectly in sync with the actual brain remote.
 
 ## Diagnosis — check WHICH remote @{u} points to BEFORE panicking
 ```bash
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 git remote -v                      # list ALL remotes (vault, origin, hub, ...)
 git rev-parse --abbrev-ref @{u}    # ← WHICH remote? origin/main or vault/main?
 # If @{u} is NOT the canonical sync remote, the divergence number is meaningless.

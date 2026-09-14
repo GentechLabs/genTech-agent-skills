@@ -53,7 +53,7 @@ done
 ### 1. Read the PR Portfolio
 
 ```bash
-cat /root/vaults/gentech/10-Labs/pr-portfolio.md
+cat ${VAULT_DIR}/10-Labs/pr-portfolio.md
 ```
 
 This is the canonical list of ALL previously-discovered PRs. It is NOT the source of truth for existence — that's the cross-repo sweep above. Use the portfolio to track which PRs have been logged and their history, not to discover new or missed PRs.

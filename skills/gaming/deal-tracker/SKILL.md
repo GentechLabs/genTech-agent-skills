@@ -391,7 +391,7 @@ Add sale period context to reports when active:
 - **CheapShark 429s block terminal-based clients for minutes** — After ~5-10 rapid requests the IP gets 429'd for 60-120+ seconds. The `web_extract` tool bypasses this (different egress path). For cron jobs: use `web_extract` for individual deal lookups when the terminal-based client is rate-limited. See `references/cheapshark-rate-limit-fallback.md`.
 - **`storeName` is NOT in the deals response** — The `/deals` endpoint returns `storeID` (numeric string), not `storeName`. Resolve via `/stores` endpoint. The `CheapSharkClient._resolve_store_name()` method handles this automatically with caching.
 - **ITAD API key never stored** — Ideas.md says "ITAD API key verified" but no key exists in `.env` or anywhere in the vault. Don't reference it until actually saved.
-- **Telegram bot token** — hermes config.yaml references `${TELEGRAM_BOT_TOKEN}` (env var), but it's usually set in `/root/.hermes/profiles/gentech/.env`, not exported. Read from `.env` file directly when sending messages programmatically. Pattern: `grep TELEGRAM_BOT_TOKEN ~/.hermes/profiles/gentech/.env`
+- **Telegram bot token** — hermes config.yaml references `${TELEGRAM_BOT_TOKEN}` (env var), but it's usually set in `${PROFILE_DIR}/.env`, not exported. Read from `.env` file directly when sending messages programmatically. Pattern: `grep TELEGRAM_BOT_TOKEN ~/.hermes/profiles/gentech/.env`
 - API key must not be exposed in logs or Telegram messages
 - Rate limit: 1000 requests / 5 min — implement caching
 - Affiliate tags in URLs must not be removed (ITAD ToS)

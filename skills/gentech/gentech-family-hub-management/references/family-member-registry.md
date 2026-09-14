@@ -187,7 +187,7 @@
 
 ### Vault Structure
 ```
-/root/vaults/gentech/
+${VAULT_DIR}/
 ├── 15-Gaming/
 │   ├── Vanito-Music-Sync.md    # Music sync protocol
 │   └── poe2-vanito.json        # POE2 build data
@@ -207,7 +207,7 @@
 │   └── vanito-all.json         # Music playlist
 └── README.md                   # User guide
 
-/root/.hermes/profiles/gentech/scripts/
+${PROFILE_DIR}/scripts/
 ├── gaming-hub-sync.py          # Gaming hub sync
 └── rate-limit-escalation.py    # Rate limit monitor
 ```
@@ -225,7 +225,7 @@
 
 ### Update Pattern
 1. Update this file with new information
-2. Run `ob sync` in `/root/vaults/gentech/` to commit
+2. Run `ob sync` in `${VAULT_DIR}/` to commit
 3. Update relevant cronjobs with new data
 4. Verify all links and paths
 

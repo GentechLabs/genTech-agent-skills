@@ -70,8 +70,8 @@ with open(config_path, 'w') as f:
 **Pitfall — yaml.dump reorders and reparses:** Any YAML round-trip via `yaml.safe_load` → edit dict → `yaml.dump` will silently reformat the file. For config.yaml this means provider blocks can merge, list indentation can collapse, and quote style can change. Always prefer text-level edits over yaml round-trips for this file.
 
 ## Files involved
-- Config: `/root/.hermes/profiles/gentech/config.yaml`
-- Env: `/root/.hermes/profiles/gentech/.env` (OLLAMA_API_KEY present)
+- Config: `${PROFILE_DIR}/config.yaml`
+- Env: `${PROFILE_DIR}/.env` (OLLAMA_API_KEY present)
 - Backup before restore: `config.yaml.bak-pre-ollama-restore-20260906-073458`
 - Prior backup used as template: `config.yaml.bak-fallback-diversify-20260831` (had the ollama-cloud block intact)
 

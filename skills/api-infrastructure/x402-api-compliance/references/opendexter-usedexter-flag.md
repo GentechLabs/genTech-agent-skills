@@ -27,7 +27,7 @@ else:
 
 ```bash
 # 1. Add the flag to the gateway env file
-echo "X402_USE_DEXTER=1" >> /root/.hermes/profiles/gentech/.env
+echo "X402_USE_DEXTER=1" >> ${PROFILE_DIR}/.env
 
 # 2. Restart so the running process re-reads .env
 systemctl restart x402-api.service

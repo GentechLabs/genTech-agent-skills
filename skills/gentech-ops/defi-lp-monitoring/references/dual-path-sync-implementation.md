@@ -2,7 +2,7 @@
 
 ## The Problem
 
-Hermes runs from `/root/.hermes/profiles/gentech/` (HERMES_HOME), but Jordan's manual rebalances update files at `/root/.hermes/scripts/` (global). Cron scripts read from the profile path. If they drift, the monitor reports stale ranges and false "OUT OF RANGE" alerts.
+Hermes runs from `${PROFILE_DIR}/` (HERMES_HOME), but Jordan's manual rebalances update files at `/root/.hermes/scripts/` (global). Cron scripts read from the profile path. If they drift, the monitor reports stale ranges and false "OUT OF RANGE" alerts.
 
 **Root cause (Jun 24, 2026):** Jordan rebalanced to $6.30–$6.559 on June 23, updating the global tracker. The profile tracker still had $9.30–$9.60 from June 21. The cron script read the stale profile file and reported "OUT OF RANGE" with 0% efficiency.
 
@@ -49,8 +49,8 @@ When Jordan rebalances manually, always update BOTH paths:
 
 ```bash
 # After extracting new values from LFJ screenshot
-cp /root/.hermes/scripts/.lfj-position-tracker.json /root/.hermes/profiles/gentech/scripts/.lfj-position-tracker.json
-cp /root/.hermes/scripts/.lfj-aae-config.json /root/.hermes/profiles/gentech/scripts/.lfj-aae-config.json
+cp /root/.hermes/scripts/.lfj-position-tracker.json ${PROFILE_DIR}/scripts/.lfj-position-tracker.json
+cp /root/.hermes/scripts/.lfj-aae-config.json ${PROFILE_DIR}/scripts/.lfj-aae-config.json
 ```
 
 Or use the `sync_tracker()` function in Python.

@@ -282,7 +282,7 @@ def calc_efficiency(price, range_low, range_high, shape):
 
 **Files using this formula:**
 - `/root/.hermes/scripts/lp-position-reader.py` — Line 320-344
-- `/root/.hermes/profiles/gentech/scripts/lp-monitor-v2.py` — Line 66-97
+- `${PROFILE_DIR}/scripts/lp-monitor-v2.py` — Line 66-97
 
 ### Bin Generation
 
@@ -808,7 +808,7 @@ mcp_servers:
 31. **CONFIG-FIRST = DON'T GUESS SHAPE/ENTRY** — The reader does NOT detect shape from on-chain. It echos whatever `--shape` was passed. If you pass the wrong shape, the dashboard shows wrong data. Always ask the user what they deployed. This is the #1 source of user frustration. (Confirmed Jul 19, 2026: Jordan corrected shape 3 times in one session.)
 32. **Bid-ask = 0% real fees when price is between edges** — The efficiency formula shows 50-100% across the range, but in practice, NO bins are crossed when price sits between bid and ask edges. This means $0/day earnings. Don't tell the user "93% efficiency" with bid-ask in chop unless the price is actually at an edge. Be honest about 0% fee earnings.
 33. **Python hashlib.sha3_256 is NOT Ethereum keccak256** — NIST SHA-3 and the original Keccak are different hash functions. Using hashlib.sha3_256 produces wrong selectors. Install pycryptodome and use Crypto.Hash.keccak. Correct LFJ V2.2 selectors: getActiveId()=0xdbe65edc, getBinStep()=0x17f11ecc, balanceOf(address,uint256)=0x00fdd58e, getBin(uint24)=0x0abe9688.
-34. **On-chain reader now works — use it instead of guessing range from screenshots** — After fixing the keccak256 bug, the Python reader at /root/vaults/gentech/scripts/onchain-reader.py can pull live bin data. Price formula: (1 + bin_step/10000) ** (bin_id - 2^23) * 10^12. Still needs shape and entry price from user config.
+34. **On-chain reader now works — use it instead of guessing range from screenshots** — After fixing the keccak256 bug, the Python reader at ${VAULT_DIR}/scripts/onchain-reader.py can pull live bin data. Price formula: (1 + bin_step/10000) ** (bin_id - 2^23) * 10^12. Still needs shape and entry price from user config.
 
 ---
 
@@ -831,7 +831,7 @@ The reader passes shape via env var `SHAPE` or defaults to `curve`. After every 
 ```bash
 # Before running reader, ensure SHAPE matches user's actual shape
 export SHAPE=curve   # or bid-ask or spot
-bash /root/vaults/gentech/scripts/run-reader.sh
+bash ${VAULT_DIR}/scripts/run-reader.sh
 ```
 
 ### Price Range Precision

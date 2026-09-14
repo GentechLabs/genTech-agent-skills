@@ -18,7 +18,7 @@
 
 **Config (milestone ladder, DCA rules):**
 - Primary: `~/.hermes/scripts/.lfj-aae-config.json`
-- Vault backup: `/root/vaults/gentech/03-Strategies/scripts/.lfj-aae-config.json`
+- Vault backup: `${VAULT_DIR}/03-Strategies/scripts/.lfj-aae-config.json`
 
 **Position Tracker (primary source of truth for monitor):**
 - `~/.hermes/scripts/.lfj-position-tracker.json` (main)
@@ -35,7 +35,7 @@
 
 ### 1. Quick Health Check (<30s)
 ```bash
-cd /root/vaults/gentech/03-Strategies/scripts
+cd ${VAULT_DIR}/03-Strategies/scripts
 python3 defi-milestone-summary.py
 ```
 
@@ -47,7 +47,7 @@ Extract: `current_tier_label`, `fee_efficiency`, `suggested_action`, `severity`
 
 ### 3. Consistency Verification
 ```bash
-diff ~/.hermes/scripts/.lfj-aae-config.json      /root/vaults/gentech/03-Strategies/scripts/.lfj-aae-config.json
+diff ~/.hermes/scripts/.lfj-aae-config.json      ${VAULT_DIR}/03-Strategies/scripts/.lfj-aae-config.json
 ```
 
 ### 4. Deep Dive (if needed)
@@ -118,7 +118,7 @@ The primary monitor (`defi-lp-consolidated.py`) now verifies on-chain data befor
 
 ## LP Shape Detector (GenTech Original)
 
-Script: `/root/.hermes/profiles/gentech/scripts/lp-shape-detector.py`
+Script: `${PROFILE_DIR}/scripts/lp-shape-detector.py`
 
 Detects strategy shapes from on-chain bin distribution:
 - **Curve:** Bell-curve, peak at center (range-bound markets)

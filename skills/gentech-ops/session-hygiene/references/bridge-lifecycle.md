@@ -50,11 +50,11 @@ Agent resumes with full overnight context — no blank slate
 
 ## Script
 
-`/root/.hermes/profiles/gentech/skills/gentech-ops/session-hygiene/scripts/context-save.py`
+`${PROFILE_DIR}/skills/gentech-ops/session-hygiene/scripts/context-save.py`
 
 Run manually:
 ```bash
-python3 /root/.hermes/profiles/gentech/skills/gentech-ops/session-hygiene/scripts/context-save.py
+python3 ${PROFILE_DIR}/skills/gentech-ops/session-hygiene/scripts/context-save.py
 ```
 
 ## Related

@@ -20,7 +20,7 @@ The Port Health Monitor is a no-agent cron script that:
 4. Delivers to the origin chat so the user sees it
 
 ## Script Location
-`/root/.hermes/profiles/gentech/scripts/port-health-monitor.py`
+`${PROFILE_DIR}/scripts/port-health-monitor.py`
 
 ## Services Checked
 

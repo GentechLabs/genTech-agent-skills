@@ -21,8 +21,8 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/root/gentechlabs/services
-EnvironmentFile=/root/.hermes/profiles/gentech/.env
-ExecStart=/usr/local/lib/hermes-agent/venv/bin/python3 %i.py
+EnvironmentFile=${PROFILE_DIR}/.env
+ExecStart=${INSTALL_DIR}/venv/bin/python3 %i.py
 Restart=always
 RestartSec=3
 [Install]

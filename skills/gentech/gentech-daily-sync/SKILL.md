@@ -50,7 +50,7 @@ Routing: Delegate via department Telegram groups, not DMs. Use Green Room for cr
 13. **Write daily summary file** — Save to `11-Mess Hall/daily/YYYY-MM-DD-summary.md`. Include: date, week, sprint name, agent activity table (Dept/Agent/Status/Focus/Blockers), action items table, ideas/notes, links.
 14. **Update working memory** — Patch `00-Working-Memory.md` to reflect current sprint status, incident resolution state, and handoff backlog. Use structured memory entry format (`## Memory Entry — YYYY-MM-DD (Agent)`).
 15. **Commit to git** — Stage new/updated files under `11-Mess Hall/` and `00-Working-Memory.md`. Commit with message prefix `docs: daily sync — YYYY-MM-DD` followed by concise body (3-5 bullets). Keep commits atomic (daily sync only).
-16. **Obsidian sync** — Run `cd /root/vaults/gentech && ob sync` if CLI available.
+16. **Obsidian sync** — Run `cd ${VAULT_DIR} && ob sync` if CLI available.
 17. **Delivery mode** — Check the cron job instruction. If it says "your final response will be delivered to the user" or similar, produce a concise actionable summary as your final response — do NOT use `[SILENT]`. Only use `[SILENT]` when the cron job is configured for vault-only updates with no delivery. See `references/silent-run-protocol.md` for decision tree.
 
 ## Vault Paths (Current as of 2026-05-04)
@@ -101,7 +101,7 @@ target_roots = [
 ]
 recent = []
 for root in target_roots:
-    for dirpath, dirnames, filenames in os.walk(f'/root/vaults/gentech/{root}'):
+    for dirpath, dirnames, filenames in os.walk(f'${VAULT_DIR}/{root}'):
         for f in filenames:
             if f.endswith('.md'):
                 fp = os.path.join(dirpath, f)
@@ -165,7 +165,7 @@ Or simpler: `git log --since='1 day ago' --oneline --all` for commit-driven insi
 - **APPROVAL QUEUE MAY NOT EXIST**: `00-HQ/Approvals/` and `00-Inbox/approvals/` are referenced as standard paths but may be empty or have only stale items. Use `search_files` or `os.walk` to check. If empty or all resolved, note "No pending approvals" — don't treat stale approvals as active items.
 - **STALE ITEM SCANNING**: When asked to check for stale items (>48h), use Python mtime scan across the target directory. Only one stale item is common — don't expect large lists. Report with file path, age in days, and what action is needed.
 - **CRON DELIVERY vs SILENT-RUN**: The skill's default is `[SILENT]` for cron. But some cron jobs are configured to deliver output to Jordan. Check the cron job's instruction text — if it mentions delivery, produce output. The `[SILENT]` rule applies only to vault-only background syncs.
-- **WEEKLY REVIEW CRON PATH MISMATCH**: The cron job prompt says "Review /root/vaults/gentech/08-Daily/" but `08-Daily/`, `Daily/`, `11-Mess Hall/daily/`, `00-Working-Memory.md`, and `11-Mess Hall/considerations.md` **don't exist** in the current vault structure. The git log (`git log --since='7 days ago' --oneline --all`) is the primary signal source, not directory scans. Ideas live in `11-Mess Hall/ideas.md`. Completed reviews save to `11-Mess Hall/YYYY/W##/YYYY-MM-DD-weekly-review.md`. See `references/weekly-review-pattern.md` for the corrected section-1 data sources.
+- **WEEKLY REVIEW CRON PATH MISMATCH**: The cron job prompt says "Review ${VAULT_DIR}/08-Daily/" but `08-Daily/`, `Daily/`, `11-Mess Hall/daily/`, `00-Working-Memory.md`, and `11-Mess Hall/considerations.md` **don't exist** in the current vault structure. The git log (`git log --since='7 days ago' --oneline --all`) is the primary signal source, not directory scans. Ideas live in `11-Mess Hall/ideas.md`. Completed reviews save to `11-Mess Hall/YYYY/W##/YYYY-MM-DD-weekly-review.md`. See `references/weekly-review-pattern.md` for the corrected section-1 data sources.
 - **SOLO OPERATION — DEPRECATED COORDINATION BOARDS**: Since the solo operation restructure (May 2026), `01-Agency/` is archived. The handoff board, coordination board, and task board **still exist at Mess Hall root** but are deprecated — they contain stale data (27–29 days overdue) and are not maintained. Do NOT treat them as active trackers. `09-Green Room/active-handoffs/` directory does not exist in solo operation. Handoff tracking is inline in `today-context.md` Active Discussions table.
 - **`00-Working-Memory.md` MAY NOT EXIST**: This file was part of the multi-agent era. In solo operation, sprint state lives in `today-context.md` and `rotation-log-*.md`. Don't treat a missing working memory file as an error.
 - **`considerations.md` STALENESS CHECK**: The file `11-Mess Hall/considerations.md` uses `[ ]` checkbox syntax under `## Topic` section headers. The file's mtime reflects the last edit to ANY item, not individual item age. To determine if a specific checkbox item is stale, check when it was first added (section header date or prior rotation logs), not the file mtime. Items with no resolution after 5+ days should be flagged as stale.

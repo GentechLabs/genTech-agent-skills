@@ -13,7 +13,7 @@ Cumulative log files are touched by nearly every commit. During a rebase, each c
 ## The loop
 
 ```bash
-cd /root/vaults/gentech
+cd ${VAULT_DIR}
 # Resolve ALL unmerged files to HEAD (the live state) then continue. Repeat in batches.
 timeout 280 bash -c '
   i=0

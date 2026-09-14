@@ -5,11 +5,11 @@
 Check message count and compression status across all active sessions:
 
 ```bash
-/usr/local/lib/hermes-agent/venv/bin/python3 -c "
+${INSTALL_DIR}/venv/bin/python3 -c "
 import sqlite3, os
 from datetime import datetime, timedelta
 
-db_path = '/root/.hermes/profiles/gentech/sessions/sessions.sqlite3'
+db_path = '${PROFILE_DIR}/sessions/sessions.sqlite3'
 if not os.path.exists(db_path):
     print('No session database found')
     exit(0)
@@ -48,10 +48,10 @@ conn.close()
 Check if memory is approaching 85% limit:
 
 ```bash
-/usr/local/lib/hermes-agent/venv/bin/python3 -c "
+${INSTALL_DIR}/venv/bin/python3 -c "
 import sqlite3, os
 
-db_path = '/root/.hermes/profiles/gentech/sessions/sessions.sqlite3'
+db_path = '${PROFILE_DIR}/sessions/sessions.sqlite3'
 if not os.path.exists(db_path):
     print('No session database found')
     exit(0)
@@ -83,10 +83,10 @@ conn.close()
 Check which sessions have been compressed:
 
 ```bash
-/usr/local/lib/hermes-agent/venv/bin/python3 -c "
+${INSTALL_DIR}/venv/bin/python3 -c "
 import sqlite3, os
 
-db_path = '/root/.hermes/profiles/gentech/sessions/sessions.sqlite3'
+db_path = '${PROFILE_DIR}/sessions/sessions.sqlite3'
 if not os.path.exists(db_path):
     print('No session database found')
     exit(0)
@@ -127,7 +127,7 @@ conn.close()
 Check which context-bridge files exist and their recency:
 
 ```bash
-ls -lt /root/vaults/gentech/09-Green\ Room/context-bridge/
+ls -lt ${VAULT_DIR}/09-Green\ Room/context-bridge/
 ```
 
 The `latest-context.md` symlink always points to the most recent bridge. If missing, no auto-save has been triggered yet this session.

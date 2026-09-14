@@ -72,7 +72,7 @@ there. Rails today:
 
 ### AVAX rail — Almanak (installed) + custody decision (Aug 6, 2026)
 The Avalanche rail is **Almanak** (almanak.co, `pip install almanak`, open-source Python
-SDK). Installed + verified in the isolated 3.12 venv `/root/.hermes/profiles/gentech/venvs/almanak-venv`
+SDK). Installed + verified in the isolated 3.12 venv `${PROFILE_DIR}/venvs/almanak-venv`
 (version 2.24.0; CLI works: `almanak --version`, `almanak ax --help`, `almanak ax swap USDC AVAX 1 --chain avalanche --dry-run`).
 Almanak is the Avalanche-native rail that can manage the LFJ AVAX/USDC V2 pool (Trader Joe —
 Jordan's favorite venue; the AAD-5/DeFi Milestone was originally built on it).
@@ -682,7 +682,7 @@ CANNOT withdraw funds. User retains full custody.
 
 **Layer 3 seed — agent-flow ledger (DONE Aug 3, greenlit by Jordan):** `gta_executor.py` now appends every decision (ENTER/CLOSE/HOLD/REPORT/SKIP) to `agent-flow.jsonl` (append-only, never mutated), each tagged with `agent_id` (default `gentech-gta`, overridable via `GTA_AGENT_ID` so Forge/ClawWork/arena competitors log under their own id), timestamp, action, symbol, reasons, mode, executed. It logs HOLD/SKIP too (flow includes "stayed out") and never fails the trade on a logging error. Verified: executor runs, appends attributed record, 9/9 tests pass. This is the attributable dataset the agent-sentiment aggregator reads later (see section 0b + `09-Green Room/specs/agent-sentiment-stack-assessment.md`). Next when ready: aggregator over `agent-flow.jsonl` → per-agent net positioning / confidence → cross against `narrative-rotation.py` → expose as MCP tool.
 - **Current hard blockers (must surface, not hide):** (1) no Hyperliquid execution private key on the box → real order placement is a stub until `GTA_HL_KEY` exists (use a trade-only key that can't withdraw — user keeps custody); (2) Base→HL bridge historically broken (Across relayers stuck funds Jul 26), `deposit_v3_fixed.py` referenced in skill is missing; (3) KeeperHub `kh_` key not provided (blocked queue #1).
-- **Test** with: `cd /root/.hermes/profiles/gentech/scripts && python3 test_gta_executor.py -v` (9 tests, no key needed) and `python3 gta_executor.py` against real state.
+- **Test** with: `cd ${PROFILE_DIR}/scripts && python3 test_gta_executor.py -v` (9 tests, no key needed) and `python3 gta_executor.py` against real state.
 
 ## 7. Position Tracking & Risk
 
@@ -915,7 +915,7 @@ product. Build once, submit many times. The Solana Foundation USA grant (up to $
 - Coinbase for Agents: CDP API key env vars
 - Q402 gasless payments: BNB trial (2000 free sends, expires Aug 15)
 - Across V3 contract investigation (proxy, selectors, fill status): `references/across-v3-contract-investigation.md`
-- Bridge Script (working depositV3): `/root/.hermes/profiles/gentech/scripts/deposit_v3_fixed.py`
+- Bridge Script (working depositV3): `${PROFILE_DIR}/scripts/deposit_v3_fixed.py`
 - **GTA executor + Coinbase CDP SDK setup (env vars, async await pattern, auth-verification):** `references/gta-executor-and-cdp-sdk.md` — the dry-run-first execution engine pattern and how to wire `cdp-sdk` for the Coinbase spot leg.
 - **Coinbase CDP swap execution blocker (gasFee:null upstream bug + method-signature fixes):** `references/coinbase-cdp-swap-execution-blocker.md`
 - **Composio audit (authorized-proxy layer):** `references/composio-open-source-audit.md` — SDK is MIT open-source but auth/execution backend is still Composio cloud; "open-sourced SDK ≠ self-hostable backend" lesson for the authorized-proxy build.

@@ -151,5 +151,5 @@ Using the strong analysis model ("Jill") was crucial for catching and resolving 
 ## Related Files
 - `/root/.hermes/scripts/.lfj-aae-config.json` - Config source
 - `/root/ProtoJay4789.github.io/DeFi/defi-data.json` - Dashboard source
-- `/root/vaults/gentech/Strategies/scripts/defi-lp-consolidated.py` - Monitor script
+- `${VAULT_DIR}/Strategies/scripts/defi-lp-consolidated.py` - Monitor script
 - `normalize_shape()` function in monitor script

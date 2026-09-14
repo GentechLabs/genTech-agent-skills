@@ -31,7 +31,7 @@ mv /tmp/output.mp3 music/vanito/Kimi_no_Koe_I_Heard_Your_Voice.mp3
 ```
 
 ### Step 2: Clone the hub repo (avoid vault nesting issues)
-The hub repo is inside the vault at `/root/vaults/gentech/github/ProtoJay4789.github.io/` and the vault's working tree changes block clean git operations. **Always use a fresh clone for pushing.**
+The hub repo is inside the vault at `${VAULT_DIR}/github/ProtoJay4789.github.io/` and the vault's working tree changes block clean git operations. **Always use a fresh clone for pushing.**
 
 ```bash
 rm -rf /tmp/hub-push
@@ -110,7 +110,7 @@ curl -s -o /dev/null -w "Song: %{http_code}\nCover: %{http_code}\n" \
 
 ## Known Pitfalls
 
-- **Repo inside vault causes git conflicts**: The local clone at `/root/vaults/gentech/github/ProtoJay4789.github.io/` always shows vault changes as modifications. **Do not attempt to push from this path.** Always use the fresh clone workflow above.
+- **Repo inside vault causes git conflicts**: The local clone at `${VAULT_DIR}/github/ProtoJay4789.github.io/` always shows vault changes as modifications. **Do not attempt to push from this path.** Always use the fresh clone workflow above.
 - **ffmpeg cannot edit MP3 in-place**: Write to a temp file first, then mv over the original.
 - **Metadata matters**: Vanito's songs should be tagged with artist="KAGEKŌ" unless specified otherwise.
 - **Verify, verify, verify**: Always curl the raw.githubusercontent.com URLs after pushing to confirm the files are live.

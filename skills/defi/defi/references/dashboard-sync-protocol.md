@@ -28,7 +28,7 @@ python3 /root/.hermes/scripts/defi-dashboard-sync.py   --range 6.20-6.37   --bal
 Dashboard reads from `ProtoJay4789/ProtoJay4789.github.io`, NOT `gentech-vault`.
 
 ```bash
-cp /root/vaults/gentech/defi-data.json /root/ProtoJay4789.github.io/DeFi/defi-data.json
+cp ${VAULT_DIR}/defi-data.json /root/ProtoJay4789.github.io/DeFi/defi-data.json
 cd /root/ProtoJay4789.github.io && git add DeFi/defi-data.json && git commit -m "..." && git push
 ```
 

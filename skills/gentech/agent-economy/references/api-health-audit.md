@@ -76,7 +76,7 @@ The engine lived in `10-Labs/deal-tracker/deal_tracker.py` (sibling of the API d
 
 ```python
 import sys
-_ENGINE_DIR = "/root/vaults/gentech/10-Labs/deal-tracker"
+_ENGINE_DIR = "${VAULT_DIR}/10-Labs/deal-tracker"
 if _ENGINE_DIR not in sys.path:
     sys.path.insert(0, _ENGINE_DIR)
 from deal_tracker import CheapSharkClient

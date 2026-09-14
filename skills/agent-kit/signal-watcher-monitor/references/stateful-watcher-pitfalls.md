@@ -43,7 +43,7 @@ When another script needs its functions, load by file path via importlib:
 import importlib.util
 _spec = importlib.util.spec_from_file_location(
     "handoff_watcher_nightly",
-    "/root/.hermes/profiles/gentech/scripts/handoff-watcher.py")
+    "${PROFILE_DIR}/scripts/handoff-watcher.py")
 _mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)
 stalled_rel = set(_mod.find_stalled().keys())

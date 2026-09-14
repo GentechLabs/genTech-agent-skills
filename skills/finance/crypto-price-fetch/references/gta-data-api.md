@@ -54,6 +54,6 @@ Current implementation serves all requests freely (no API key enforced). The 402
 
 ## Source
 
-- Monitor: /root/.hermes/profiles/gentech/scripts/gta-arb-monitor.py
-- API: /root/.hermes/profiles/gentech/scripts/gta-arb-api.py
+- Monitor: ${PROFILE_DIR}/scripts/gta-arb-monitor.py
+- API: ${PROFILE_DIR}/scripts/gta-arb-api.py
 - Repo: github.com/ProtoJay4789/gentech-treasury-trader

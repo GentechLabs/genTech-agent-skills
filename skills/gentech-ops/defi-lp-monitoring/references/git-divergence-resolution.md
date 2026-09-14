@@ -26,7 +26,7 @@ git fetch origin
 git reset --hard origin/main
 
 # 2. Re-run the on-chain reader (writes fresh clean data)
-python3 /root/.hermes/profiles/gentech/scripts/run-reader.py
+python3 ${PROFILE_DIR}/scripts/run-reader.py
 
 # 3. Let the reader's auto-commit+push handle the rest
 ```
@@ -41,7 +41,7 @@ git fetch origin
 git reset --hard origin/main
 
 # 2. Write fresh defi-data.json from tracker/reader
-python3 /root/.hermes/profiles/gentech/scripts/run-reader.py
+python3 ${PROFILE_DIR}/scripts/run-reader.py
 
 # 3. If reader script fails to push, do it manually
 git add DeFi/defi-data.json

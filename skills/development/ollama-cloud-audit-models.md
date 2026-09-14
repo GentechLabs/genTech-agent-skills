@@ -30,7 +30,7 @@ broken.
 
 ## The verified working call (curl)
 ```bash
-KEY=$(grep OLLAMA_API_KEY /root/.hermes/profiles/gentech/.env | cut -d= -f2)
+KEY=$(grep OLLAMA_API_KEY ${PROFILE_DIR}/.env | cut -d= -f2)
 curl -s -X POST "https://ollama.com/v1/chat/completions" \
   -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
   -d '{"model":"glm-5.3-flash","messages":[{"role":"user","content":"<audit task>"}],"max_tokens":2000}'

@@ -17,7 +17,7 @@ Drive it directly (no gateway needed):
 
 ```python
 import sys
-sys.path.insert(0, "/root/.hermes/profiles/gentech/plugins/keeperhub")
+sys.path.insert(0, "${PROFILE_DIR}/plugins/keeperhub")
 from keeperhub_plugin.client import KeeperHubClient
 try:
     c = KeeperHubClient("kh_...")
