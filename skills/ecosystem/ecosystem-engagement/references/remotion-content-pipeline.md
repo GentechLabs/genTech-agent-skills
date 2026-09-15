@@ -9,8 +9,29 @@ Vault (build queue, PR portfolio)
   → content-pipeline.py (generates script)
     → Remotion Agent Skills (generates motion video)
       → elevenlabs-narrate.py (voiceover)
-        → X/Twitter post
+        → ⚠️ X/Twitter post — NOT BUILT (see Pitfalls)
 ```
+
+## ⚠️ The publishing step does not exist
+
+**Verified Sep 14 2026.** This doc previously implied an automated `→ X/Twitter post` stage.
+There is **no publishing automation** in the pipeline: `content-pipeline.py` writes the script,
+Remotion renders the video, `elevenlabs-narrate.py` produces the narration — and then **nothing
+posts**. The last mile was documented but never built (same "declare ≠ done" class as the
+stale compliance claim in queue #13).
+
+The scheduled fix is **build-queue #76** — Postiz (`gitroomhq/postiz-app`) for the publishing
+rail, integrated via `gitroomhq/postiz-agent` (a dsh/OpenClaw/Hermes-native agent CLI + hosted
+MCP). Until it ships, treat every step after narration as **manual**.
+
+### Current real boundary
+
+| Stage | Automated? |
+|---|---|
+| Script generation (`content-pipeline.py`) | ✅ yes |
+| Video render (Remotion) | ✅ yes |
+| Narration (`elevenlabs-narrate.py`) | ✅ yes |
+| **Publish / schedule to social** | ❌ **no — manual** |
 
 ## Scripts
 

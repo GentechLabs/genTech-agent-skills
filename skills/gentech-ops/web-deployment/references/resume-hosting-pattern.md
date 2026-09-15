@@ -34,6 +34,37 @@ The portfolio index "Connect" section carries: `📄 Résumé / CV` → `https:/
 and `🏛️ x402 Council APIs` → `https://api.gentechlabs.net/docs`. Point at the self-hosted URL,
 never the flapping .io one.
 
+## Drift testing: hash the ORIGIN, not the public URL
+
+`gentechlabs.net` sits behind Cloudflare with **Email Obfuscation ON**. It rewrites the résumé's
+contact line on the way out:
+
+```
+<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="462c29…">[email&#160;protected]</a>
+```
+
+and appends `<script src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">`.
+**Consequence:** `curl -sL https://gentechlabs.net/resume.html | sha256sum` can *never* equal the
+master's hash, and that is **not drift** — it is a false alarm that will make you re-sync a file
+that is already correct.
+
+- **Test for drift at the origin:** `curl -s http://127.0.0.1/resume.html | sha256sum` — must equal
+  the vault master. Same for `resume.pdf` (PDFs pass through unmodified, so the public URL is fine).
+- **Use the public URL only to confirm it is served** (`curl -o /dev/null -w '%{http_code}'` → 200,
+  or compare byte *size*, which Cloudflare's rewrite changes by a known few hundred bytes).
+- Corollary: an HTML hash mismatch between public and origin is **expected**; an **origin** mismatch
+  against the vault master is real drift.
+
+## Weekly-check trap: a "Selected Project" can be a fork with zero own commits
+
+Before crediting a listed project, check `gh api repos/GentechLabs/<repo> --jq '.fork'` and
+compare ahead_by against the parent. Four résumé lines (r402, ra2a, iAgent, ard-spec) are
+**unmodified upstream forks** — qntx, Injectivelabs, ards-project — where our actual work is an
+**open, unmerged PR** in the upstream repo. Under a heading like "Selected Projects — GenTech Labs"
+that framing overclaims. Verify authorship by commit email/login, not by the repo merely existing
+under the org; also note `users/GentechLabs.public_repos` **includes forks** (66 total vs 50
+non-fork), so a "N public repos" headline inflates unless it says "own repos".
+
 ## The sync cron ("Resume Sync — vault → web + portfolio repo", every 6h)
 Prompt outline (job id 877b19f24f9f):
 1. `diff -q` the three pairs (vault pdf/html vs /var/www/gentechlabs, vault md vs repo resume.md)
