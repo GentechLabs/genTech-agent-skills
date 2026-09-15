@@ -34,9 +34,12 @@ curl -sS -X POST \
        "arguments":{"folder_name":"Folder Name"}}'
 ```
 
-**Tool slugs that matter:** `GOOGLEDRIVE_CREATE_FOLDER`, `GOOGLEDRIVE_CREATE_FILE_FROM_TEXT`,
-`GOOGLEDRIVE_UPLOAD_FILE`, `GOOGLEDRIVE_LIST_FILES`,
+**Tool slugs that matter:** `GOOGLEDRIVE_CREATE_FOLDER` (takes `folder_name`, **not** `name`),
+`GOOGLEDRIVE_CREATE_FILE_FROM_TEXT`, `GOOGLEDRIVE_UPLOAD_FILE`, `GOOGLEDRIVE_LIST_FILES`,
 `GOOGLEDRIVE_GOOGLE_DRIVE_DELETE_FOLDER_OR_FILE_ACTION` (there is **no** `DELETE_FILE` slug).
+**Delete arg is `fileId`** (verified 2026-09-14) — `GOOGLEDRIVE_GOOGLE_DRIVE_DELETE_FOLDER_OR_FILE_ACTION`
+takes `{"fileId": "<id>"}`; both `id`/`item_id` and the bare `DELETE_FILE`/`GOOGLEDRIVE_DELETE` slugs
+404 or "missing field". Move/rename slug is `GOOGLEDRIVE_MOVE_FILE` (takes `fileId`).
 
 ### 📎 BINARY files (PDF, PNG, MP4) — three steps, proven 2026-09-14
 

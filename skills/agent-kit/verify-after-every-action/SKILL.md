@@ -173,11 +173,108 @@ file — **so the account hit 100% with a perfectly working alarm sitting unread
 
 **Check the DELIVERY TARGET, not the exit status.**
 
+## ⚠️ `/health` 200 does NOT mean the gateway accepts work
+
+**A gateway can serve 200 on `/health` and `/v1/models` while refusing every agent turn with 503.**
+Measured on a live seat:
+
+```
+GET  /health            -> 200        (green)
+GET  /v1/models         -> 200        (green)
+POST /v1/chat/completions -> 503 {"code":"gateway_draining"} in 0.0014s   (every turn refused)
+```
+
+`/health` reports liveness of the HTTP surface, not admission. `/v1/models` reports a static list.
+**Neither exercises the turn path.** When checking whether a peer can actually be reached, POST a
+real request (or use the peer's async `run` + `status`); a curl to `/health` proves nothing about
+whether work is accepted.
+
+Source: `gateway/platforms/api_server.py` `_gateway_is_draining()` → `runner._draining or
+runner._external_drain_active` → 503 `gateway_draining` with `Retry-After: 1`.
+
+## ⚠️ A pending-state marker with presence-only semantics wedges the thing it guards
+
+The drain above was caused by a single stale file:
+
+```
+<profile>/fleet_restart_pending      (written by an updater that could not act on its own unit)
+  started=... pid=3375872 expected_sha=1a990f3062...
+
+hermes_cli/update_cmd_fleet.py:192
+  if _fleet_restart_pending_marker_path().is_file():
+      return True            # presence alone — no expiry, no identity check, no discharge path
+```
+
+**One un-discharged marker ⇒ an obligation that never resolves ⇒ the gateway refuses all work.**
+The updater that wrote it correctly skipped its own unit (acting on it would terminate the updater)
+— but the marker it left behind had no way to record that the obligation was handled by anyone else.
+
+**Design rule:** any "pending/owed/needs-restart" marker must carry an identity (expected sha or
+version), an expiry, and a discharge path — and the read path must verify identity, not just
+existence. **An artifact that cannot express its own resolution becomes a permanent false alarm,
+and a permanent false alarm masks the real one.**
+
+**Corollary for repair order:** never clear such a marker without first performing the work it
+tracks. Deleting it converts a loud failure (refusing turns) into a silent stale one (serving old
+code, no warning) — strictly worse, because nothing remains to signal the state.
+
+## ⚠️ A receipt that reports work it skipped is worse than no receipt
+
+**Verify a reported action against the artifact it claims to have changed — not against the list it
+wrote about itself.** A fleet updater recorded all four gateways as restarted while the one running
+the update had `NRestarts=0` and a 5-hour-old process serving code 446 commits behind:
+
+```
+receipt:  restarted_services: [treasury, gentech, gizmo, pixel]
+          failed_units: []   incomplete: false   phase_error: ""
+reality:  treasury/gizmo/pixel  started 23:46  NRestarts=1   code 1a990f3062
+          gentech (self)        started 18:44  NRestarts=0   code 5dea46d13d  <- never restarted
+```
+
+**Probable cause and the generalisable lesson:** the updater ran *inside* the profile it would have
+restarted, so restarting that unit would have killed the updater. Skipping was CORRECT; **recording
+the skip in the success list was the bug.** A self-exclusion needs its own field (`skipped: [reason]`),
+never the success list.
+
+**How to check any "X was restarted/deployed/applied" claim:**
+```bash
+systemctl --user show <unit> -p ExecMainStartTimestamp -p NRestarts -p MainPID
+# then compare the running code identity against the installed one
+python3 -c "import json;print(json.load(open('<profile>/gateway_state.json'))['code_sha'])"
+git -C <install> log -1 --format=%h
+```
+`NRestarts=0` + an old start timestamp refutes a "restarted" claim outright, whatever the receipt says.
+
+**Corollary — self-referential operations must exclude themselves explicitly.** Any tool that
+restarts/replaces the process running it will hit this: the safer behaviour is to skip itself AND
+say so loudly, because the one seat that silently didn't update is the one whose reports you are
+reading. Version skew across a fleet presents as "that one seat just doesn't answer."
+
 ## Why This Matters
 
 Jordan's words: "this happens a lot." The fleet-model-change is one instance of a recurring class: config changes that don't propagate, deploys that don't take effect, cron edits that don't stick. The verification layer catches these BEFORE the user does — turning the user from QA tester back into the boss.
 
 **The agent that verifies is the agent that can be trusted to act autonomously.**
+
+## Config has TWO paths — never check one and call it done
+
+Settings like aux providers/vision can live in **two places**: a top-level `<slot>.provider`
+AND `auxiliary.<slot>.provider`. Setting one does NOT set the other, and a sweep of only
+one path misses the other. Before declaring a provider switch "done fleet-wide":
+
+1. **Walk the ENTIRE config tree** (every key/value recursively), flag every value
+   containing the dead/old provider name — do NOT pre-filter to known slots.
+2. Check BOTH paths for every aux slot: top-level `<slot>.provider` and
+   `auxiliary.<slot>.provider`.
+3. **Verify by resolved value, not by what the file looked like** — a name in the file is
+   not proof the running process uses it.
+4. Re-check after a change: an exhaustive re-walk returning ZERO hits of the old provider
+   = done. One known-slot spot check = NOT done.
+
+Real incident (2026-09-14): Treasury + gizmo kept firing a nous fallback warning for hours
+because the earlier "fleet switched to ollama-cloud" check only swept `auxiliary.*` and MISSED
+`vision.provider = nous` at the top path. Took 3-4 tries. The fix that actually worked was an
+exhaustive recursive walk of every profile's config tree.
 
 ## Negative Findings Need Proof Too
 
@@ -204,3 +301,174 @@ oversight.** Missing something is ordinary. **Announcing that it's missing is th
 
 **Same family as every other rule here:** a signal that misnames its cause is worse than no
 signal. "The capability doesn't exist" is a signal. Make sure it's true before you send it.
+
+## ⚠️ A line number is a fact about a REVISION, not about the code
+
+**Cite the symbol, not the line.** Four copies of one file on one machine gave four different
+answers for the same code, because each was a different revision:
+
+```
+models.py:1412    live VPS install (5dea46d13)   <- published by one seat
+models.py:1384    a checkout (fcd7df372c)        <- cited by the other seat
+models.py:1259    our PR head (9033a596)         <- a third number
+github main:1434  the PR's actual BASE           <- what a public comment needs
+```
+
+The symbol `_PROVIDER_CATALOG_FETCHERS["ollama-cloud"]` was identical in all four. The line number
+rotted within a day as `main` moved — and a maintainer clicking the cited line on `main` finds
+unrelated code and stops trusting the rest of the report.
+
+**Rules:**
+- Reference the **symbol / key / function name**. It survives refactors and rebases.
+- If a line number is genuinely needed, **pin the revision in the same sentence**
+  (`models.py:1434 @ 40f2702b2`). Unpinned, it silently becomes a false claim.
+- **Name the revision of the FILE, not the repo HEAD.** They differ whenever a commit doesn't
+  touch that file — which is most commits. Labelling a copy with `git log -1` (repo HEAD) and then
+  quoting a line from it is a mislabel, and it happened to two of four copies in the case above.
+- **Before attributing a number to a change, check the change touches the file at all.**
+  `git show --stat <sha> | grep <file>` — a PR whose diff is one file cannot have moved lines in
+  another. Quoting a line and naming a PR that never touched that file reads as authoritative and
+  is checkable in seconds — by a reviewer who will then distrust everything else in the report.
+
+**Self-test before publishing any file/line/version claim:** *if a reader opens exactly what I
+cited, at the revision I named, will they see what I said?* If the revision is unnamed, the answer
+is unknowable and the claim is not yet checkable.
+
+### ⚠️ `git show --stat` reports the WHOLE TREE when a commit is GRAFTED
+
+**An empty `%p` means the commit is grafted — not that it is a root commit, and not that the
+parent object is missing.** A graft (`.git/shallow`) suppresses traversal while the parent object
+sits in the pack. Proved by adding a tip to `.git/shallow` in a full clone:
+
+```
+parent object present          -> cat-file -t = commit
+add tip to .git/shallow        -> parent object STILL present (cat-file -t = commit)
+                                  %p = ''            (git's GRAFTED VIEW)
+                                  --stat = whole tree
+                                  raw object still contains 'parent 8f6d5bc...'
+```
+
+**`git log --format=%p` is a DERIVED VIEW, not the object. It lies under a graft.** So:
+
+```bash
+# is it grafted?  (empty %p here is a graft, not a root)
+[ -f .git/shallow ] && grep -q "$(git rev-parse <sha>)" .git/shallow
+
+# is it REALLY a root commit?  read the raw object — zero parent lines = true root
+git cat-file -p <sha> | grep -c '^parent'
+```
+
+**Boundary sets differ per clone, so the same commit can be grafted on one box and not another.**
+The same command against the same commit gave opposite output on two machines in one session
+(10 boundaries vs 51). A reading is only valid for the clone it was taken in — quote the clone
+state alongside it.
+
+**Prefer the PR API over local `--stat` for "what does this PR touch":**
+`gh api repos/<owner>/<repo>/pulls/<n>/files --jq '.[] | {filename, additions}'`. It reads from the
+host, not your clone, so local object state cannot fool it.
+
+### ⚠️ State the METRIC, not just the number
+
+**Two correct measurements of different quantities look like a contradiction.** "Lines in the tree"
+is undefined until you say whose counting:
+
+```
+git diff --numstat <empty> HEAD, summed text additions : 3,162,920   (binaries = 0, no-NL = +1)
+wc -l over every file's contents                       : 3,297,689   (counts newlines inside binaries)
+reconciled exactly: 3,162,920 + 135,134 (newlines in 91 binaries) - 365 (files w/o trailing NL)
+```
+
+Neither figure was wrong. The apparent 134,769 gap was **a metric difference wearing the same
+word**, and it cost both seats a round of guessing (one guessed "binaries", which overshot).
+
+**Name the unit in the sentence:** `numstat additions (text)` vs `wc -l (all bytes)`; `characters`
+vs `bytes`; `files` vs `paths` (a `find -name` census counts directories too). If two numbers about
+the same thing disagree, **suspect the definitions before suspecting the arithmetic.**
+
+**Clone state is not a revision.** A shallow boundary, a detached HEAD, a grafted parent, an
+uncommitted edit — all are local states that masquerade as facts about a commit. A content hash or
+line number is meaningless unless paired with the artifact it describes (`<file> @ <blob|rev>`).
+
+**Before citing any file/line/version fact, ask which revision you measured.** "I read it in the
+file" is not sufficient when several revisions of that file exist locally.
+
+## ⚠️ Measure with `-type f`, and count BYTES not characters
+
+Two measurements that look verified and are not. Both produced wrong numbers that were reported
+outward and propagated to another seat before anyone re-ran them.
+
+**1. `find -name '*.ext'` matches DIRECTORIES too.** Foundry writes build output as
+`out/<Name>.sol/` **directories**, empty, one per artifact. A census that omitted `-type f`
+reported "329 `.sol` files" when the truth was **92 files + 237 directories** — and the number
+was carried into a peer's report as evidence for a defect class that didn't exist.
+
+```bash
+find . -name '*.sol' -type f -not -path './.git/*' | wc -l   # the real count
+find . -name '*.sol' -type d -not -path './.git/*' | wc -l   # what you were counting
+```
+
+**Any extension census, size audit, or "N files were dropped" claim needs `-type f`.** Then
+divide the result into tracked / untracked / **untracked-AND-not-gitignored** — only the last
+category is a transport or deployment gap. An ignored file is not a missing file.
+
+**2. `len(str)` is characters; `len(s.encode())` is bytes.** Reported a file as `11211 B` when
+git said `11224`. A 13-char gap from multibyte characters (`·`, `—`, `✅`). The **sha256 was
+correct** because it hashed `.encode()` — so the two numbers in the same table disagreed and
+neither looked wrong.
+
+```bash
+wc -c < file          # bytes (authoritative)
+git cat-file -s <blob>  # bytes, straight from git
+hashlib.sha256(raw).hexdigest()  # hash the BYTES, then size them the same way
+```
+
+**Rule: derive every quantity in a report from the same representation, and prefer the tool that
+measures the artifact itself (`wc -c`, `git cat-file -s`) over one you compute in Python.**
+
+## ⚠️ Scope your claim to what you measured
+
+**A single-tree observation is not a fleet-wide claim.** Writing *"Nothing closure-related is
+`git ls-files`-tracked"* after checking **only my own checkout** generalised one seat to every
+seat — and the artifact was, at that moment, present in a peer's branch. The claim was true of
+my tree and false of the fleet.
+
+**Say "not in this tree" when that is what you checked.** If the finding is going to a peer, it
+is going to be acted on: an unqualified negative makes them rebuild something that exists, or
+chase a defect that doesn't. Cost-free precision: name the scope in the sentence.
+
+**Corollary for receiving:** when a peer hands you a measurement, **re-run it before building on
+it** — a number you inherited was not verified by you. In the incident above, a peer's report
+carried my wrong `.sol` figure forward; the seat that trusted the peer's number passed the error
+along. Re-measuring a two-minute census is cheaper than a wrong report to a third party.
+
+## ⚠️ Never draw the test sample from the implementation under test
+
+**The most dangerous kind of wrong number is one that is arithmetically correct.** A coverage
+matrix whose inputs come from the code being measured will report a *self-consistent* figure that
+looks like evidence and discriminates nothing.
+
+**Real case (2026-09-14):** measuring whether a vendor-prefix strip covers a model catalogue, the
+slug list was drawn largely **from the lookup table the code consults**. Nine of ten test slugs
+were values *in that table*. Result: a values-only predicate and a keys-or-values predicate scored
+**identically** (216/240 each) — the sample could not tell them apart, because every slug was
+already a member of the set being tested. Re-measured on an **independently-drawn** list (domain
+knowledge: real aggregator prefixes plus key-form tokens), the same two predicates came out
+**240/360 (66%)** vs **336/360 (93%)** — a 27-point gap the circular sample had hidden.
+
+**Rule: the test sample must come from the DOMAIN, not from the artifact.** If your inputs appear
+verbatim inside the thing you are testing, you are measuring self-consistency.
+
+```
+# CIRCULAR — slugs taken from the table under test
+SLUGS = list(_VENDOR_PREFIXES.values())
+
+# INDEPENDENT — slugs taken from how the domain actually presents them
+SLUGS = ['mistralai','z-ai','deepseek',..., 'glm','claude','kimi','gpt']  # incl. forms the table lacks
+```
+
+**Include at least one input you expect to FAIL.** A sample where every case passes cannot
+falsify anything. The absent slug (`mistralai`) and the key-form slugs (which values-only misses)
+are what turned a flat 90% into a discriminating 66% vs 93%.
+
+**Same family as every rule here:** a number that can't be wrong is worse than no number, because
+it gets reported outward as evidence.

@@ -19,7 +19,21 @@ For MCP servers listed in awesome-mcp-servers, the Glama bot REQUIRES:
    ```
 3. Run `docker build` first locally or use Glama's Dockerfile upload if needed
 
-If the PR is missing the badge, the Glama bot comments asking for it. Add the badge, update the PR body, and the bot re-checks.
+**The badge is a HARD MERGE GATE — treat it as a precondition, not a follow-up.** The bot comments
+within ~15 seconds of opening (`<!-- glama-check -->`) and labels the PR `missing-glama`. Evidence:
+of 43 merged PRs sampled across a 3-day window, every one carried a badge line in its diff; the few
+that merged while still labelled `missing-glama` added it mid-PR (`missing-glama` → `has-glama`).
+**Do not reason "other entries in this section omit it" — they don't reach merge without it.**
+
+**Add the badge as a COMMIT to the PR branch, not by editing the PR body.** The bot re-scans on new
+commits; a body edit does not change the file the bot checks.
+
+**Verify the badge URL actually resolves before relying on it:** `curl -s
+https://glama.ai/mcp/servers/OWNER/REPO/badges/score.svg` returns an SVG whose `<title>` reads *"This
+MCP server is not listed on Glama"* when the repo is absent (or listed under a retired account name —
+an org rename leaves prior listings on the dead account). Submit via Glama's *Add Server* first
+(needs a Dockerfile / build spec that starts and answers introspection), then add the badge. Badge
+resolves at any non-zero score; at 0% the SVG cannot render.
 
 ## Ordering Rules
 

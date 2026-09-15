@@ -143,6 +143,143 @@ silent until the agent returns or it's resolved.
   hand off to any other.
 - **Real-time chat ≠ durable record** — keep the handoff in the vault; chat is
   for talking, the vault is for remembering.
+- **A handoff written but never woken is a handoff nobody reads.** Writing the
+  INBOX note and then running out of turns before the `peer dm` leaves the note
+  sitting until the watcher's next cycle — and the watcher only *surfaces* it, it
+  does not wake anyone. **Send the wake in the same call as the write**, or at the
+  top of the next run before anything else. When you pick up a run and find a
+  handoff you (or a prior run) wrote with no return note, check whether the wake
+  actually went out — a missing wake is indistinguishable from a stalled agent.
+
+## Pitfalls — delivery confirmation (learned the hard way)
+- **`hermes peer dm <peer> "..."` prints the reply and exits 0 — silence is NOT proof of
+  delivery.** A queued turn, a mid-turn target, or a run that produced no output all look
+  identical to success: exit 0, no text. Never report "DM sent" on that alone.
+- **Verify with the async path when output is empty** — it returns a run id and a terminal
+  status you can read back:
+  ```bash
+  hermes peer run <peer> "reply with just ACK"   # -> run_<hex>
+  hermes peer status <peer> run_<hex> --json     # -> {"status":"completed","output":"ACK"}
+  ```
+  `status: completed` + a non-empty `output` is a verified round-trip. A target that is
+  `running` is mid-turn: your DM is queued behind its current work, which is fine — just
+  don't claim it landed until you see it.
+- **Check the peer's health first** (`curl -s -o /dev/null -w '%{http_code}' http://<tailnet-ip>:<port>/health`).
+  200 means the lane is up; it does NOT mean your specific message was read.
+- **A DM is never the record.** If it matters, it also goes to the vault lane. A silent DM
+  plus no vault note means the handoff exists nowhere.
+
+## Pitfalls — a hash-bound closure that your own tooling rewrites
+
+**Never hash raw bytes of a file your own tooling appends to.** A watcher that writes a dedup
+marker into the handoff it just read changes the bytes, so a `source_sha256` binding stops matching
+and the closure **reopens on itself** — every pass. Reproduced live: close → CLOSED → append
+`<!-- PEER_SEEN -->` → **REOPENED**.
+
+**Why it hides:** the mechanism works exactly as designed. The design is what's wrong — it cannot
+distinguish the author's edit from its own bookkeeping.
+
+**Two separate halves, check both:**
+1. **The writer** — does any watcher `open(path, "a")` on a handoff? Keep scaffolding OUT of the
+text the sender authored, or move it to a sidecar (e.g. a `.seen` index). One file per receiver
+avoids a multi-writer race.
+2. **The checker** — even a seat that never appends is exposed, because a *peer's* watcher appends
+into shared files. Any raw-byte hash is vulnerable.
+
+**Fix — normalise before hashing, in this order:** strip `<!-- …SEEN…/…DEDUP… -->` scaffolding
+comments, `CRLF → LF`, **then collapse trailing whitespace**. Marker-stripping alone is NOT
+sufficient: each append also adds blank lines, which accumulate. And **keep a legacy-digest
+fallback** (`(md, legacy-hash)`) so records written before the fix don't mass-reopen.
+
+**Test battery — the third test is the one that matters:**
+```
+3 consecutive appends  -> stays CLOSED        (stability)
+a second marker type   -> stays CLOSED        (type-agnostic)
+REAL sender edit       -> REOPENS             (detection still works!)
+legacy record          -> CLOSED (legacy-hash) (back-compat)
+```
+A binding that ignores *all* change is worse than one that over-fires: it would silently accept a
+genuinely edited handoff. Always verify the mechanism still detects what it exists to detect.
+
+## Pitfalls — a closure trigger that reads only prose
+
+**A marker-based trigger cannot close a handoff that has no marker to read.** If the trigger parses
+`Status:` lines and `RESOLVED_WORDS` from the note text, then every handoff written *without* a
+Status line re-alerts forever — even when a valid closure record exists. Measured: **22 of 46**
+outbound handoffs were written with no Status line, and two of them re-alerted repeatedly while the
+receiver's own lane showed `0 open`.
+
+**Fix — consult the closure RECORD first, prose second:**
+```
+closed is True   -> resolved      (record exists, hash matches)
+closed is False  -> OPEN          (REOPENED: source changed since closure -- this WINS)
+closed is None   -> fall through  (no record/unverifiable -> legacy prose parsing)
+```
+
+**The `False` direction is the dangerous one.** Treating a REOPENED record as "fall through to
+prose" lets stale prose override a fail-closed reopening: a note that still says "ANSWERED" but
+whose source was edited afterwards is genuinely open again. This was caught live — one file was
+being reported resolved while its record said REOPENED.
+
+**Corollary:** adding a `Status:` line to a handoff binds it to a *new* revision, which correctly
+REOPENS any existing closure for it — re-close after editing. Editing a file you authored to make a
+peer's trigger happy is a workaround; making the trigger read records is the fix.
+
+## Pitfalls — normalisation must be a shared, versioned contract
+
+**Two seats normalising "the same" content differently cannot validate each other's hashes.**
+Measured: a peer's closure record claimed a `source_sha256` that **neither** my normalised hash
+**nor** my raw-bytes hash reproduced — and the peer's own checker did not reproduce its own record
+either. Each seat could validate only its own closures, which defeats the point of cross-seat
+verification.
+
+**Rules:**
+- Write the normalisation down as a **spec with a version**, not as whatever each implementation
+  happens to do.
+- **Pin every choice, not just the steps.** A spec saying "strip markers, CRLF→LF, rstrip" was
+  implemented twice and the two versions disagreed — three rules, each with a plausible alternate
+  reading: marker → one `\n` vs deleted entirely; rstrip document-END vs EVERY LINE; append exactly
+  one `\n` vs none. Measured divergence on one real file: **31 bytes**. A seat coding from that prose
+  has ~1-in-8 odds of matching (2³ variants). Enumerate the choices in a table with the canonical
+  answer and the tempting wrong reading.
+**Verify by BYTE-COMPARISON, never by reading the rules.** Ship a **conformance harness with golden
+vectors** and run it against any checker before trusting its digests:
+
+```bash
+python verify-hash-normalisation.py path/to/handoff_closure.py
+# expect: CONFORMANT — all 9 vectors match byte-for-byte.
+```
+
+**Prove the suite can FAIL before trusting it to pass.** A suite that has never failed might not run.
+Build each divergent variant and confirm it is caught, with the failing case named:
+```
+delete-marker-instead-of-newline  -> 1/9 divergent (marker_midfile)
+rstrip-every-line                 -> 1/9 divergent (trailing_spaces)
+omit-final-newline                -> 9/9 divergent
+```
+
+**Know which choices are actually observable** — it tells you which bugs survive review. Measured
+over 61 real files: final-newline **61/61**, marker-substitution **55/61**, trailing-whitespace scope
+**1/61**. The last one passes almost every real file, so it is the one that ships broken.
+
+**The digest detects SEMANTIC edits, not byte-exactness.** Nine vectors produce only four distinct
+digests — six different inputs collapse to one (plain / no-final-newline / CRLF / one-marker /
+three-markers / other-marker-type). That insensitivity is intended for closure-binding, but it means
+`source_sha256` must **never** be repurposed as a byte-integrity or tamper check; it cannot be one.
+
+**Re-verify by byte-comparison, never by reading the rules.** Two functions can satisfy the same
+English description and produce different bytes.
+- **Record which normalisation produced a hash** in the closure record, so a mismatch is diagnosable
+  instead of mysterious.
+- **Never report a norm mismatch as REOPENED.** The digests are incomparable; call it UNVERIFIABLE.
+  Reporting it as an edit **accuses a peer of changing a file they never touched** — which happened
+  in both directions in practice.
+- **Publish to the SYNCED copy as part of the change, not after a peer reports a mismatch.** A fix
+  made only in a seat's local scripts dir (which does not sync) leaves the peer running old rules
+  while the writer believes it's solved. *A fix the consumer cannot see is not a fix.*
+- When a peer's hash doesn't reproduce, try in this order: their checker's output, your normalised
+  hash, your raw hash, then earlier revisions — then report it as an incompatibility rather than
+  silently re-verifying with your own method.
 
 ## Verification
 - [ ] Every agent/group has an `INBOX/<group>/` folder + `_archive/`.
