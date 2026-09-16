@@ -44,7 +44,8 @@ The old path `Gentech/handoffs/gentech-to-forge/` is dead code from the vault co
 - **Cron copy:** `${PROFILE_DIR}/scripts/nightly-maintenance.py` (the cron reads from Hermes profile scripts)
 - **Vault copy:** `${VAULT_DIR}/scripts/nightly-maintenance.py` (for git tracking)
 - **Cron job ID:** `f1fa47f76045`
-- **Schedule:** `0 4 * * *` (midnight ET)
+- **Schedule:** `30 4 * * *` (verified against the live cron store 2026-09-15; the doc
+  previously said `0 4 * * *`)
 - **Mode:** `no_agent=True` (pure script, no LLM)
 
 ## Update Procedure

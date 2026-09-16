@@ -84,7 +84,7 @@ location /arb {
 | deals.gentechlabs.net | 8080 | Deal Tracker |
 | prices.gentechlabs.net | 8082 | Crypto Price API |
 | gas.gentechlabs.net | 8084 | Gas Price API |
-| security.gentechlabs.net | 8086 | Token Security |
+| security.gentechlabs.net | 8086 | Token Security |  ⛔ RETIRED 2026-09-15 (duplicate of rugcheck; gateway serves it)
 | rugcheck.gentechlabs.net | 8088 | Rug Check |
 | search.gentechlabs.net | 8091 | Agent Search |
 

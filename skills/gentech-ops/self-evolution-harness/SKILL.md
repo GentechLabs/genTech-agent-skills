@@ -84,7 +84,9 @@ Five articles, all binding:
 
 Each cycle follows this exact sequence:
 
-1. **Read constitution** — load `/root/.hermes/harness/constitution.md`
+1. **Read constitution** — load `${PROFILE_DIR}/harness/constitution.md`
+   (the old path `/root/.hermes/harness/constitution.md` does not exist; each profile owns
+   its own copy under `profiles/<name>/harness/`)
 2. **Read critique log** — if last 3 entries are unaddressed, address them; new hypothesis disallowed
 3. **Generate goal** — ask "What concrete user-facing capability is currently weak?"; write to recommendation.md BEFORE reading existing files
 4. **Ground in evidence** — read witness-log.md, harness-state.md, execution-log.md, skills inventory; cite one witness by timestamp

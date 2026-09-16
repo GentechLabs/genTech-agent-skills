@@ -90,7 +90,7 @@ and surfaces dead nginx backends.
 | 8080 | Deal Tracker API | deal-tracker-api | — |
 | 8082 | Crypto Price API | crypto-price-api | — |
 | 8084 | Gas Price API | gas-price-api | — |
-| 8086 | Token Security API | token-security-api | — |
+| 8086 | Token Security API | token-security-api | — |  ⛔ RETIRED 2026-09-15 (duplicate of rugcheck; gateway serves it)
 | 8088 | Rugcheck v2 (sim mode) | rugcheck-api | rugcheck.gentechlabs.net |
 | 8090 | x402 Gateway v2.0 | x402-api | api.gentechlabs.net |
 | 8091 | agent_discovery | x402-backend@agent_discovery | — |

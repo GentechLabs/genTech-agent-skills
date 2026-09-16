@@ -31,7 +31,7 @@ The Port Health Monitor is a no-agent cron script that:
 - 8080 — Deal Tracker API (`deal-tracker-api.service`) → 10-Labs/deal-tracker-api
 - 8082 — Crypto Price API (`crypto-price-api.service`) → 10-Labs/crypto-price-api
 - 8084 — Gas Price API (`gas-price-api.service`) → 10-Labs/gas-price-api
-- 8086 — Token Security API (`token-security-api.service`) → 10-Labs/token-security-api
+- 8086 — Token Security API (`token-security-api.service`) → 10-Labs/token-security-api  ⛔ RETIRED 2026-09-15 (duplicate of rugcheck; gateway serves it)
 - 8088 — Rugcheck v2 API (`rugcheck-api.service`, sim mode) → /root/rugcheck/api → `rugcheck.gentechlabs.net`
 - 8090 — x402 Gateway v2.0 (`x402-api.service`) → `api.gentechlabs.net`
 - 8091–8096 — x402 backends (`x402-backend@.service` template): agent_discovery, defi_lp_analytics, wallet_analysis, nft_search, lineage_guard, treasury_defender

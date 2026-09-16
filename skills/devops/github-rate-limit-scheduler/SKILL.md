@@ -5,6 +5,11 @@ description: Budget-aware GitHub operation scheduling. Use whenever GitHub work 
 
 # GitHub Rate-Limit Scheduler
 
+> 🛑 **STOP — read `devops/github-account-compliance` FIRST.** It holds the absolute rules
+> (403/429 = stop, no bursts, no ad-hoc repo creation, ~30 call cap, use the helper).
+> This skill covers *how to schedule* GitHub work; that one covers *what will get the
+> account flagged*. Load both before any GitHub write.
+
 ## When to use
 - Creating repos, opening PRs, forking, or searching GitHub API on GentechLabs
 - Any GitHub work that 403s or exhausts quota

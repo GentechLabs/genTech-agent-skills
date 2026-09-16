@@ -67,7 +67,184 @@ Glama (`glama.ai`) is an MCP server quality scoring and discovery platform. Publ
 
 **Status:** genTech-shop live since Jul 25, 2026.
 
-## Crown Unlock: ONE Settlement Indexes Us on THREE Markets at Once — CORRECTED (Aug 11, 2026)
+## CDP Bazaar / PayAI indexing — CRAWL-DRIVEN, not settle-driven (corrected Sep 15, 2026)
+
+**⚠️ THE SETTLE-TRIGGER MODEL WAS WRONG. Do not pay to be indexed. Re-measure first.**
+
+An earlier version of this section said indexing fires on a settled payment and that N services need N
+settles. **That was a misreading of Coinbase's docs, disproved by our own access logs.**
+
+**What actually happens:** the catalogs are filled by **crawlers that read our 402 challenges.**
+```
+PayAI-Bazaar/1.0 (+https://docs.payai.network/x402/facilitators/bazaar)
+CoinbaseBazaarDiscovery/1.0 (+https://docs.cdp.coinbase.com/x402)
+```
+**Evidence:** on Sep 15 both catalogs grew with **zero USDC leaving any wallet** (verified on-chain). The
+index entries matched crawler hits **to the second, one-for-one** — e.g. a crawl of `/v1/gas/gas/` at
+23:33:21 → that resource indexed at 23:33:21. And `market/price/ETH` was indexed **with no settle at all**.
+
+**Why the earlier "proof" looked convincing:** Treasury's settles and the crawler's **first-ever visit**
+happened in the same minute. The crawler's real trigger was the **Sep 11 `paid_endpoint_root` fix** —
+before it, endpoints returned **307 instead of 402**, so a crawler could not see a challenge. Verify with:
+`grep -c CoinbaseBazaarDiscovery /var/log/nginx/access.log*` across day-files.
+
+**The doc line "eligible for indexing AFTER A SUCCESSFUL SETTLED PAYMENT" describes ELIGIBILITY, not
+TRIGGER.** Taking eligibility as trigger is the same class as asserting the gate instead of the outcome —
+with a doc sentence as the gate.
+
+**Correct procedure when a service is absent from a catalog:**
+1. Confirm the endpoint returns a **proper 402** (not a redirect) — that is the real precondition.
+   `POST https://api.cdp.coinbase.com/platform/v2/x402/validate` (free, keyless) → `valid=true`.
+2. **Check whether the crawler has visited**, not whether we've paid:
+   `grep PayAI-Bazaar /var/log/nginx/access.log` · `grep CoinbaseBazaarDiscovery /var/log/nginx/access.log`
+3. **Wait a crawl cycle and re-measure presence** before spending anything:
+   `curl "https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=<ours>"` (pagination.total)
+   `curl "https://facilitator.payai.network/discovery/resources?payTo=<ours>"` (same filter)
+4. Only if a correct 402 endpoint stays uncrawled across cycles is there a real defect to chase.
+
+### ⚡ BETTER STILL — you can list it YOURSELF, for $0.00 (verified Sep 16, 2026)
+
+**Do not wait for a crawl cycle and do not spend.** PayAI's own docs state the admission rule:
+
+> *"A resource is listed when **either** proof holds: the indexing payment was a **settlement**,
+> **OR the read-only probe itself answers 402 Payment Required**."*
+
+`/verify` **moves no funds** — so a signed payload that is **verified but never settled** lists a
+GET resource that answers 402. **This is not a dry run: it writes the catalog row.**
+
+```
+node 10-Labs/x402-gateway/cdp-settle/payai-free-listing-run.mjs        # all services
+node 10-Labs/x402-gateway/cdp-settle/payai-free-listing-run.mjs --dry  # preview
+```
+Measured: PayAI catalog for our payTo went **6 → 14 of 14 resources**, every row
+`lastWrite.source = "verify"`, payer USDC delta **0.000000**, no settle, no lockfile. A real settle
+would have cost ~$0.26 and needed a chain we never funded. **The correct spend here is zero.**
+
+**Ask first whether a settle is required AT ALL — before budgeting one.**
+
+**Per-resource diagnostic (use this instead of inferring from the catalog):**
+```
+GET https://facilitator.payai.network/discovery/listing-status?resource=<url>
+  → listed, hidden, hiddenReason, lastProbe.httpStatus, lastWrite.source
+```
+`404 "No catalog row or recent write outcome exists"` = we never got there.
+`listed:true, source:"verify"` = listed for free. Distinguishing these two is the whole point.
+
+**Probe URLs must match the catalog's EXACT form, including the trailing slash.** Our nginx paths
+serve with a trailing slash; querying `.../nft/search` reports *not found* while `.../nft/search/`
+reports *listed*. Comparing the wrong form produces a false "not listed".
+
+**A settle is still required in one case:** a **POST/PUT/PATCH/DELETE, MCP, or method-less**
+resource is deferred (`resource_needs_settlement`) on a verify-only first listing. All our services
+are GET, which is why the free path covers them. Do not assume this generalises.
+
+### ⚠️ The free-listing path is PAYAI-ONLY — Dexter was tested and says no (2026-09-16)
+
+`POST https://x402.dexter.cash/verify` **exists and accepts a valid payload (HTTP 200) — and creates
+no catalog row.** Dexter's total stayed 3,328 with 0 of ours after the call; `/discovery/listing-status`
+404s there. **Never generalise a facilitator mechanism from one success** — test each host.
+
+**Dexter's catalog (`https://x402.dexter.cash/discovery/resources`) has NO server-side filter.**
+`?payTo=` and `?search=` **both** return the whole set, control included — so a filtered check proves
+*nothing* and an empty result is indistinguishable from a broken query. The only honest test is a
+**full page-walk, asserting `walked == total`** as the completeness control; a short walk must report
+**UNKNOWN**, never "absent". (PayAI *does* have `?payTo=`, so one request answers it there. Different
+catalogs need different assertions — the control, not the shape, is what makes a check trustworthy.)
+
+**Scan rotated logs with `zgrep`, not `grep`.** Older nginx entries live in `.gz` files and a plain
+`grep` silently under-counts: a scan found 1 `Dexter-Verifier` hit where the true figure was 21.
+A crawler hit is the **leading** indicator (what is about to be indexed); a catalog count is lagging.
+
+**Check the crawler before blaming the envelope.** `Dexter-Verifier/1.0` has probed us every 1–2 days
+since Sep 2 and indexed nothing, always hitting `/v1/agent` — which is a **legacy path alias**
+(`server.py`: `"agent": "agent_research"`), not a manifest service. A live payable route absent from
+the manifest is a discoverability inconsistency worth fixing, not evidence of a broken challenge.
+
+**Always run a POSITIVE CONTROL on a `payTo` filter** — an empty result and a broken filter look
+identical. Query a payTo you know is indexed and confirm it returns >0 before reporting absence.
+
+**Presence is the assertion that matters** — "is it buyable?" not "does it 402?"
+
+**And listing is NOT buyability.** A catalog row proves discoverability, not revenue — no USDC has
+moved through our gateway via PayAI. Never report a listing as a sale.
+
+---
+
+## ⚠️ SUPERSEDED — Aug 11 "settlement does NOT index us" (kept for provenance only)
+
+**⚠️ THE OLD "DO NOT RE-SETTLE / PIVOT TO NON-CDP" GUIDANCE BELOW IS SUPERSEDED. READ THIS FIRST.**
+
+**What is true now (empirically proven, not documented):** on **Sep 15 18:20Z** Treasury ran 11 settles
+against our own `defi/lp` route on the **Base** rail via the **CDP facilitator** → **CDP Bazaar indexed us
+within the same minute.** The Aug 11 finding ("settlement alone does NOT index us") was **correct when
+written and superseded since the Sep 11 `paid_endpoint_root` fix** — before that fix our challenge
+307'd instead of 402'ing, so no settle *could* index anything.
+
+**The mechanism, as measured — THREE FACILITATORS, ONE RULE:**
+- **Cataloging keys on WHICH FACILITATOR PROCESSED THE SETTLE — not which rail.** Each facilitator
+  catalogs the settles **it** handled: **CDP** (Base), **PayAI** (Avalanche/Solana),
+  **Dexter** (only when `X402_USE_DEXTER=1`). Routing: `server.py:2090-2112`; the Dexter comment at
+  `server.py:1278-1281` says the identical thing.
+- ⚠️ **Do NOT model this as "settle on rail X to get into catalog Y."** PayAI's own catalog **contains
+  Base resources** — 70 of its first 100 entries are `eip155:8453` — so settling on Base is **not** by
+  itself disqualifying. What matters is whose facilitator processed it. (An earlier version of this
+  skill said "rail must be Base"; that was a rail→catalog shortcut and it was wrong.)
+- 🛑 **STALE — RETRACTED (Sep 15).** The bullets that followed here asserted a **settle-trigger** model:
+  *"indexing is PER-RESOURCE, not per-seller"*, *"N services need N separate settles"*, and
+  *"cost: $0.02/settle"*. **All three were derived from a timestamp coincidence and are WRONG.** Both
+  catalogs were observed filling **with zero settles**, matched to crawler hits second-for-second.
+  **Do not pay to be indexed.** See the CRAWL-DRIVEN section above — check for a crawler visit, wait a
+  cycle, re-measure presence.
+- ⚠️ The one durable lesson from that mistaken run, kept: **do NOT model catalogs as "settle on rail X →
+  appear in catalog Y."** PayAI's own catalog **contains Base resources** (70 in its first 200), so the
+  rail is not the discriminator. (An earlier version of this skill said "rail must be Base" — also wrong.)
+- **Client must echo `extensions.bazaar`** for a challenge to be catalogable: official `@x402/core` +
+  `@x402/fetch` does; `@dexterai/x402` does **not** (`buildTransaction` returns no `extensions`).
+  *(This one is still believed correct — it was verified against the client source, not inferred from a
+  timestamp.)*
+- **Absence claims need a POSITIVE CONTROL.** PayAI/agentic catalogs expose a server-side `?payTo=`
+  filter; a spot-check cannot prove absence in a 25,443-record set. Re-query a payTo you know is
+  present (from the catalog's own first page) and confirm non-zero — otherwise "0 for us" may just be
+  a broken filter. `cdp-bazaar-monitor.py` does this automatically.
+- **PayAI absence, verified 2026-09-15:** catalog total **25,443**; `?payTo=0x7ebff188…` → **0**, with
+  a **control** payTo → **9** (filter proven working). We are genuinely absent, not under-searched.
+- **Agentic.Market search returns DOMAIN-level aggregates, not per-resource rows.** One "entry" for us
+  is one seller record (one per domain, all networks under it, `enriched: false`) — so "1 entry" does
+  NOT mean "1 of N services is listed there". Per-service indexing truth comes from the facilitator's
+  per-resource count (CDP discovery `?payTo=`); treat Agentic.Market counts as seller-level only.
+
+**Free, keyless validator — use it before and after:**
+```bash
+curl -s -X POST https://api.cdp.coinbase.com/platform/v2/x402/validate \
+  -H 'Content-Type: application/json' \
+  -d '{"resource":"https://api.gentechlabs.net/v1/market/price/ETH"}'
+# expect valid=true, simulation.outcome=accepted, 0 failures, 0 warnings
+```
+No API key required. A clean pass means the endpoint **is** eligible — absence from the index is then an
+**indexing** problem, not a metadata one.
+
+**Check presence, not just the gate** (the blind spot that hid this for months):
+```bash
+curl -s "https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=<our-payto>"
+# pagination.total = how many of OUR resources are actually discoverable
+```
+Assert this in health monitors. "Does it 402?" is not "is it buyable?" — the same gate-vs-outcome gap
+that produced a broken X Layer rail and a paid API serving 404s.
+
+**Status Sep 15 (live, moves fast — re-measure):** at the last check **6 of 14** were present in PayAI's
+catalog and **3 of 14** in CDP — all picked up by **crawlers with zero settles paid**. Earlier in the same
+evening it was 0 and 2, so the counts are rising on their own. **Re-run the presence check rather than
+trusting any number written here.**
+*(Earlier "10 of 11" counts used a narrower service list that omitted the three MSS sovereign-router
+endpoints — `providers`, `route`, `score`; the bazaar manifest itself returns **14**.)*
+
+**Second catalog:** the x402.org facilitator reportedly keeps a separate list, but
+`https://x402.org/facilitator/discovery/resources` → **404**. Locate the real path before asserting on it,
+or the check is permanently red for the wrong reason.
+
+---
+
+## ⚠️ SUPERSEDED — Aug 11 "settlement does NOT index us" (kept for provenance only)
 
 **⚠️ REVISED — do NOT treat CDP-settlement-as-indexing as reliable.** This was the working theory, and this session **disproved it**. A correctly-configured, validated gateway that settles successfully still did NOT index on Agentic.Market.
 
@@ -97,6 +274,10 @@ Glama (`glama.ai`) is an MCP server quality scoring and discovery platform. Publ
 - Native gas: `eth_getBalance`.
 - A key deriving to a wallet is NOT enough — the wallet must also HOLD spendable USDC on that chain. The Avalanche owner wallet key (`0x7ebff188…`, stored `/root/.blockrun/jordan-avax-secret`) derives fine but has **0 USDC / 0.099 AVAX** because funds are locked in the AVAX/USDC LFJ LP pool. Signing key ≠ liquid settlement funds.
 - The AVAX owner wallet is Avalanche-native — its key does not fund USDC on Base/Ethereum either.
+- **Exclude token-CONTRACT addresses from wallet-funding audits.** When candidate addresses are
+  enumerated from notes/configs, a token contract (e.g. the USDC contract itself) holds its own
+  reserve and `balanceOf` reads non-zero — it looks like a funded wallet. Filter by deployed code
+  (`eth_getCode` non-empty) before judging "funded", or the audit reports money nobody can spend.
 
 **Registry drift pitfall (Aug 11, 2026):** the marketplace registry (`11-Mess Hall/marketplace-listings-registry.md`) drifts behind reality. This session the file said `v9.0.0 / 8 services / 6 chains` while the live gateway was already `v9.1.0, 15+ endpoints, 7 chains`. When working listings, ALWAYS `curl https://api.gentechlabs.net/.well-known/x402-bazaar` (and `.well-known/x402`) first and compare against the registry row before using the registry's service count/version as ground truth. Update the row to match — a stale registry undercounts our API surface and can gate a submission on outdated info.
 
