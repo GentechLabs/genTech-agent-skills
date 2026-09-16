@@ -1,5 +1,32 @@
 # Marketplace Registration Flows — Aug 2026 Session Notes
 
+> ## 🔴 READ FIRST — ONE PARAGRAPH IN THIS FILE IS SUPERSEDED AND ITS ADVICE IS NOW HARMFUL
+>
+> This file was written **2026-08-12**. One conclusion in it — *"settlement alone does NOT index us
+> here … then **stop settling** and pivot to non-CDP discovery"* — was **correct when written and is
+> WRONG today.** It predates the **Sep 11 `paid_endpoint_root` fix**, when our paid routes answered
+> **307 instead of 402**, so a settle genuinely could not index anything.
+>
+> **Post-fix we proved the opposite ourselves: on 2026-09-15 18:20:39–18:21:03Z, 11 CDP-facilitator
+> settles on the Base rail got CDP Bazaar to index us within the same minute.** Settling **is** the
+> indexing trigger.
+>
+> **DO NOT STOP SETTLING.** Acting on that sentence abandons the CDP Bazaar / AWS Bedrock AgentCore
+> buyer channel exactly when it started working — and our absence from that index is what makes 10 of
+> our 11 paid services unbuyable. The do-not-resettle hold (registry rows 8c/200/202) is **discharged**.
+>
+> What is actually true: indexing is triggered by **a settled payment through the CDP facilitator**,
+> it is **per-RESOURCE (not per-seller)** — 11 settles on one route indexed exactly that one service —
+> the settle must be on the **Base rail (`eip155:8453`)**, and the client must echo
+> `extensions.bazaar` (official `@x402/core` + `@x402/fetch`; **`@dexterai/x402` does not**).
+>
+> The **validator** advice in that same paragraph was RIGHT — `POST /platform/v2/x402/validate` is
+> free, keyless and first-party; we wrote it down here on Aug 12 and didn't use it until Sep 15.
+> The struck paragraph is at the end of the **Agentic.Market verification** section.
+>
+> Full evidence: `11-Mess Hall/marketplace-listings-registry.md` (5pm rail-watch row, 2026-09-15) ·
+> queue **id 25**.
+
 Session-specific details gathered while researching marketplaces to list GenTech on. Companion to the "Crown Unlock" section in SKILL.md.
 
 ## BountyBook (bountybook.ai) — agent task marketplace on Base
@@ -58,4 +85,28 @@ PayAI is the facilitator behind our WURK flow. Decentralized agent marketplace, 
 
 ## Agentic.Market verification
 
-`curl "https://api.agentic.market/v1/services/search?q=gentech"` returned `{"services":[],"total":0,...}` on Aug 11 despite gateway manifest v9.1.0 being live AND a real settlement landing the same day. **CORRECTED: settlement alone does NOT index us here** — this is the documented CDP facilitator gap (x402 issue #2112: `EXTENSION-RESPONSES` header never emitted; multiple validated+settled teams still absent). Confirm our side is right via `POST https://api.cdp.coinbase.com/platform/v2/x402/validate` (expect 200 + `bazaarExtension`), then stop settling and pivot to non-CDP discovery (x402scan/OpenDexter via `/.well-known/x402` + OpenAPI).
+`curl "https://api.agentic.market/v1/services/search?q=gentech"` returned `{"services":[],"total":0,...}` on Aug 11 despite gateway manifest v9.1.0 being live AND a real settlement landing the same day. **CORRECTED: settlement alone does NOT index us here** — this is the documented CDP facilitator gap (x402 issue #2112: `EXTENSION-RESPONSES` header never emitted; multiple validated+settled teams still absent). Confirm our side is right via `POST https://api.cdp.coinbase.com/platform/v2/x402/validate` (expect 200 + `bazaarExtension`) — **that part was RIGHT: free, keyless, first-party; we wrote it down on Aug 12 and didn't use it until Sep 15.** ~~then stop settling and pivot to non-CDP discovery (x402scan/OpenDexter via `/.well-known/x402` + OpenAPI)~~ **<-- STRUCK 2026-09-15: THIS ADVICE IS SUPERSEDED AND WRONG. DO NOT STOP SETTLING.** It predates the Sep 11 `paid_endpoint_root` fix; post-fix, 11 settles indexed us within the minute. Settling IS the indexing trigger (per-RESOURCE, Base rail `eip155:8453`, official `@x402/core` + `@x402/fetch` client). See the SUPERSEDED block below.
+
+> 🔴 **SUPERSEDED 2026-09-15 — DO NOT FOLLOW THE "stop settling" ADVICE ABOVE.**
+>
+> The conclusion above was **correct when written and is now WRONG.** It was formed **before the Sep 11
+> `paid_endpoint_root` fix**, when our paid routes answered **307 instead of 402** — so a settle genuinely
+> could not index anything. That was the real cause, not the #2112 header gap.
+>
+> **Post-fix, we proved the opposite ourselves: on 2026-09-15 18:20:39–18:21:03Z, 11 CDP-facilitator
+> settles on the Base rail (0.22 USDC, blocks 51353546–51353558) got CDP Bazaar to index us
+> *within the same minute*.** `?query=gentech` went from `[]` → 1 resource; the registry row flipped
+> 🟡→🟢. See `11-Mess Hall/marketplace-listings-registry.md` (5pm rail-watch row).
+>
+> **Acting on "stop settling" today would abandon the CDP Bazaar / Bedrock AgentCore buyer channel
+> precisely when it started working** — and our absence from that index is what makes 10 of our 11 paid
+> services unbuyable. The do-not-resettle hold (registry rows 8c/200/202) is **discharged**.
+>
+> **What is actually true:** indexing is triggered by **a settled payment through the CDP facilitator**, and
+> the trigger is **per-RESOURCE, not per-seller** — 11 settles on one route indexed that one service and
+> nothing else. The settle must be on the **Base rail (`eip155:8453`)** and use a client that echoes
+> `extensions.bazaar` (official `@x402/core` + `@x402/fetch`; **`@dexterai/x402` does not**).
+>
+> **The validator advice in that paragraph was RIGHT and we should have followed it a month earlier** —
+> it is free, keyless, and first-party. Same lesson as the settle: we wrote the tool down on Aug 12 and
+> didn't use it until Sep 15. Tracked as queue **id 25**.

@@ -27,7 +27,8 @@ hermes cron list | grep -B 1 -A 12 'Harness Critic'
 
 Look for:
 - Active job ID (e.g. `8f71e23cbfd6 [active]`)
-- Correct schedule (`2 */4 * * *`)
+- Correct schedule (`0 2 * * *` — it was `2 */4 * * *` when this note was written; do not
+  reuse the old cadence, re-read the live job as the SKILL.md table warns)
 - Next run timestamp in the near future
 - Correct workdir (`${PROFILE_DIR}/harness`)
 

@@ -250,6 +250,136 @@ restarts/replaces the process running it will hit this: the safer behaviour is t
 say so loudly, because the one seat that silently didn't update is the one whose reports you are
 reading. Version skew across a fleet presents as "that one seat just doesn't answer."
 
+### ⚠️ A probe from a privileged vantage point proves nothing about exposure
+
+**Before reporting "X is publicly reachable", verify your OWN source can reach it as an outsider.**
+A test that succeeds only because the prober is whitelisted is a false positive of exactly the shape
+this file exists to prevent — and it reads as diligence.
+
+Real case: a gateway backend on `:8082` returned **200** when probed at the host's public IP, and
+this was nearly filed as "direct-to-IP bypass, bigger blast radius than reported." **Invalid.** The
+probe ran *on* the VPS, so its source address was the box's own public IP — which the firewall
+explicitly whitelists (`ufw: Anywhere ALLOW IN <operator-ip>`). Only **80/443** were open to
+`Anywhere`; `8082` was **not publicly reachable at all**.
+
+```bash
+# 1. What can the general internet reach?
+ufw status numbered            # look for 'Anywhere' entries only — a named IP is a whitelist
+
+# 2. What address am I probing FROM?
+curl -s https://api.ipify.org   # if it matches a whitelist rule, your result is void
+
+# 3. Prefer the real public path (DNS name -> CDN -> origin) over IP:port
+curl -s -o /dev/null -w '%{http_code}\n' https://public-hostname/path
+```
+
+**Rule: state the privilege of the probe alongside the result.** "200 from inside the allowlist"
+and "200 from the open internet" are different findings, and only the second is a security finding.
+Same family as the self-request deadlock and the stale-claim probes: *a test must be able to
+distinguish the target's condition from the tester's.*
+
+### ⚠️ A monitor that SKIPS the broken state can never report it
+
+**Before trusting a health check, confirm it actually inspects the state that goes wrong.**
+
+A cron health monitor contained `if not enabled: continue` and **zero occurrences of the word
+"paused"** anywhere in the file. A doorbell job had been paused for 14 hours; the monitor reported
+**"ok"** at the end of it. The check was not wrong — it was structurally blind, because the failure
+mode *was* the state it skipped.
+
+Same family as a probe that only hits `:443` while the leak lives on `:80`, or a test that only runs
+on the happy path. **The blind spot is in the check, not the system.**
+
+**Rule:** enumerate the states your check never visits, and ask which of them would be a failure.
+Then either test them or state plainly that they are uncovered.
+
+### ⚠️ Turning off a notification path means you must change how you SEND
+
+**If you disable a wake/doorbell/watch mechanism, every workflow that relied on it breaks silently.
+Disabling the notification is a SEND-SIDE change, not just a receive-side one.**
+
+A wake trigger ("scan inbox, DM the agent when a new handoff appears") was paused. Handoffs kept being
+filed as vault files — the *record* half of "DM to wake, vault to record" — and nobody was ever woken.
+A live security finding sat unread for 5 hours and was then fixed within 20 minutes of an actual DM,
+which proves the file was fine and only the doorbell was missing.
+
+**Rule:** when you switch off a wake path, immediately substitute a delivery mechanism for anything
+urgent (DM at filing time), and audit what else fed off that path. A relay that writes a file and
+calls it delivered is not delivery.
+
+### ⚠️ A stale note is more dangerous than no note — check the artifact you READ, not the one you wrote
+
+**When a fix lands, the note describing the OLD state is still there and still authoritative-looking.
+A reader finds it, believes it, and re-debugs a fixed bug — or mis-scopes a live one.**
+
+Three times in one week, the same shape:
+- A relay filed into an inbox whose doorbell had been switched off — the file was correct, delivery
+  was not, and the sender believed "filed" meant "delivered."
+- A "BLOCKED" note kept re-alerting after the task was done, because the DONE note was a *different
+  file* the reader never opened.
+- A registry entry describing a bug that had already been fixed in live source, which made the
+  remaining fix look larger than it was.
+
+**The pattern: the artifact describing the fix is not the artifact the reader finds.**
+
+**Rule:** when you ship a fix, update the artifact that DESCRIBES the broken state in the same
+change — not a new adjacent file. And when you read a status claim, check it against live state
+before acting on it, because the note may predate the fix it contradicts.
+
+## ⚠️ A static file can shadow the route you deployed to
+
+**"I verified it on the public endpoint" is worthless if you verified a DIFFERENT public URL than
+the one consumers read.** A deploy can land in the service while the canonical public path keeps
+serving an old file, because a webserver matches a longer location prefix first.
+
+Real case (2026-09-15): a manifest fix was deployed and "verified on the public endpoint" — true of
+`/.well-known/x402-bazaar`, **false of the canonical `/.well-known/x402`**, which nginx served from
+disk because the prefix is longer than the `/` proxy rule:
+
+```nginx
+location /.well-known/ { root /var/www/site; }      # ← longer prefix, WINS
+location /            { proxy_pass 127.0.0.1:8090; } # ← the service your fix is in
+```
+
+So the service route was never reached for that path. Three artifacts then disagreed — served file
+(10 services), the service's own copy (11), the sibling doc (14) — and the canonical one had been
+**stale for 16 days** while consumers read it.
+
+**Prove which artifact a URL serves by HASH, not by reading a field:**
+```bash
+curl -s https://host/path | sha256sum
+sha256sum /var/www/site/path          # identical sha = you are reading the static file
+nginx -T | grep -A2 'location .*well-known'   # which rule actually matches
+```
+
+**Rule: identify the artifact behind the URL before trusting anything read from it.** When a path
+exists both on disk and as a service route, one of them is invisible — and it is usually the one you
+deployed to. Prefer deleting the shadow so there is ONE source.
+
+### ⚠️ A DOCUMENTED claim is not a TESTED one — eligibility is not trigger
+
+**When a vendor's doc says X causes Y, treat it as a hypothesis. Find the log line that proves it.**
+
+A platform doc said endpoints become *"eligible for indexing AFTER A SUCCESSFUL SETTLED PAYMENT."*
+That was read as **"a settle triggers indexing"**, and money was about to be spent on a plan derived
+from it. **It was wrong.** The catalogs were being filled by **crawlers** reading our 402 challenges,
+with **zero payments** — visible only in our own nginx access log.
+
+**What made the misreading convincing:** the predicted effect and an unrelated cause happened in the
+**same minute**, so the timestamp "confirmed" the theory. The actual trigger was an earlier fix that
+changed our responses from `307` to `402` — a crawler could not see a challenge before it.
+
+**Rules:**
+- **"Eligible for" does not mean "triggered by."** A precondition describes what is *allowed*, not what
+  *happens next*.
+- **A correlation that lands inside the same minute is the most seductive and least reliable kind.**
+  Look for the *other* actor before concluding causation.
+- **Check your own access logs for crawlers/bots by User-Agent** before designing anything payment-based.
+  `grep <Candidate-UA> /var/log/nginx/access.log*` — if an index can be filled by a crawl, no spend is
+  needed.
+- **Prefer the free measurement over the paid one.** Waiting one cycle and re-measuring cost $0; the
+  settle plan would have cost real money to test a model that was already disproved in our logs.
+
 ## Why This Matters
 
 Jordan's words: "this happens a lot." The fleet-model-change is one instance of a recurring class: config changes that don't propagate, deploys that don't take effect, cron edits that don't stick. The verification layer catches these BEFORE the user does — turning the user from QA tester back into the boss.
@@ -440,6 +570,34 @@ chase a defect that doesn't. Cost-free precision: name the scope in the sentence
 it** — a number you inherited was not verified by you. In the incident above, a peer's report
 carried my wrong `.sol` figure forward; the seat that trusted the peer's number passed the error
 along. Re-measuring a two-minute census is cheaper than a wrong report to a third party.
+
+### ⚠️ A check that validates a COPY of the thing is not a check on the thing
+
+**A guard that mirrors the values it guards — instead of reading them — reports green while the
+real source is broken.** The mirror and the source are two artifacts, and only one of them is live.
+
+Real case (2026-09-15): a new `test_eip712_domains.py` guarded EIP-712 domains by comparing a
+**hardcoded `SHIPPED` dict** against pinned on-chain separators. Nothing read the actual source
+(`server.py`'s `NETWORKS`, `server.mjs`'s `PRICE`); even its `--live` flag only re-read the chain,
+still taking the shipped name/version from the literal. Proven by re-injecting the real defect into
+the real source (edit confirmed landed) and running the guard untouched:
+
+```
+guard output: 5/5 PASS, "ALL DOMAINS CORRECT", exit 0
+real source : the celo rail was genuinely mis-signed
+```
+
+Its author's "proven both ways" was **circular** — the BUG replay mutated the *test file's own* dict,
+so it demonstrated the comparison arithmetic, not that the source was watched. The one failure mode
+that had already bitten us (source drifting from the mirror) was the one case it could not see.
+
+**Rule: a verification must READ the artifact it claims about.** Derive the shipped side from code
+(import the config object, parse the source, or probe the running service). Pinned truth values are
+fine — pinning the *expected* side is correct — but the *actual* side must never be a copy.
+
+**Prove any guard can fail on the REAL system, not on its own fixture:** make the genuine defect
+recur in the genuine source and confirm the guard goes red. If reverting the source doesn't flip the
+result, the guard is a mirror.
 
 ## ⚠️ Never draw the test sample from the implementation under test
 
