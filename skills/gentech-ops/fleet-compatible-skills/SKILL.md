@@ -67,6 +67,37 @@ the path is the only mechanism that works fleet-wide without editing every cron 
 - [ ] **Placed in the shared core**, not one profile's `skills/`
 - [ ] **Verified on more than one seat** before calling it done
 
+## The gate (step (c) — a check that runs, not a convention)
+
+The checklist above is a promise. These two tools are the enforcement:
+
+```bash
+cd /root/vaults/gentech/00-System/agent-profiles
+python3 fleet_compat_scan.py    # exit 1 = a skill references another seat's filesystem
+python3 fleet_compat_fix.py     # dry-run plan; --apply rewrites only what it can prove resolves
+```
+
+**Why a new tool was needed (measured 2026-09-17):** the drift audit compares seat to seat, so a
+defect present in *every* copy reads as `identical` — healthy. It reported a clean fleet while
+**731 references on the three worker seats told their reader to use HQ's filesystem**
+(`/root/.hermes/profiles/<the-HQ-seat>/…`), 452 of them in executable context. Pixel's own copy of
+`github-api-helper` inserted the HQ seat's `scripts` directory on `sys.path`; pixel's
+`arc-cli-tooling.md` told the reader to run the HQ seat's `arc-canteen`. Add the scan to the pre-ship
+check: if it names a seat that is not the reader's, it is not fleet-compatible, however many
+copies agree.
+
+The fixer refuses rather than guesses, and the refusals are the interesting part:
+- a path that does not resolve on the reading seat (222 hits reference files that exist only on the
+  HQ seat — substituting them would produce a path that resolves to nothing: a green light pointing
+  at nothing);
+- code files (`.py`/`.sh`) — `${PROFILE_DIR}` is not a variable there, so the substitution that
+  fixes a `SKILL.md` would break a script;
+- a seat copy whose skill also lives in the shared core, when the core copy would refuse the same
+  substitution — a seat-only edit is a build artifact and the next sync replaces it;
+- a line that names a second seat, or a file not already written portably.
+
+Full finding: `00-HQ/fleet-compat-2026-09-17.md`.
+
 ## Where the shared core is
 
 ```

@@ -668,3 +668,73 @@ file over" is not a deployment — it MOVES the drift.
 7. **A sibling-less deployment target is worse than none** — it turns every run into an
  `indeterminate`/false red. Distinguish "probe could not run" from "thing is broken" as separate
  states, then check which one your deployment actually produces.
+
+## ⚠️ "The file is on disk" is not "the file is served" — check the EDGE, not just the origin
+
+A file can be correctly installed, byte-identical to the repo, and still **404 for every visitor**,
+because a CDN is serving a cached 404 from before the install. This is indistinguishable from a missing
+file unless you look for it, and it makes a completed fix look failed.
+
+The tell is in the response headers of the 404 itself:
+
+```
+HTTP/2 404   server: cloudflare   cf-cache-status: HIT   age: 61   cache-control: max-age=14400
+```
+
+Three probes separate "missing" from "cached-missing" — run all three before concluding anything:
+
+1. **Bytes, with the encoding pinned.** `curl -H 'Accept-Encoding: identity'`. Comparing compressed
+   bytes against an on-disk file yields a mismatch that looks like drift and is not. (This one cost me a
+   false `served != webroot` against a colleague's correct measurement.)
+2. **Cache-busted.** Append a unique query (`?cb=$(date +%s)`). 200 here + 404 on the bare URL = edge cache.
+3. **The origin directly.** `curl -H 'Host: <domain>' http://127.0.0.1/<path>`. This removes the CDN from
+   the question entirely.
+
+If it is the edge and you hold no purge token, changing the URL the page asks for (a version query) fixes
+it for real visitors immediately. **Revert that workaround once the edge revalidates on its own** — an
+unpurgeable cache is a temporary condition, and leaving token noise in the markup is a permanent one.
+Warn anyone re-measuring in the window: they will see 404 on a file that is correctly installed.
+
+## ⚠️ Probing page assets: extract EVERY fetch-capable attribute, and resolve RELATIVE refs
+
+A guard that greps a page for `https://yourdomain.com/...` misses exactly the refs that break. Two
+independent blind spots, both silent:
+
+- **Relative refs.** `music/film-v8.mp4` is the common form and an absolute-only regex never sees it.
+- **Attributes other than `src`/`href`.** `<source src>`, `poster`, `data-src` and `srcset` all fetch
+  bytes. A `<video preload="none">` with a dead `<source>` renders a perfect poster and only fails when a
+  visitor presses play — and nothing logs it, because there is no handler.
+
+Extract `src`, `href`, `poster`, `data-src` and `srcset` (splitting the candidate list), accept both
+relative and own-domain absolute URLs, then assert **two separate things**: the file exists under the
+webroot (install gap, rename) **and** it answers an anonymous fetch (edge cache, nginx). They fail
+independently and need to be reported independently — the filesystem cannot see the second one.
+
+**Dedupe before probing.** The same poster appears on every card; probe each unique path once and map back
+to the pages that use it, or a health check fires hundreds of live requests and gets disabled.
+
+## ⚠️ A falsifiability test must never mutate the thing it is testing
+
+Proving a guard works by planting a defect directly into the **live** artifact is a self-inflicted
+outage. The window is small, which is exactly why it survives review — and it has one fatal property:
+**if the run is killed between plant and restore, the restore assertion can never fire.** The mutation
+simply stays, on a production page, with nobody watching for it. This happened: a test that copied
+`/var/www/gentechlabs/hub-vanito.html`, planted a dead link in it, and restored it afterwards left a
+visitor clicking a planted 404 on the live hub for ~34 seconds.
+
+The rule: **the test writes to a throwaway copy, never to production.** Three properties make it work:
+
+1. **Scratch root, symlinked tree.** `mkdtemp()`, then symlink every entry of the real webroot into it
+   *except the artifact under test*, which is **copied**. Reads pass through the symlinks so refs still
+   resolve and the baseline stays honest (`missing 0`); the only writable object is the copy.
+   Symlinking rather than copying matters when the tree holds gigabytes of media.
+2. **Make the guard's root injectable** (`os.environ.get("GENTECH_WEBROOT", <default>)`). A checker whose
+   scope is hardcoded cannot be tested without touching what it checks.
+3. **Startup restore-check.** Before doing anything, assert the live artifact carries no test marker and
+   **strip any it finds** — that is the only recovery path for a run that already died mid-window. Then
+   assert at the end that the live artifact is byte-identical to how it started.
+
+A guard against this that is worth copying: keep the plant marker a single distinctive token, so both the
+startup check and the end-state assertion are one grep. And **verify the recovery path itself** — plant
+into a scratch copy by hand, run the startup check, and confirm it strips the marker and restores the
+exact original hash. An untested recovery path is a guess.
