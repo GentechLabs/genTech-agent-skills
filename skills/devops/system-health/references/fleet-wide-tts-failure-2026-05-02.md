@@ -66,7 +66,7 @@ curl -H "xi-api-key: <key>" https://api.elevenlabs.io/v1/voices
    echo "ELEVENLABS_API_KEY=<new-valid-key>" >> ${PROFILES_DIR}/yoyo/.env
    echo "ELEVENLABS_API_KEY=<new-valid-key>" >> ${PROFILES_DIR}/dmob/.env
    echo "ELEVENLABS_API_KEY=<new-valid-key>" >> ${PROFILES_DIR}/desmond/.env
-   echo "ELEVENLABS_API_KEY=<new-valid-key>" >> ${PROFILES_DIR}/gentech/.env
+   echo "ELEVENLABS_API_KEY=<new-valid-key>" >> ${PROFILE_DIR}/.env
    ```
 3. Restart gateways to ensure new env vars loaded:
    ```bash

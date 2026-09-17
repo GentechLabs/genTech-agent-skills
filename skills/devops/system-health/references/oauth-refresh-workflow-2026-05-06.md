@@ -79,5 +79,5 @@ The script is well-designed for monitoring:
 ## References
 - Main refresh script: `${PROFILES_DIR}/gentech/scripts/refresh_nous_oauth.py`
 - Device flow completion: `${PROFILES_DIR}/gentech/scripts/complete_nous_device_flow.py`
-- Auth state: `${PROFILES_DIR}/gentech/auth.json`
-- Configuration: `${PROFILES_DIR}/gentech/config.yaml`
+- Auth state: `${PROFILE_DIR}/auth.json`
+- Configuration: `${PROFILE_DIR}/config.yaml`

@@ -492,7 +492,7 @@ WorkingDirectory=/root/rugcheck/api
 ExecStart=${INSTALL_DIR}/venv/bin/python3 -m uvicorn server:app --host 0.0.0.0 --port 8088
 Restart=always
 RestartSec=5
-EnvironmentFile=${PROFILES_DIR}/gentech/.env
+EnvironmentFile=${PROFILE_DIR}/.env
 
 [Install]
 WantedBy=multi-user.target
@@ -1025,7 +1025,7 @@ Understanding `auth.json` is crucial for troubleshooting:
 - **Script not found errors**: Ensure you're in the correct Hermes profile directory
 - **Device flow file missing**: Run `hermes model` first to initiate device flow
 - **Token refresh fails repeatedly**: The session may be permanently revoked. Full re-authentication required.
-- **Script permissions**: Scripts should be executable. Fix with `chmod +x ${PROFILES_DIR}/gentech/scripts/*.py`
+- **Script permissions**: Scripts should be executable. Fix with `chmod +x ${PROFILE_DIR}/scripts/*.py`
 - **Python path issues**: The refresh script adds `${INSTALL_DIR}` to Python path. Ensure Hermes is installed there.
 
 **Best Practices**
