@@ -45,7 +45,9 @@ reset window, then re-check with ONE call. Do not diagnose a flag from 404s alon
    Note the count when you're done. If the task needs more, batch/cache it or split it across cycles.
 
 5. **Use the shared helper — never raw `gh api` in a loop.**
-   `scripts/github_api.py` — authenticated REST, 1h response cache, quota guard, spam-flag detection.
+   **`/root/.hermes/profiles/gentech/scripts/github_api.py`** — authenticated REST, 1h response cache, quota guard, spam-flag detection.
+   *(Give the absolute path: a bare `scripts/github_api.py` resolves differently from different cwds, and
+   there is a stale second copy under `~/.hermes/profiles/*/home/.config/` — see the trap below.)*
    Raw `gh api` bypasses the cache and the guard.
 
 6. **git for bytes, web for scanning.**
@@ -88,6 +90,38 @@ Every one of the four STOP rules was broken. Full write-up:
 
 **The lesson is not "be careful." It's: these rules must be in front of you at the moment of action.**
 That is why this skill is loaded on GitHub work rather than filed in a handoff somewhere.
+
+## A "200" on your own content proves nothing about public visibility
+
+**An authenticated call shows the OWNER's view — and the owner always sees their own flagged/hidden
+account.** So "I called the API with our token and got 200" is not evidence the account is publicly
+healthy; it is the *expected* behaviour of a hidden one.
+
+**Rule:** for any PUBLIC-visibility question (is our repo/issue/profile visible to outsiders?), measure
+**logged out**, or with a second account. Authenticated results may be reported only as
+"visible-to-owner", never as "public".
+
+Symptom this explains: anon `404` on every artifact we author, while controls (someone else's repo) return
+`200` in the same batch, and auth `200` on our own. That split is *content-scoped*, not caller-scoped — so
+it is not rate limiting, which is applied to the caller and returns `403`, not `404`.
+
+## Two `hosts.yml` files exist — test the LIVE one, or you will call a valid credential "invalid"
+
+There is a **live** credential file and at least one **stale** copy:
+
+- LIVE: `~/.config/gh/hosts.yml`
+- STALE: `~/.hermes/profiles/<profile>/home/.config/gh/hosts.yml` (older; silently `401`s)
+
+Reading the stale one produced a false "our token has been invalidated" conclusion that went into an
+incident note. **Before concluding a credential is dead:**
+
+1. List every candidate file (`find` for `hosts.yml`) and compare mtimes.
+2. Test each one against `GET /user` (`200` + the expected `login` = alive).
+3. Report which path was tested. Never generalise from one file to "the token".
+
+Note the direction of the risk: a dead token and a hidden account look similar from outside. Testing the
+wrong file manufactures a credential problem that does not exist — which is why this belongs in the
+pre-flight, next to the quota check.
 
 ## See also
 - `devops/github-rate-limit-scheduler` — the budget-aware scheduler that owns repo_create/fork/PR ops

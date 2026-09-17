@@ -630,3 +630,41 @@ are what turned a flat 90% into a discriminating 66% vs 93%.
 
 **Same family as every rule here:** a number that can't be wrong is worse than no number, because
 it gets reported outward as evidence.
+
+## Deployment drift: ONE canonical file + symlinks (a copy can go stale, a symlink cannot)
+
+When a tool exists in several places and the file that RUNS is not the file you edited, "copy the newest
+file over" is not a deployment — it MOVES the drift.
+
+1. **Pick the canonical path by capability, not preference.** A tool that imports siblings relative to
+ its own file can only live where those siblings are. If one directory is the only one that has them,
+ the choice is FORCED — say so instead of presenting it as a judgement call.
+2. **Make every other entry point a symlink to canonical.** The caller's path is unchanged (cron
+ `script:` resolves by name), so nothing downstream needs editing.
+ **⚠️ EXCEPT when CRON runs that path directly — there a symlink is a dead job, not a deployment.**
+ The scheduler resolves each job's `script:` against `HERMES_HOME/scripts` and REFUSES the job when
+ the real path escapes that dir (`cron/scheduler_script.py:_resolve_script_path`, Hermes 0.21.3):
+ *"Blocked: script path resolves outside the scripts directory"*. A refused job never starts — it
+ produces no red check, only a silent `last_error` in the job file. **Measured 2026-09-16: three jobs
+ across two profiles were dead this way** (gentech `port-health-monitor` 18:00Z, gentech
+ `nightly-maintenance` — latent, would have died 04:30Z, gizmo `api-health-check` 07:01Z) because the
+ canonical+symlink pattern had been applied to paths cron executes. For a path cron executes, the
+ correct form is a **byte-identical COPY inside that profile's own `scripts/` dir**, and the guard's
+ job is to catch a copy that goes STALE (sha256 vs canonical) rather than to demand a symlink.
+ Symlinks stay correct for every entry point nothing schedules.
+3. **⚠️ `os.path.abspath(__file__)` does NOT resolve symlinks — use `os.path.realpath(__file__)`.**
+ This is the trap that makes a naive symlink fix fail: the symlinked entry point reports the
+ *symlink's* directory as its own and looks for siblings there, in a directory that has none. Fix
+ realpath FIRST, or you ship the same false red you were removing.
+4. **Prove the guard is falsifiable before trusting it.** Inject a real copy where a symlink belongs,
+ confirm the drift check fires, then restore. An unfailable guard is the defect, not the fix.
+5. **A stale copy of an OPERATIONAL script is a hazard, not untidiness.** Read what the old copy is
+ MISSING before treating drift as cosmetic. A stale maintenance script lacking a protected-paths
+ denylist would delete a live service's `node_modules` and crash-loop it on next restart — and a
+ running process masks the damage until it restarts.
+6. **Establish "stale" vs "a different artifact" BEFORE overwriting.** Identical docstrings plus a diff
+ dominated by additions means same tool, older generation. A different docstring means a genuinely
+ different artifact, and overwriting it destroys intent.
+7. **A sibling-less deployment target is worse than none** — it turns every run into an
+ `indeterminate`/false red. Distinguish "probe could not run" from "thing is broken" as separate
+ states, then check which one your deployment actually produces.

@@ -25,9 +25,56 @@ Vault: `${VAULT_DIR}/10-Labs/Resumes/Jordan_Master_Resume.{md,html,pdf}`
    and `resume/index.html` committed. NOTE: repo `.gitignore` has `**/*.pdf` — a PDF needs
    `git add -f`. The local clone's remote points at `ProtoJay4789/...` (old account) — push
    still lands via redirect, but re-point to the org when convenient.
-3. **GitHub Pages mirror:** `gentechlabs.github.io/resume.*` — blocked in rename provision-limbo
-   (see SKILL.md GitHub Pages section). The sync cron pushes repo files regardless so the
-   mirror self-heals when GitHub finishes provisioning.
+3. **GitHub Pages mirror:** `gentechlabs.github.io/resume.*` — **the file is committed to `main`, but
+   the hostname serves NOTHING (measured 2026-09-16).** Root, `index.html` and `resume.md` all return
+   **404 · "Site not found · GitHub Pages"** while the Pages API reports the site configured, source
+   `main`, and the last deploy `success`. Cause: the `GentechLabs` account is invisible to anonymous
+   visitors — auth 200 / anon 404 on the profile, on every repo page, and on every
+   `raw.githubusercontent.com/GentechLabs/**` path, while the API reports the repos
+   `"visibility":"public"`; `search/repositories?q=user:GentechLabs` → 422 **`User flagged as spammy.`**
+   The separate `Gentech-Labs` org *does* serve publicly (anon 200). The old "rename provision-limbo /
+   it will self-heal" note is **wrong** — the last deploy *succeeded* and still serves nothing. It is
+   the account, not the pipeline. **Repo-presence is not liveness: never write "live 200" here.**
+
+## Verify public links by ANONYMOUS resolution, never by spelling
+
+A link scan that greps for the *right string* proves nothing about whether a recruiter can open it.
+For every URL printed on a public-facing document:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://github.com/<owner>        # anonymous: no auth, no -H
+curl -s -o /dev/null -w '%{http_code}\n' https://github.com/<owner>/<repo>
+```
+
+**Always include a control in the same minute** (`github.com/torvalds` → 200,
+`raw.githubusercontent.com/torvalds/linux` → 200). Without a control a 404 is indistinguishable from
+our IP being blocked, a rate limit, or a GitHub wobble; with one, the auth/anon split proves *which
+side* is invisible. Measured 2026-09-16 on the master résumé: the `GitHub` line
+(`github.com/gentechlabs`) and the `Portfolio` line (`gentechlabs.github.io`) are both **anonymous
+404**, and the `SELECTED PROJECTS (github.com/gentechlabs)` heading points at the same invisible
+account — so "64 shipped public repositories" is not publicly checkable either. **Two of four contact
+lines broken while the weekly check kept calling them "clean" because they were spelled correctly.**
+Repointing them is an identity decision that collides with the standing "all work uses `GentechLabs`"
+directive → **flag to Jordan, do not edit.**
+
+## The push path has its own failure mode — check the credential, not just the diff
+
+The portfolio clone's `origin` may embed a PAT in the URL. When that token is revoked, `git push` dies
+with `remote: Invalid username or token` — a dead sync path that raises **no drift signal at all**,
+because on the day it breaks there is nothing to copy. Before reporting a clean run:
+
+```bash
+cd /root/repos/gentechlabs.github.io && GIT_TERMINAL_PROMPT=0 git ls-remote origin main
+```
+
+If it fails, repair (no secret handling needed — `credential.helper=store` and `gh auth git-credential`
+both work) and re-verify:
+
+```bash
+git remote set-url origin https://github.com/GentechLabs/gentechlabs.github.io.git
+git ls-remote origin main      # must print the remote sha
+grep -c ghp_ .git/config       # must print 0 (no plaintext PAT left behind)
+```
 
 ## Links from the portfolio
 The portfolio index "Connect" section carries: `📄 Résumé / CV` → `https://gentechlabs.net/resume.pdf`
