@@ -76,6 +76,63 @@ If ANY prediction is falsified, unverifiable, or overdue → report. In this
 session the earliest genuinely-due-and-unadjudicated prediction (#31, due
 2026-08-08T22:00Z) was still ~22h in the future, so [SILENT] was correct.
 
+## ⚠️ Counting graded blocks: glob by NAME PREFIX, never by `.md` extension
+
+This reference's due-date logic was right; the **denominator** was wrong for ~6 weeks.
+Prior cycles computed "N/N blocks graded" with `glob('facts/history/prediction-outcomes*.md')`.
+That pattern silently skipped `facts/history/prediction-outcomes.md-archive-20260808T041001Z` —
+an archive whose name ends in `Z`, not `.md`, so `*.md` never matched it. The Gardener writes
+archives as `<original-name>-archive-<ts>` sometimes and `<stem>-archive-<ts>.md` other times;
+both forms live in `facts/history/`. Cost: 5 graded blocks (#38, #42, #46, #47, #48) were
+excluded from every tally, so the harness reported "75/75 graded, 7 FALSIFIED" when file truth
+was **80 blocks, 11 FALSIFIED, 2 PARTIALLY**. The Critic's entry-75 finding caught it.
+
+**Rule — enumerate the corpus by name prefix over BOTH directories, then print the file list:**
+```python
+files = sorted(glob.glob('facts/prediction-outcomes*')) \
+      + sorted(glob.glob('facts/history/prediction-outcomes*'))
+```
+Never emit "N/N graded" without the exact file list it was computed over. A glob that *looks*
+correct and matches 3 of 4 files is the failure mode; printing the list is the cheap defense.
+
+**Count IDs, not blocks.** Two prediction numbers carry two blocks each in the Aug-8 archive
+(#38: primary FALSIFIED + second-claim FULFILLED; #42: early + final adjudication, both
+FALSIFIED), so raw block count (82) exceeds distinct-id count (80). Report the distinct-id union,
+and disclose any pid whose blocks DISAGREE rather than letting the tie-break hide it.
+
+**Match BOTH `Status:` styles when extracting**, and match the Useful marker on both phrasings —
+`Useful?` (newer) and `Was the prediction useful?` (older). A one-phrasing regex undercounts and
+makes a present verdict look missing. A block whose archive copy was truncated mid-compaction
+(#140: Status + f1 + f2 only) legitimately has no Useful marker — say "no marker, block
+truncated", never infer N.
+
+**Distinguish "ungraded" from "never authored."** Before reporting a number in a claimed range
+as ungraded, `grep -rn 'PREDICTION #<N>'` the whole harness tree (all `predictions*`, current +
+archived). #109–#112 and #117 have no grade because the producer authored no prediction for those
+cycles — a hole in the *numbering sequence*, not a missing verdict. Reporting them as "ungraded"
+would send a future reader chasing phantom falsifications.
+
+## Pitfall: a MALFORMED block header silently drops a pid from the corpus
+
+The corpus scan must tolerate header noise. `#37` is recorded only under
+`### PRED#37` (not `### PREDICTION #37`), so a strict
+`^#+ (PREDICTION|OUTCOME) #N` matcher returns 110 pids + no `#37` while file truth
+is 111 pids. The 111th pid is exactly the one carrying the `OPEN` grade, so the
+error presents as "a pid vanished" rather than "a regex missed". Always reconcile
+the derived count against the standing header before publishing it, and when the
+two disagree, look for a header the author mangled — do not adjust the header.
+
+## Pitfall: the LOCATION of a grading block drifts when the Gardener archives it
+
+A blocked pid's verdict stays true while its *file* changes. After a Gardener
+compaction the live `prediction-outcomes.md` holds **zero** `### PREDICTION #N`
+grading blocks — every #135–#146 verdict lives in `facts/history/` only. Cycle
+entries that kept asserting "6 FULFILLED in current file (#141–#146)" were
+repeating a file state that no longer existed. Grades were never wrong; the
+stated location was stale, and a stale location is how a future reader concludes
+a verdict is missing. Re-resolve where each block lives every cycle, and when the
+location has moved, correct the record rather than repeating the old sentence.
+
 ## Pitfall: don't trust the `.cycle-highwater` file for due-date logic
 
 `facts/.cycle-highwater` tracks the evolve-N id counter, NOT prediction due

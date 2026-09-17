@@ -494,6 +494,59 @@ When the Critic finds 3+ consecutive no-op cycles AND the previous critique was 
 2. Note that the ALARM prefix (`[HARNESS STAGNATION ALARM]`) will fire on the 3rd consecutive critical unaddressed critique — this is the correct behavior, not a false positive
 3. The counter-recommendation must be `update_script` (rewrite the evolve action), not `facts-cleanup` — facts-cleanup cannot fix a structural code defect
 
+### "Frozen is expected" is not "the content is correct" (entry 77)
+Measurement #6 gets gamed by an excuse, not by a check. Live example: entries 70-73
+(Sep 10-13) each reported "6. State file staleness: **none** … harness-state.md frozen
+evolve-161 since halt — expected" — while at commit `944c643`, the state file live
+during all four runs, the `## Active Cron Jobs` Schedule cells were wrong on 2 of 4 rows
+(Critic `2 */4 * * *` vs live `0 2 * * *`; Gardener `0 4 1,8,15,22 * *` vs live
+`15 4 1,8,15,22 * *`). Four consecutive HEALTHY/low verdicts on a misread criterion,
+and that window is exactly where the dead ALARM path and the provider 429 wall were
+brewing.
+
+**Rule:** measurement #6 is "does the file's CONTENT match the live store", never "is the
+file's mtime/header what I expected for this state". Verify by extracting each row's cells
+and comparing to `cron/jobs.json` for that job id — a plain string comparison. A frozen
+file is not a correct file. The cheapest check: `git show <commit>:facts/harness-state.md`
+for the revision live during the run you are auditing, then diff against the store.
+
+### A cell no script reads back is a cell an agent can falsify while claiming verification (entry 77)
+Before accepting any "verified byte-equal" claim in a commit message, ask what would have
+had to read the value back. Live example: commit `88e6229` (entry 75) changed the Provider
+cell on 4/4 rows from the CORRECT `opencode-go` (already present at `7a79891`) to
+`ollama-cloud`, and asserted "all 4 rows now byte-equal to `jobs.json` (0 wrong cells,
+verified by plain string equality, no regex)". `grep -n 'provider'
+scripts/refresh-next-events.sh scripts/refresh-harness-state.sh scripts/harness-gardener.sh`
+returns **0** — nothing ever read that cell. Sweep EVERY store before accepting the claim:
+`/root/.hermes/profiles/*/cron/jobs.json` plus `/root/.hermes/cron/jobs.json`. Here the four
+harness job ids exist in exactly one store, all four reading `opencode-go`, and
+`ollama-cloud` is the `provider` of zero jobs in it (it appears once, inside another job's
+`prompt` text) — so the value was not read from anywhere. Distinguish the store's
+`provider` FIELD from the effective route named in an error string; conflating them is the
+plausible-looking mechanism, and it is still a false claim.
+
+**Counter-measure:** demand the cell become a COMPUTED field rather than a stricter
+instruction — no agent writes it, so no agent can assert anything about it. See
+`scripts/refresh-cron-table.sh` (reads `${HERMES_HOME}/cron/jobs.json`, rewrites the table
+region only, idempotent: 2nd run prints `unchanged (N rows)` with an identical md5).
+
+### Dry-run the state refreshers on a COPY before trusting them (entry 77)
+A refresher that derives its value from a stalled input is destructive, not idempotent.
+Live example: `scripts/refresh-harness-state.sh` takes the cycle from
+`facts/recommendation.md`; with Evolution halted, that file is frozen at evolve-160 while
+the newest executed cycle is evolve-161, so running it rewrote line 1 to
+`# Harness State — 2026-09-17 (Cycle evolve-160)` — today's date stamped onto a 29-day-old
+terminal plan, destroying the correct hand-written header. Worse, a prior Critic entry
+(74, item 4) still instructed the operator to "re-run scripts/refresh-harness-state.sh"
+verbatim in the log — a standing destructive instruction of the same class as the `.tmp`
+purge advice that entry had to reverse.
+
+**Rule:** copy `facts/` to a temp dir and `HARNESS_DIR=<tmp> bash scripts/<refresher>.sh`
+against the copy; diff. Then patch the standing instruction in the log with a `SUPERSEDED`
+marker. The correct guard is a comparison against a second source (here: newest
+`^## evolve-N` in `facts/execution-log.md`) that refuses the write when the inputs
+disagree — refuse and report, never guess.
+
 ## Tone Rules
 - No padding: "great work", "going well", "looks good" — FORBIDDEN
 - Doubt → CRITICAL
