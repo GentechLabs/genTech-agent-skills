@@ -123,6 +123,21 @@ Note the direction of the risk: a dead token and a hidden account look similar f
 wrong file manufactures a credential problem that does not exist — which is why this belongs in the
 pre-flight, next to the quota check.
 
+## A dead `secrets/github-token` shadows the live `gh` credential — and `check_quota` hides it
+
+`scripts/github_api.py` resolves its token from `${PROFILE_DIR}/secrets/github-token` **before** falling back to
+`gh auth token`. Those two credentials can **diverge** (measured 2026-09-18: secrets file → **401 Bad credentials**,
+live `gh` token → **200 `GentechLabs`**), and then every `gh_get` / `check_quota` call fails 401 while `gh api`
+works perfectly.
+
+**The trap:** `check_quota("core")` reports **`0/0`** when the token is rejected — it reads as *"quota exhausted"*,
+not *"bad credential"*, so a blocked script looks like a rate limit.
+
+**Rule:** when the helper 401s but `gh api user` returns our login, the helper's **credential is stale** — the API
+is fine. Test each credential with its own `GET /user` call; never generalise from one source. (This is the reverse
+direction of the Aug-2 case, where `gh` reported the token invalid while the secrets file still worked.) Fix by
+replacing the file's contents — `pr-submission-rules` → `references/token-death-recovery.md`.
+
 ## See also
 - `devops/github-rate-limit-scheduler` — the budget-aware scheduler that owns repo_create/fork/PR ops
 - `github/github-api-helper` — the helper's API surface and wiring pattern
