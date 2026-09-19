@@ -1,0 +1,65 @@
+---
+name: group-handoff-mesh
+description: "Use when moving work between GenTech groups — V4 mesh."
+version: 1.0.0
+author: Gentech
+license: MIT
+category: agent-coordination
+tags: [handoff, coordination, vault, multi-channel, mesh]
+related_skills:
+  - agent-coordination
+  - routing
+  - single-agent-multi-channel
+---
+
+# Group Handoff Mesh (V4)
+
+## When to use
+Any time work needs to move between GenTech groups (HQ, Labs, Entertainment,
+Treasury, Forge, gizmo) — for approval, context, or handoff. This replaced the
+old hub-and-spoke model where every group returned only to Gentech.
+
+## The core idea
+V4 is a **full mesh**: ANY group can hand off to ANY other group. The mesh adds
+peer handoffs on top of Gentech's consolidation role — it does not remove it.
+Gentech still consumes ALL returns overnight, so nothing is lost regardless of
+who sent it to whom.
+
+## Routing rules
+- **Approval/decision** → hand off to `hq` (Jordan's lane) or the group that owns the decision.
+- **Context** → hand off to the group that holds it (e.g. a finance decision needing Labs' technical read → `labs-to-treasury/`).
+- **Build** → `labs` (or `forge` for desktop-only work).
+- **Content/social** → `entertainment`.
+- **Finance/portfolio/yield** → `treasury`.
+
+## Folder naming & file contract
+- Folder: `01-HANDOFFS/<from>-to-<to>/` with dated `.md` files (e.g. `labs-to-treasury/2026-08-15.md`).
+- Shipped item IDs also go in `<from>-completions.md` (e.g. `labs-completions.md`).
+- Return note format:
+  ```
+  ## From <Group> — <date>
+  ### ✅ Completed this session
+  - #<id> — what was built
+  ### ⏸ Blocked / waiting on
+  - #<id> — what's blocking
+  ### 📝 Notes
+  ```
+
+## The overnight scanner
+`/root/vaults/gentech/scripts/group-returns-scanner.py` reads EVERY
+`<from>-to-<to>/` folder (not just `-to-gentech/`) plus every
+`<group>-completions.md`, extracts shipped `#<id>` tokens + notes, and emits
+JSON for the Nightly Build Session + Morning Digest. It also auto-creates
+missing return folders. Groups list includes `gizmo` (Labs bot).
+
+## Vault source of truth
+- `01-HANDOFFS/sync-protocol.md` — the full protocol (read before writing handoffs).
+- `01-HANDOFFS/INBOX/README.md` — the delegation board + mesh rules.
+
+## Pitfalls
+- **After delivering the report, mark the SOURCE handoff's `Status:` line DONE.** Completing the work and writing the return note to `labs-to-gentech/` is not enough — the watcher/re-flag trigger keys off the source file in `01-HANDOFFS/<sender>-to-<you>/<name>.md` still reading `**Status:** open`. Leaving it open makes the same done item keep surfacing as "new handoff, ACK now". Patch the source's Status line to `✅ DONE — <what> (see <return-lane file>)`, commit, push, and Obsidian-sync. Do this in the same push as the report. (Hit twice in one day on arb-loop-phase0 + lighter-ts-read.)
+- **Never `write_file` an append-only completion/return log.** `<from>-completions.md` (and return notes) are append-only shared files that every session contributes to. `write_file` overwrites the ENTIRE file, silently destroying all prior sessions' entries — recovered only by `git checkout HEAD -- <file>` then re-appending. Always append with `>>` (or `patch` to add a line), never rewrite the whole file.
+- Don't assume a handoff must go back to Gentech — route peer-to-peer when the target group owns the decision/context.
+- The scanner regex `^([a-z]+)-to-([a-z]+)$` matches peer folders; `-to-gentech` is handled separately in `scan_group`, so don't double-count.
+- Group agents sometimes push only to GitHub — always `git pull vault main` before reading handoffs.
+- **Strengthen tool-scout handoffs with vault-backed scope.** When handing off a scouted tool to a group (e.g. a GPU/desktop tool → Forge), search the vault for existing planned usage of that tool BEFORE writing the handoff, and include it. A tool that looks like a one-off may actually be a planned accelerant across several projects (e.g. BlendCap mocap → Blender is already Forge's lane per SETUP.md, #74 Agent Arcade 3D Lobby, and the `blender_mcp` skill). Including that context lets the receiving group see the full picture and prioritize correctly, instead of treating it as a lone tool. Proven Aug 21, 2026: BlendCap handoff to Forge was strengthened this way.
