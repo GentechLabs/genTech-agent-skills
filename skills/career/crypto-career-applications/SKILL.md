@@ -171,7 +171,9 @@ Crypto-native growth candidate with production DeFi experience
 - **Status check:** Run `hermes cron list` to see last run status
 
 **If scanner errors:** Common issues:
-1. **web_search blocked** — Requires FIRECRAWL_API_KEY → Run `hermes model` → Configure at https://portal.nousresearch.com/billing
+1. **web_search** — ✅ **works again** (verified 2026-09-18). If it errors, checking the API key is still the
+   right first move (`hermes model` → https://portal.nousresearch.com/billing), but do not treat it as
+   permanently blocked.
 2. **web3.career** — Works via curl + JSON-LD extraction (see Tool Preference section below). No browser needed.
 3. **crypto.jobs** — Server-rendered HTML; curl + text extraction finds job titles, companies, posting ages. Not fully structured but usable.
 4. **Devpost, DoraHacks, ETHGlobal** — JS-rendered SPAs. Curl returns skeleton only. Colosseum's SvelteKit SSR embeds event data in `__sveltekit` JSON within HTML (regex-extract `currentEvent` object).
@@ -208,10 +210,14 @@ Crypto-native growth candidate with production DeFi experience
 
 ### Scanner Execution Notes
 
-**Tool workarounds (discovered May–Jul 2026, updated for MCP Exa + GLM-5.2):**
-- `web_search` BLOCKED (no FIRECRAWL_API_KEY). Use **MCP Exa via BlockRun** instead.
-- `web_extract` does NOT work with DuckDuckGo backend (search-only).
-- **Primary method:** MCP Exa (`mcp_blockrun_blockrun_exa`) for job board search + extraction.
+**Tool workarounds (discovered May–Jul 2026; STALE RULES RETIRED 2026-09-18):**
+- ✅ `web_search` **works** — the old "BLOCKED (no FIRECRAWL_API_KEY)" rule is retired. It was used
+  successfully on 2026-09-18.
+- ✅ `web_extract` **works** — the old "does NOT work with DuckDuckGo backend" rule is retired.
+- **Scoring model:** do **not** route job scoring to GLM — **z.ai/GLM is retired.** Use the current
+  verification model (kimi-k2.7-code on Ollama Cloud).
+- MCP Exa via BlockRun remains a valid fallback for SPA-heavy boards (Devpost, DoraHacks), but it is a
+  fallback, not the primary path.
 - **Exa `search` endpoint:** Find job listing pages ($0.01/call). Query: `"<tech stack> remote jobs site:<job_board>"`.
 - **Exa `contents` endpoint:** Extract job listings from found URLs ($0.002/URL, up to 100).
 - **Exa `find-similar` endpoint:** Find similar jobs to a promising listing ($0.01/call).
@@ -283,12 +289,32 @@ for card in cards:
     # Clean and structure data
 ```
 
-### Step 3: GLM-5.2 relevance scoring
-Use GLM-5.2 to score jobs against Jordan's criteria:
-- 100% remote (no timezone constraints)
-- Entry-level (0-3 years)
-- Python + Solidity stack
-- Crypto/web3/AI companies
+### Step 3: relevance scoring
+Score jobs against Jordan's criteria. (Scoring model: the current verification/auditing model — **z.ai/GLM is
+retired**; do not route this to GLM-5.2.)
+
+**Hard filters (must pass):**
+- 100% remote (no timezone constraints) · US-eligible, or worldwide
+- Location + Remote + Salary stated up front; screen out on-site
+- Entry-level (0-3 years) — as a SENIORITY filter, not a domain filter
+
+**Weighting (2026-09-18, updated from labour-market evidence):**
+1. **AI literacy is the priced skill** — US roles requiring AI literacy are up **70% YoY**. Score a role up when
+   it names AI/agent/LLM/automation work, and score Jordan's own GenTech agent work as *direct evidence*, not
+   as a side project. Do not score a role down for lacking the word "crypto".
+2. **Widen the domain filter.** The old rule was "crypto/web3/AI companies". The jobs actually being created are
+   **AI infrastructure, data-centre and AI-native roles** — including at companies that are not crypto at all.
+   Target **AI-exposed infrastructure**, not a crypto-only list.
+3. **Add `Forward-Deployed Engineer` / `Solutions Engineer` / `AI Engineer` as target titles.** FDE is named by
+   LinkedIn as one of the fastest-growing roles, it is customer-facing engineering rather than senior IC work,
+   and the experience gate is far lower than "senior SWE". Jordan's profile (runs production infra, comfortable
+   with customers, builds with AI) fits this shape unusually well and we have **not been searching it at all**.
+4. **Prefer professionalised over democratised work** (PwC 2026): roles where judgement/domain expertise
+   compounds grow ~2x faster with ~42% higher wage growth than roles AI makes easy for anyone.
+
+**Known trap to avoid:** concentrating the pipeline in *entry-level knowledge work*. That is the segment the
+data says is squeezed, while the growth is elsewhere. A live pipeline of junior-support and junior-SWE roles
+is a pipeline inside the shrinking segment.
 
 ### Step 4: Filter and deliver
 Only deliver 4-5 star matches. Silent if nothing found.
@@ -298,7 +324,9 @@ Only deliver 4-5 star matches. Silent if nothing found.
 - web3.career: **DOES work via curl** — the listing page returns full server-rendered HTML with **JSON-LD JobPosting data** in `<script type="application/ld+json">` blocks. Each block has title, company, datePosted, salary, remote status, applicant requirements, and full description. Extract with `python3 -c "import re, json; ..."`. See `references/web3-career-jsonld-extraction.md` for the complete extraction script.
 - Colosseum (colosseum.org): SvelteKit SSR embeds event data inside the HTML. Regex-extract `__sveltekit` JSON for `currentEvent` objects (eventType, name, phase, countdownTarget, participantCount). Works without JS rendering.
 - Always validate: check if link 404s, check posting date, verify "remote" isn't Asia-only.
-- **Do NOT use web_search** — blocked on this system. MCP Exa or curl + JSON-LD are replacements.
+- **web_search works again** (verified 2026-09-18 — used successfully this session). Keep curl + JSON-LD as the
+  primary for structured job data, and use web_search for corroboration and discovery. The old
+  "web_search is blocked" rule is retired.
 
 ### Tool Preference: curl + JSON-LD ≈ MCP Exa > web_search
 

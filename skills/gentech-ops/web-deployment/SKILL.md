@@ -150,7 +150,10 @@ EOF
 nginx -t && nginx -s reload"
 ```
 
-Then add an **A record** in Cloudflare DNS. This is a manual step — Cloudflare API credentials are not stored, so the user must log into cloudflare.com and add the record themselves:
+Then add an **A record** in Cloudflare DNS. **This is a manual step.** A token file exists at
+`~/.hermes/profiles/gentech/secrets/cloudflare-token`, but it was **verified dead on 2026-09-18** — it returns
+`401 Invalid API Token` on `/user/tokens/verify` and `403` on zone lookup, so it cannot read or write DNS.
+Do not assume DNS is manageable from this box; the user must log into cloudflare.com:
 
 | Subdomain | Type | Value | Proxy Status |
 |-----------|------|-------|-------------|

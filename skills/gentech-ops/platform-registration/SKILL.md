@@ -466,3 +466,37 @@ clawhub skill publish ./my-skill --slug my-skill --name "My Skill" --owner <owne
 **Next attempt:** Use ClawHub CLI device flow (`clawhub login --no-browser`) which prints a verification URL the user opens on their own machine. This avoids the localhost callback problem entirely.
 
 **Alternative path:** Submit skills via GitHub issue template at `github.com/HKUDS/DeepTutor/issues/new?template=eduhub.yml` — no OAuth needed, just open an issue with the skill details.
+
+## 🔴 The listing audit must ask what a STRANGER sees (build-queue id 1)
+
+Every check we owned went green throughout the account-invisibility defect, because **our token is the
+single identity for which those pages exist.** A listing audit that only probes with credentials will
+report a listing as live while a logged-out visitor gets a 404. Run the logged-out assertion as a
+**separate, additional** step — never as a replacement:
+
+```bash
+T=/root/vaults/gentech/10-Labs/tooling
+python3 $T/visibility-coverage.py              # every registry-declared surface has a TARGETS entry? exit 3 if not
+python3 $T/visibility-assert.py --gate         # exit 3 on NEW invisibility, 1 if a control broke
+```
+
+**Read the two checks ALONGSIDE each other and treat the disagreement as the finding.** The authenticated
+probe answers "is our listing registered?"; the logged-out assertion answers "can a stranger see it?".
+They are *supposed* to disagree during this defect, and collapsing them into one pass/fail destroys the
+signal. Never delete the authenticated probe because the visibility gate passes, and never read a green
+visibility gate as "the listing is registered".
+
+Exit codes are not interchangeable:
+- `0` clean · `1` **CHECK UNTRUSTWORTHY** (a control failed — this is *not* a clean bill of health)
+  · `3` **NEW INVISIBILITY** (something became invisible that the baseline had as visible).
+
+**Baseline discipline.** `--gate` compares against `visibility-baseline.json`, so:
+- after creating a submission, add its URL to both the registry **and** `TARGETS` (with a `control`),
+  then re-run the coverage check — a listing that is in the registry but not in `TARGETS` is measured by
+  nothing, and `visibility-coverage.py` exists solely to catch that;
+- after any fix, refresh with `--snapshot` and commit it. When the account is restored, `--delta` will
+  report the PRs as `newly visible` — the fix becomes self-evidencing instead of asserted.
+
+**Do not add a hard failure for known, owner-gated invisibility.** It cannot go green until a human acts
+outside our lane, and a permanent red trains people to ignore the row. That is why the known five (plus
+the pre-rename account) sit in the baseline and only *new* invisibility exits 3.

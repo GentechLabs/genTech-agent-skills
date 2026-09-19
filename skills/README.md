@@ -28,8 +28,9 @@ sync.
 
 ## Current skills
 - `development/develop-and-verify` — the consolidated develop-and-verify
-  pipeline (DeepSeek V4 Flash DEV → GLM-5.3-flash/Kimi K2.7 AUDIT on Ollama
+  pipeline (DeepSeek V4 Flash DEV → Kimi K2.7 CODE AUDIT on Ollama
   Cloud). Two-phase build pattern with pre-publish audit checklist.
+  **z.ai/GLM is retired — do not route the audit phase to it.**
 
 ## Convention
 - When a new custom skill is created/updated on the VPS, copy it here so all
@@ -52,5 +53,5 @@ python3 ${VAULT_DIR}/00-System/agent-profiles/fleet_skills_sync.py          # ap
 providers. Both Hermes and Ollama Cloud carry the same models, so a skill works
 on either. Do NOT hard-pin a skill to a single provider (OpenCode Go was a
 single-provider dependency that became a blocker when its monthly limit hit).
-Name the model (e.g. `glm-5.3-flash`), let the provider be whichever of the two
-we're on.
+Name the model (e.g. `kimi-k2.7-code`, the current audit model — **not** the retired
+GLM family), let the provider be whichever of the two we're on.
