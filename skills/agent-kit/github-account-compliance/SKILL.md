@@ -105,7 +105,28 @@ Symptom this explains: anon `404` on every artifact we author, while controls (s
 `200` in the same batch, and auth `200` on our own. That split is *content-scoped*, not caller-scoped — so
 it is not rate limiting, which is applied to the caller and returns `403`, not `404`.
 
-## Two `hosts.yml` files exist — test the LIVE one, or you will call a valid credential "invalid"
+## Stale credential files — test the LIVE one, or you will call a valid credential "invalid"
+
+**⚠️ This is a FLEET pattern, not a GitHub one. Two instances in one week.**
+
+Before concluding ANY credential is dead, **enumerate every copy on the box and test each one**:
+
+```bash
+find / -name "hosts.yml" -o -name "*composio*key*" -o -name "*.env" 2>/dev/null | head
+```
+
+Then test each candidate against a cheap authenticated endpoint and report **which path** you tested.
+
+| Instance | Live copy | Stale copy | Symptom of reading the stale one |
+|---|---|---|---|
+| GitHub (2026-09-18) | `~/.config/gh/hosts.yml` | `~/.hermes/profiles/<p>/home/.config/gh/hosts.yml` (Aug 31) | declared a working token "invalid" → wrote it into an incident note |
+| Composio (2026-09-19) | `COMPOSIO_API_KEY` in the profile `.env` (`ak_`, 23 ch) | `/root/composio-key.txt` (`COMPOSIO…`, 40 ch) | 401 `Invalid API key` → declared Drive blocked (it was live) |
+
+**Never generalise from one file to "the credential".** A dead token and a restricted/hidden account
+look identical from outside — so testing the wrong file manufactures a problem that does not exist, while
+the real one stays available.
+
+### GitHub-specific detail
 
 There is a **live** credential file and at least one **stale** copy:
 
@@ -134,9 +155,9 @@ works perfectly.
 not *"bad credential"*, so a blocked script looks like a rate limit.
 
 **Rule:** when the helper 401s but `gh api user` returns our login, the helper's **credential is stale** — the API
-is fine. Test each credential with its own `GET /user` call; never generalise from one source. (This is the reverse
-direction of the Aug-2 case, where `gh` reported the token invalid while the secrets file still worked.) Fix by
-replacing the file's contents — `pr-submission-rules` → `references/token-death-recovery.md`.
+is fine. Test each credential's file with its own `GET /user` call; never generalise from one source. (This is the
+reverse direction of the Aug-2 case, where `gh` reported the token invalid while the secrets file still worked.)
+Fix by replacing the file's contents — `pr-submission-rules` → `references/token-death-recovery.md`.
 
 ## See also
 - `devops/github-rate-limit-scheduler` — the budget-aware scheduler that owns repo_create/fork/PR ops
