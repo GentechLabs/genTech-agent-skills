@@ -287,3 +287,22 @@ English description and produce different bytes.
 - [ ] Agent that reads a handoff reports back what it did.
 - [ ] Resolved notes archived; `_archive/` purged weekly.
 - [ ] No handoff left unread or unreported at a stopping point.
+
+## PITFALL: `hermes peer dm` is SYNCHRONOUS — it waits for the remote agent's whole turn
+
+`hermes peer dm <peer> "<msg>"` delivers the message **and prints the reply**, which means the command
+does not return until the remote agent has finished its entire turn. On a long handoff this blocks for
+minutes and can hit any shell timeout (observed: a 400s timeout on a Forge handoff).
+
+**A timeout does NOT mean the message failed to send.** The message was delivered; the sender gave up
+waiting. Do not re-send blindly — that double-delivers.
+
+- **Long handoff / wake → `hermes peer run <peer> "<msg>"`** — starts the turn asynchronously and returns a
+  run ID. Read the result with `hermes peer status <id>`; stop it with `hermes peer stop <id>`.
+- **Short question you need an answer to now → `peer dm`** is correct.
+- **Always write the vault handoff too.** The vault is the source of truth and survives a machine being
+  off; the DM only wakes. "DM to wake, vault to record."
+
+**A hang is a diagnostic, not just a nuisance.** If `peer dm` hangs past a normal turn, suspect the remote
+agent's own provider — a remote seat on a rate-limited or dead provider (e.g. ollama-cloud 429) will stall
+exactly like this. Check the peer's provider before assuming the mesh is broken.

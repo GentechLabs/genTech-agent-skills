@@ -380,6 +380,36 @@ changed our responses from `307` to `402` — a crawler could not see a challeng
 - **Prefer the free measurement over the paid one.** Waiting one cycle and re-measuring cost $0; the
   settle plan would have cost real money to test a model that was already disproved in our logs.
 
+### ⚠️ Never read `ls` of a folder root as "there is nothing here"
+
+**A listing's shape is not a statement about content.** Directories and dotfiles at a folder root say nothing
+about what is inside them — and a lane whose root looks empty is often just **archived**.
+
+**The test that is actually honest:** ask git what it tracks, recursively.
+
+```bash
+# WRONG - sees the root only, and "no .md here" is not "no notes here"
+git ls-files 01-HANDOFFS/<lane>/
+ls 01-HANDOFFS/<lane>/
+
+# RIGHT - catches _archive/, _closed/ and every nested note
+git ls-tree -r HEAD --name-only | grep "01-HANDOFFS/<lane>/"
+```
+
+**Two real instances in one week, both mine:**
+1. `_lane-state.json` — I read top-level keys that don't exist at that level, saw `None`, and reported the
+   agent's lane as "degraded". The values were intact under `measured`.
+2. `forge-to-gentech/` — I ran `ls` on the root, saw `_archive/`, `_closed/` and dotfiles, and wrote that the
+   lane "contains no `.md` notes at all". **39 archived notes were one level down.**
+
+**Why this class is worse than a normal miss:** it converts "I used a command that could not see the data"
+into a **claim about another agent's diligence** — "this seat went silent" — which is both false and
+unflattering. An empty lane root usually means **the archiving workflow ran**, which is the system working.
+
+**Rule:** before saying anything is absent, name the command you used and ask whether it could have seen the
+thing. Prefer a recursive git query over any directory listing, and never generalise from one missing file to
+the state of a whole lane.
+
 ## Why This Matters
 
 Jordan's words: "this happens a lot." The fleet-model-change is one instance of a recurring class: config changes that don't propagate, deploys that don't take effect, cron edits that don't stick. The verification layer catches these BEFORE the user does — turning the user from QA tester back into the boss.
