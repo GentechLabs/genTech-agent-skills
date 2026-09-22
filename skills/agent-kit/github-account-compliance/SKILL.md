@@ -159,6 +159,28 @@ is fine. Test each credential's file with its own `GET /user` call; never genera
 reverse direction of the Aug-2 case, where `gh` reported the token invalid while the secrets file still worked.)
 Fix by replacing the file's contents — `pr-submission-rules` → `references/token-death-recovery.md`.
 
+## The fleet WRITE gate — every `git push` is paced
+
+`/root/.hermes/scripts/github-write-gate.py`, enforced by `.git/hooks/pre-push` in the vault
+repo. One writer at a time, 25 s minimum spacing, **20 writes per rolling hour** across ALL
+profiles (state: `/root/.hermes/state/github-write-gate.json`, shared box-wide — the risk is
+the ACCOUNT's total write shape, not one profile's).
+
+- Check `status` before a push you care about: it prints `remaining` / `used_last_hour`.
+- On saturation it prints `GITHUB-GATE: deferred (push) — budget saturated, retry next tick`
+  and exits 3. **That is the gate working, not an error.**
+- A caller is only held `MAX_WAIT_S = 120 s`; longer and it defers rather than blocking a
+  cron forever. A retry therefore succeeds once the OLDEST write in the window has aged
+  enough for the computed wait to drop under 120 s — read the oldest `ts` from the state
+  file and retry at `oldest + 3600 - 120`.
+- **Do NOT set `GITHUB_GATE_BYPASS=1` for convenience.** Unpaced pushes are the lane that
+  got the account flagged; a saturated budget is usually our own agents pushing, and
+  bypassing recreates exactly the burst shape being prevented. Emergencies only — and say
+  so in the log.
+- **A deferred push loses no work** — the commit is safe on disk; only the push waits.
+- A rejected push when local is AHEAD and nothing is incoming is usually this gate, NOT a
+  conflict. Check `status` before assuming a rebase is needed.
+
 ## See also
 - `devops/github-rate-limit-scheduler` — the budget-aware scheduler that owns repo_create/fork/PR ops
 - `github/github-api-helper` — the helper's API surface and wiring pattern

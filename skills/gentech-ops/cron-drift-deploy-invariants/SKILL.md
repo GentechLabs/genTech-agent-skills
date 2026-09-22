@@ -16,6 +16,7 @@ See `references/drift-guard-classes.md` for the working set of drift-guard class
 
 ## Copy-drift guards (the tool that watches copies)
 
+- Byte-identical script copies are NOT a complete deployment. A cron entry point also depends on its RUNTIME DATA (caches, state files, generated JSON) — and those are written somewhere else, so the copy the cron actually executes can be missing them while every script hash matches. A cron entry point that resolves a data file relative to `__file__` will silently fall back to its degraded path in exactly the copy production runs. Fix: search every enrolled location for the data and pick by FRESHNESS (timestamp), never by path order or first-found; then prove it on the copy the cron invokes, not the one you edited. Symptom to watch for: a fix verified from the vault appears to do nothing in production, with no error — the classic false-value signature.
 - Define ONE canonical; entry points anywhere else count as drift only if their bytes differ from it, a real file or symlink to it both pass. "Copy the newest file over" is not a deployment — it moves the drift.
 - Falsifiability is mandatory: a guard that cannot fail is a second defect class. To prove one, mutate the target to an obviously bad state, confirm the check fires, then restore and confirm clean. Record the proof (fired + restored) whenever a new assertion is added.
 - Extend an existing check instead of adding a duplicating one; keep result rows machine-readable (count fields plus explicit missing lists) so verdicts render cleanly.

@@ -583,6 +583,27 @@ def push_to_github():
 
 **Key insight:** The first scan (pre-commit, Layer 3) is still valuable — it catches pre-existing corruption before commit. The SECOND scan (post-add, pre-push) catches rebase-introduced corruption. Both are needed. Without the second scan, a concurrent push during the rebase window leads to silently corrupted data on the remote.
 
+### Anti-Pattern 15: A Frozen Constant Masquerading as a Live Measurement
+
+**Bug pattern:** A script holds a hardcoded reading in a dict it labels as measured (`MEASURED`, `CURRENT_APR`, `LATEST_BALANCE`) and prints it every run with no date. Because it is re-read each run, it reads exactly like a fresh measurement — the value never appears in the output as old. Worse, the file's own comment often *claims* the renderer warns when it is old, so the guard is assumed to exist and is never written. A comment asserting a check is not the check.
+
+**Real-world example (Sep 21, 2026 — pool-fee-rank.py):** `MEASURED = {"blackhole-clmm|WAVAX-USDC": {"apr_pct": 47.0, "date": "2026-09-17"}}` was reprinted as the live leader on 09-19 and 09-20. The comment above it said *"the renderer now warns when it is old"* — the renderer had no such code at all. The number was 4 days stale and driving a venue choice.
+
+**Fix — three rules, all required:**
+1. **A measurement must carry its age and be disqualified by it.** Rename the constant to make the dishonesty impossible (`FALLBACK_MEASURED`), stamp rows `src=STALE`, and give a stale row a *negative* sort key so it cannot set the headline.
+2. **Show it, don't drop it.** A stale row must still print, flagged `STALE`, so a broken measurement job stays visible. Silently dropping it hides the failure; silently using it fabricates a fact.
+3. **A stale value must not leak into any DERIVED list.** Grep every downstream aggregate that filters on the value (here: the PURE-FEE summary and the emissions table both printed the frozen number as live). Excluding it from the ranking but not from the summaries leaves the same lie in a different place.
+
+**The general rule:** a number without a date is not evidence. Any reading that survives longer than its refresh interval must expire on its own, or it will be quoted as current forever.
+
+### Anti-Pattern 16: Measurement Stronger Than Its Method (Overclaiming Provenance)
+
+**Bug pattern:** A script promotes a computed value to a stronger label than the method supports — `"actual accrual"` for `volume × nominal fee tier`, `"on-chain balance"` for a config value — and downstream reports then defend it as a direct observation. The number is usually *better* than the aggregator's, which is what makes the overclaim survive review.
+
+**Real-world example (Sep 21, 2026):** `pool-fee-rank.py` printed *"Where we have an on-chain measurement of actual accrual…"* while its own source (`chain-fee-rank.py`: `fees = volume x tier`, tier read from the pool contract) computes decoded Swap volume × the **nominal** tier — **gross of protocol share**, assuming every trade paid that tier. Stronger than aggregator arithmetic (the tier is real, the volume is real) but it is not observed accrual.
+
+**Fix:** Before writing a provenance word (measured / actual / verified / on-chain), open the file that produces the number and read its method. State the method's real limits in the same sentence the number appears in — including what is still assumed or gross. **A measurement you cannot attribute to this row is also unrankable** (e.g. one per-tier read cannot label a row that aggregates several tiers into one) — report it as `NOT ATTRIBUTABLE` rather than borrowing a neighbouring pool's value.
+
 ### Anti-Pattern 10: Empty Dict Silently Filters All Data
 
 **Bug pattern:** A script has a filter dict (`KNOWN_SERVICES`, `ALLOWED_SOURCES`, `TRACKED_WALLETS`) populated at declaration time but never updated. The main processing loop only handles items that match the dict — but since the dict is empty (or stale), **all data is silently discarded**.

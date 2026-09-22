@@ -1,0 +1,188 @@
+---
+name: bug-class-self-audit
+description: "Use when hardening a system or after fixing bugs."
+tags: [audit, self-healing, verification, core-pattern]
+version: 1.0.0
+author: Gentech
+trigger: "When Jordan says 'audit', 'what could I be missing', 'self-heal', or after fixing any bug — turn the fix into a permanent check."
+---
+
+# Bug-Class Self-Audit
+
+Audit by bug CLASS, not instance. Encode each mistake's shape as a permanent
+check so the whole family can never return.
+
+## The principle
+
+**Auditing by instance produces a report. Auditing by CLASS produces a
+ratchet.** A report is stale tomorrow. A check runs forever.
+
+Every bug has a *shape* — the assumption that was wrong. Find the shape, write a
+check for it, and that entire family is closed permanently.
+
+## The root cause of nearly every bug
+
+> **The code assumed something about the world that nobody verified against
+> ground truth.**
+
+Before writing any check, ask: *what did this code assume, and could I have
+asked the system instead?* That question alone catches most of them.
+
+## The universal verification principle
+
+> **When the system can tell you the answer, ask it — don't compute it.**
+
+- Validating a fee *formula* → simulate the chain's own `collect()` call.
+- Validating a *valuation* → simulate `decreaseLiquidity` / `balanceOf`.
+- Validating a *capability claim* → grep the actual source.
+
+Every time the computed value and the system disagreed, **the system was
+right**. Make simulation-vs-formula agreement the acceptance test.
+
+## The recurring classes (start here)
+
+1. **success-before-status** — a success message printed before verifying the
+   operation actually succeeded (tx receipt status, HTTP code, non-empty result).
+   *Check:* find success prints whose guard sits nowhere near them.
+2. **index-selection** — selecting an item by loop index / list position instead
+   of by the property that matters. *Fix:* rank by value, never by order.
+3. **address-unverified** — a hardcoded address/id that doesn't exist.
+   *Check:* resolve every hardcoded address against the live system.
+4. **config-derived-value** — a number computed from config arithmetic instead
+   of read from the source of truth. *Only flag on a LIVE path.*
+5. **copy-divergence** — multiple copies of the same file drift apart.
+   *Fix:* declare one source of truth, sync, hash-verify.
+6. **balance-vs-claimable** — reads a stored balance where it means
+   accrued/claimable. *Fix:* read the authoritative "what can I claim" call.
+7. **api-shape** — assumes an external API's field path is stable.
+   *Fix:* read both shapes defensively; re-validate on schema change.
+8. **zero-denominator** — a checker reports "clean / none found" after examining
+   NOTHING. A hard-coded root, a seat name absent from the list, a permission
+   error, an empty glob — the loop runs zero times and the tool prints a
+   confident pass. **"0 findings" and "0 things examined" are different results
+   and must never render the same.** *Fix:* count what you actually read and
+   refuse to pass on zero. Distinguish the zero states — no source dir at all
+   (misconfiguration) vs source dir genuinely empty (a real clean) vs files
+   present but unreadable (a silent miss). Only the middle one is a pass.
+9. **partial-coverage green** — the aggregate hides a dead component. A check
+   that passes on a TOTAL can still be covering 3 of 4 sources: one source's dir
+   moves, empties, or becomes unreadable, the others keep the total non-zero, and
+   the verdict reads green. **One green source must never certify a dead one.**
+   *Fix:* report PER-SOURCE coverage and name every source that contributed
+   nothing, in every output path — not just when the whole run comes up empty.
+   A per-source gap test must key on "read nothing from it", not on "had no files":
+   files-present-but-unreadable is the same silent skip one level down.
+
+## Tune for false positives — or the audit gets ignored
+
+A self-audit that cries wolf is worse than none: it trains everyone to ignore
+it. Expect your first run to be noisy, then tighten:
+
+- **Known-benign values** — skip your own wallet/EOA, other-chain address maps.
+- **Scan both directions** for a guard — a correct check may sit *before* the
+  line you flagged, not after.
+- **Recognise legitimate fallbacks** — an explicit "find a DIFFERENT id" branch
+  after a re-create is correct, not index-selection.
+- **Downgrade dead code to INFO** — retired rails aren't live risk.
+
+Target: **0 HIGH/MED findings** on a healthy system. Report only HIGH/MED;
+keep INFO for context.
+
+## Wire it to run without being asked
+
+1. Write the checker as a script with `--json` output and a non-zero exit on
+   findings.
+2. **Wrap it in silence doctrine:** fingerprint the finding set and speak ONLY
+   when that fingerprint changes. A standing known issue must stay quiet; a NEW
+   class must speak immediately.
+3. Schedule it on a cron delivering to the group's channel.
+4. Verify the silence behaviour explicitly — run it twice; the second run must
+   produce **no output**.
+
+## The loop that makes it evolution
+
+```
+detect (self-audit) → fix (audit-fix-verify) → verify (ground truth)
+   → encode the lesson as a NEW check → that class can never return
+```
+
+The last step is the difference between maintenance and evolution. Every bug
+should leave behind a check that closes its entire class.
+
+## Pitfalls
+
+- **Don't ship a report when Jordan says "audit."** Fix every instance in one
+  pass, verify, then report what changed. See `audit-fix-verify`.
+- **Verify you're editing what actually runs.** Editing a stale mirror or a
+  synced copy that gets overwritten produces work that changes nothing. See
+  `source-of-truth-verification`.
+- **A check that can't fail is not a check.** Prove each check catches its bug
+  by pointing it at the real (unfixed) code once.
+- **Hermeticity has TWO halves: the VERDICT and the TRANSCRIPT.** A check can be provably
+  unable to flip a result (inert, never AND-ed into the verdict, exception path dead) and
+  STILL not be machine-independent — if it prints host-specific output, on-machine and
+  off-machine transcripts differ and the proof is broken. Safety ≠ hermeticity. Prove the
+  transcript half by diffing full stdout from both machines, not just comparing exit codes.
+- **Informational output belongs on stderr.** If a diagnostic must stay visible but is
+  machine-dependent, route it to stderr: stdout then carries only the portable assertions
+  and stays byte-identical everywhere, while the picture is still there for a human.
+- **On a non-hermetic revision there is no such thing as "the" transcript hash.** If a check
+  prints machine-specific output, every seat computes its own hash — so two honest seats
+  reporting different values are BOTH right, and chasing the "discrepancy" is wasted work.
+  Before treating a hash disagreement as a defect, ask whether the artifact can even be
+  machine-independent; if it can't, the disagreement IS the defect, not noise around it.
+- **Always state the capture recipe with any hash you quote**
+  (`... 2>/dev/null | md5sum` = stdout only, the portable half; `... 2>&1 | md5sum` = for
+  humans). Unstated recipes turn every cross-seat comparison into a round-trip.
+- **Normalise line endings before comparing transcripts across platforms:**
+  `--selftest 2>/dev/null | tr -d '\r' | md5sum`. Windows Python text mode translates `\n`
+  to `\r\n` on a pipe and Linux does not, so a bare `md5sum` is not a portable instrument —
+  it reports a correct hash of a correct transcript that can never equal the other seat's,
+  which reads exactly like a defect in the tool. Reuse the existing `crlf2lf` stage in our
+  own hash-normalisation layer (`NORM_ID`,
+  `10-Labs/agent-kit-self-tracking/handoff_closure.py`) rather than inventing one.
+- **Sweep by MECHANISM across the whole tree before calling a peer's claim unreproducible.**
+  A narrow path sweep that comes back empty is a false negative, not evidence: grep the
+  mechanism (e.g. `crlf` in any code file, any directory) — the implementation may live in
+  `10-Labs/` or another dir outside the obvious `scripts/` pair.
+- **State the sweep BOUNDARY in every negative claim, or sweep the whole domain.** A confident
+  negative from an unstated boundary produces byte-identical output to a sweep that genuinely
+  had nothing to find, so the reader cannot tell a real absence from a narrow search. Three
+  separate false negatives in one thread shared this root cause: "not on any of the twenty
+  refs" (refs never fetched), "18/77 vault paths absent" (one directory prefix searched),
+  "crlf2lf isn't in our normalisation" (two of three dirs swept). Write "absent from <the
+  domain I searched>" — never a bare "does not exist".
+- **A guard inside a program needs its own negative control — and it must exercise the
+  VERDICT, not the inputs.** A suite that asserts against the helper's return values never
+  touches the code path that prints the verdict and sets the exit code, so the whole guard
+  can be deleted while the suite goes on saying PASS. Reproduce it: neuter the guard, then
+  run the suite — if it still passes, the suite is guarding nothing. The control must run
+  the real entry point (re-run `__file__` as a subprocess if needed); testing a fixture
+  copy proves nothing about the shipped artifact.
+- **...and a check that can't PASS on a healthy machine is not a check either.** Both
+  directions matter: a false GREEN (reports clean after examining nothing) and a false
+  RED (reports FAIL on a working tool) are the same defect wearing opposite masks. A
+  false red is often worse when a GATE depends on it — "run the selftest before trusting
+  this" becomes unpassable on any host whose layout differs.
+- **A self-test must be HERMETIC: never assert against the HOST's environment.** A
+  positive control that reads the real installation path only passes on machines that
+  share that layout, so it fails everywhere else for a tool that is fine. Build the
+  fixture in a temp tree the test owns. If you still want to report host state, do it as
+  an INFO line that is never AND-ed into the result — **and wrap it**, or an exception in
+  an informational probe becomes a failure and the false red comes back through another
+  door.
+- **After hardening a check, re-run the negative control.** A hermeticity fix can quietly
+  make the suite unfalsifiable — green on a broken tool. Regress the thing the check
+  guards, in a copy, and confirm the suite still goes RED.
+- **A clean report must state its denominator.** "No issues found" with no count
+  is unfalsifiable — it is the same output whether you scanned 400 files or 0.
+  Print how many sources you read, and exit non-zero when that number is zero.
+- **Don't swallow errors inside the auditor.** A `try/except: continue` around a
+  detector turns a crashing check into silently FEWER findings — silent
+  wrongness in the one place whose job is to catch it. Collect and surface
+  them, and exit non-zero if the output contract says errors are signalled.
+- **Never prove a permission/read-failure path with `chmod 000` while running as
+  root.** Root reads through it, so the test passes for the wrong reason. Use a
+  **directory named `*.py`** — `open()` raises `OSError` for any uid.
+- **Beware edits that get clobbered by a sync job.** If a cron syncs
+  source→copies, edit the SOURCE and re-run the sync; verify the hash after.
