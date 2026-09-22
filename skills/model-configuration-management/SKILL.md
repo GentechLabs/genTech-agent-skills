@@ -98,6 +98,104 @@ When a configured model is unavailable:
 3. **Configuration Update**: Permanently update the config to prevent repeated failures
 4. **Notification**: Log the change for audit purposes
 
+## ⚠️ A runtime switch is NOT a config change — verify the FILE, not the session
+
+**Changing the model/provider mid-session only affects that session.** The `config.yaml` files still
+read the old provider, so the next gateway restart silently reverts everything and the "switch" never
+took effect. When the user says *"we're switching back to X"*, that is a CONFIG task until proven
+otherwise — check the files before agreeing it is done.
+
+**Verify at the file, then at the resolved value:**
+```bash
+for p in <profiles>; do
+  printf "%-18s " "$p"
+  python3 -c "import yaml;d=yaml.safe_load(open('/root/.hermes/profiles/$p/config.yaml'));\
+print(d['model'].get('provider'), (d.get('fallback_providers') or [{}])[0].get('provider'))"
+done
+```
+
+**Count the aux roles too — a provider switch is never just the primary model.** Compare the count of
+slots still on the OLD provider against the total; a partial sweep that leaves 10 aux roles behind
+leaves web reading, vision, compression and session search broken while chat keeps working, which is
+exactly the failure that hides longest.
+
+## ⚠️ ollama-cloud is a BUILT-IN provider — do not author a provider block for it
+
+`ollama-cloud` is registered natively (auth provider table, keyed by `OLLAMA_API_KEY`). It needs **no
+`providers:` entry** — only `model.provider: ollama-cloud` and the key present in the profile `.env`.
+
+**Do not conclude it is "missing" because `grep '^  ollama-cloud:' config.yaml` returns nothing**, and
+do not "restore" a block for it. Confirming it is built-in: it appears in the CLI's provider list and
+in the model-normalisation module. Distinguish a built-in provider (re-point only) from a
+user-declared one (needs a `providers:` block) BEFORE editing — conflating them produces either a
+redundant duplicate block or a hunt for something that was never missing.
+
+## ⚠️ Scripted config rewrites: parse-check the CANDIDATE before writing
+
+**A script that rewrites config can write a file that SCANS but does not PARSE, and that is a hard
+outage.** Measured: an automated provider-switch emitted a `fallback_providers` sequence without its
+leading indent and left a live config unparseable (`mapping values are not allowed here`). The write
+is the only irreversible step, so make it the last thing that can happen:
+
+1. **Build the new text, then `yaml.safe_load` the CANDIDATE STRING.** Refuse to write if it does not
+   parse.
+2. **Re-read the resolved values from the parsed result and assert they equal what you intended** — a
+   valid file with the wrong values is a silent failure, and it still landed on disk.
+3. **Back up first, timestamped, never overwritten** — the restore path turns a corrupt write into a
+   two-minute fix instead of an outage.
+4. **Line-level edits only.** Never round-trip through parse/serialise: re-emitting a large config
+   reformats it and destroys comments (`yaml.dump` has already silently merged provider entries).
+5. **Match the indent exactly.** YAML nesting is load-bearing: `fallback_providers` needs its dash
+   indented two spaces (fields at four); `auxiliary:` roles sit at two with fields at four. **A regex
+   written for the wrong depth matches NOTHING and reports "no changes needed"** — a silent no-op on
+   precisely the entries that matter. Print the match count per target block and confirm it is non-zero;
+   never trust the summary line alone.
+6. **Remap model names along with the provider.** The model ids are provider-specific: repointing a
+   slot without remapping its model yields a config that parses clean and 404s at call time. Check each
+   aux model against the target provider's catalogue, not just the provider field.
+7. **Probe the target with a real completion** before calling the run successful, and note in the
+   output that changes take effect on the **next gateway restart** — a gateway cannot restart itself
+   from inside its own process.
+
+The reusable script for the primary+fallback+aux switch fleet-wide:
+`00-System/agent-profiles/switch_to_ollama_cloud.py` (`--dry-run` first, then apply).
+
+## ⚠️ A stale uncommitted patch in the install is discarded by the next update
+
+**Before updating a checkout, read its uncommitted modifications — do not assume they are disposable.**
+A live install carried a 23-line uncommitted fix; the update would have discarded it silently, and the
+fix was **not** upstream (confirmed by reading the upstream revision of that file, not by assuming).
+
+```bash
+git -C <install> status --short
+git -C <install> diff <file> > <vault>/patches/<topic>-<purpose>.patch
+sha256sum <patch>                                  # make the preservation verifiable
+git -C <install> show origin/main:<file> | grep -n <symbol>   # is it already upstream?
+```
+
+If upstream has since fixed the same defect, the local edit is redundant and keeping it fights the new
+code. If it has not, the patch is a real fix that must survive. **"Uncommitted" does not mean
+"disposable"** — and a dirty tree also blocks some update paths, so resolve it deliberately rather than
+being stopped by it.
+
+**The mirror-image check: a patch saved in the vault that was never APPLIED is just as silent.** A clean
+install tree proves only that nothing is *at risk* — it does not prove the fix is *live*. Check the
+direction too:
+
+```bash
+git -C <install> apply --reverse --check <patch>   # succeeds ONLY if the change is present
+```
+
+Measured 2026-09-21: an install was clean (**0** modified entries) while a preserved patch was **not**
+applied — so neither the dirty-tree check nor the patch file existing would have revealed it. Read
+`git status` *and* verify the patch landed, because "I saved it" and "it is running" are different
+claims. If the defect it fixes has since been fixed upstream in another form, say so by probing the
+behaviour rather than by assuming either way.
+
+Also: `git show origin/main:<file>` assumes `main`. Use the repo's actual default branch, and
+`git fetch` first, or the comparison silently reads a stale ref and can make a local fix look upstream
+when it is not.
+
 ## Providers vs `custom_providers` — When to Use Each
 
 Hermes has **two distinct patterns** for adding LLM providers. Choosing the wrong one causes config drift, gateway crashes, or silent routing through unintended providers.

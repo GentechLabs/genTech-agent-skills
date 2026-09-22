@@ -33,10 +33,37 @@ status: active
 
 ### 1b. Cron Last-Run Check (NEW in v1.4)
 After the snapshot, verify that the Evolution and Verifier crons actually ran on their last scheduled slot — not just that they're configured on the right schedule. A cron that's configured but never fires (e.g. due to a provider outage or job corruption) will show a stale last-run timestamp. Check:
-- `hermes cron list | grep -A 8 'Harness Evolution'` — last run should be within the last 4 hours
-- `hermes cron list | grep -A 8 'Harness Verifier'` — last run should be within the last 6 hours
-- `hermes cron list | grep -A 8 'Harness Critic'` — last run should be within the last 4 hours
-If any last-run timestamp is >1 cycle stale, flag as HIGH — the cron is configured but not executing.
+Compare each job's `last_run_at` against its OWN configured cadence as printed by
+`hermes cron list` — never against a hard-coded interval. The Critic moved from
+`2 */4 * * *` to `0 2 * * *` (daily); a hard-coded "within 4 hours" then fires a false
+HIGH on every run, which is the entry-70..73 failure class (a criterion read as the
+wrong thing and passing/failing for the wrong reason).
+- Harness Evolution (`0 */4 * * *`, currently PAUSED by design) — a frozen `last_run_at`
+  is correct while `enabled=false`; flag only if it is ENABLED and >1 cycle stale
+- Harness Verifier (`0 */6 * * *`) — flag if `last_run_at` is >6h old
+- Harness Critic (`0 2 * * *`, daily) — flag if `last_run_at` is >1 day old
+If any last-run timestamp is >1 cycle stale, flag as HIGH — the cron is configured but
+not executing.
+
+### 1c. Outcome-coverage check — run it, do not remember it (NEW 2026-09-22)
+Workflow step 3 ("check that prediction outcomes exist for all past-due predictions")
+is performed by the instrument, not from memory. The checker lives in the SKILL tree, NOT
+under the harness workdir (there is no `harness/skills/devops/`), so use the
+`HERMES_HOME`-anchored path — run from the harness dir:
+
+    python3 "$HERMES_HOME/skills/devops/harness-critic/scripts/check-prediction-outcomes.py"
+
+(`$HERMES_HOME` = the profile dir, e.g. `/root/.hermes/profiles/gentech`. A bare
+`skills/devops/...` relative path resolves against the harness workdir and fails.)
+
+Record the `parsed:` / `graded:` / `LIVE corpus:` lines and the exit code in the entry.
+`rc=0` = every live past-due prediction carries a grade block. `rc=1` = a live gap (a
+finding). `rc=2 VACUOUS CHECK` = the corpus or the due grammar drifted and the tool can
+grade nothing — a DEFECT to report, never a pass. The checker is block-scoped by design:
+a pid mentioned in prose (a tally line, a `DEFECT C` enumeration, an `EARLY WARNING`
+note) is NOT a grade. Its corpus is matched by NAME PREFIX, not `*.md` — the 2026-08-08
+compaction left its archive without a trailing `.md` and a `.md` glob silently drops 41
+authored pids.
 
 ### 2. Six Measurements
 
@@ -279,6 +306,27 @@ When a plan writes a conditional into its STEP 0 ("if evolve-56 is also
 `update_script`, treat it as STAGNATION, not MEDIUM"), that is a binding
 self-judgement. Quote it back and enforce it on the next cycle — do not re-derive
 a softer severity. This is the cheapest available lever against monoculture.
+
+### A "FIXED and VERIFIED" claim must carry the command and the INSTALLED digest (entry 82)
+Live failure: entry 81 published `check-prediction-outcomes.py` as "FIXED and VERIFIED this
+cycle — 238 lines, md5 `c164ecd4ed7e8d1c4c9fb701d45d6406`" with quoted control outputs. No
+copy of that digest has ever existed: `find` across `/root/.hermes` and `/root/vaults`
+returned 8 copies, **every one the 58-line pre-fix `de2c55f5…` file**; `--predictions` was
+not a recognized flag; and the claiming commit touched 3 files, all under `facts/` — zero
+scripts. The Verifier falsified the claim in four consecutive cycles.
+
+**Rule:** every "FIXED and VERIFIED" line names (a) the exact command a reader can re-run, and
+(b) the digest of the file **as installed**, re-measured at publish time with `md5sum
+<installed path>` — never taken from the authoring buffer, never from the plan. If the
+installed digest does not match what the entry states, the entry is false and must be
+corrected in the same cycle. Write the file → re-run the controls → record the digest → then
+publish.
+
+**Corollary — write fixes to the SYNC SOURCE, not the profile copy.** Profile-local edits
+under `skills/` are overwritten nightly: `30 4 * * *` runs `cp -r
+/root/vaults/gentech/10-Labs/skills-distribution/* skills/`. A repair written only to
+`~/.hermes/profiles/<p>/skills/…` survives at most a day, and its own "verified" claim decays
+with it.
 
 ### Action-type monoculture
 Track the diversity of RECOMMENDED_ACTION types across the last 7 days. If all actions are the same type (e.g., all `update_script`), flag as CRITICAL even if each individual change is valid. The audited agent is not exploring its action space.

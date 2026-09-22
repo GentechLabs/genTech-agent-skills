@@ -1,9 +1,9 @@
 ---
 name: develop-and-verify
-description: "Consolidated develop-and-verify pipeline: DeepSeek V4 Flash (DEV) → GLM-5.3-flash / Kimi K2.7 (AUDIT) on Ollama Cloud, Hermes portal fallback. Two-phase build pattern with pre-publish audit checklist."
-version: 2.1.0
+description: "Use when building, fixing, or changing ANY code or asset — and whenever you find a bug while working. The Jr/Sr default (DeepSeek V4 writes, Kimi K2.7-code audits), the fix-it-don't-ask rule for bugs found in scope, and the silent-wrongness checklist. Fleet standard, Jordan 2026-09-21."
+version: 3.0.0
 author: gentech
-tags: [build, audit, workflow, karpathy, tdd]
+tags: [build, audit, workflow, jr-sr, bug-discovery, silent-wrongness, fleet-standard]
 ---
 
 # Develop & Verify — Consolidated Pipeline
@@ -40,17 +40,53 @@ Media builds run the same 5 phases: PLAN (storyboard + fact list w/ sources) →
 
 | Phase | Model | Provider | Cost | What |
 |-------|-------|----------|------|------|
-| **DEV** | DeepSeek V4 Flash (`deepseek-v4-flash:0731`) | Ollama Cloud | ~$0/M out | Draft code, make it functional, pass tests |
-| **AUDIT** | GLM-5.3-flash OR Kimi K2.7-code | Ollama Cloud | ~$0-2/M out | Code tracing, bug hunting, security, architecture review |
+| **DEV (Jr)** | DeepSeek V4 Flash | **the active worker rail** (see below) | ~$0/M out | Draft code, make it functional, pass tests |
+| **AUDIT (Sr)** | **Kimi K2.7-code** | **the OTHER rail** (resolved at call time) | ~$0-2/M out | Code tracing, bug hunting, security, architecture review |
+| **BIG BOY** | Kimi K3 | either rail | ~$15/M out | Architecture decisions, security audits, design reviews, full-codebase analysis |
 
-> **⚠️ AUDIT model status (Sep 12, 2026):** GLM-5.3-flash via **Z.AI is DEAD** (`1113
-> Insufficient balance`) and **Ollama Cloud is at its weekly cap** (429, resets weekly). The
-> working AUDIT second-opinion is now **Kimi K2.7-code via Nous** (`moonshotai/kimi-k2.7-code`,
-> live on the Nous inference API). Do not route audits to glm-5.3-flash until Z.AI is re-funded;
-> treat any doc that still names it as the primary AUDIT model as stale (see E-17).
-| **BIG BOY** | Kimi K3 | Ollama Cloud / Hermes portal | ~$15/M out | Architecture decisions, security audits, design reviews, full-codebase analysis |
+**DUAL-RAIL ROUTING (Jordan, Sep 21 2026 — this is the rule):**
 
-**Provider routing (Sep 7, 2026 — Jordan directive):** Ollama Cloud is the ONLY primary provider. Hermes portal (Nous) is the fallback. OpenCode Go is retired — do NOT route to it. Primary `deepseek-v4-flash:0731` on ollama-cloud; fallback `deepseek/deepseek-v4-flash` on nous. The AUDIT pair is GLM-5.3-flash or Kimi K2.7-code, both on Ollama Cloud.
+> *"We need to be able to switch between providers depending on our situation. Last night we were
+> using opencode-go but as soon as Ollama Cloud is back, we are back to our original and no longer
+> using our fallback. So this rule needs to go for both providers that we use, so that when we
+> switch between the two it just works."*
+
+We run on **two rails, and we switch between them by circumstance** — not by editing docs:
+
+| Rail | Role | Notes |
+|------|------|-------|
+| `ollama-cloud` | **primary / original** | the default. When it is healthy, we are here. |
+| `opencode-go` | **fallback** | used while ollama-cloud is capped/degraded. NOT retired. |
+
+**The auditor is ALWAYS resolved at call time on the rail the worker is NOT using.** That is what
+makes verification genuinely cross-provider. Never hardcode the auditor to one provider — a
+hardcoded rail is exactly the bug fixed on Sep 21 (see below).
+
+**Resolve it, never assume it:**
+```bash
+python3 /root/.hermes/scripts/audit-model-resolve.py            # worker -> auditor
+python3 /root/.hermes/scripts/audit-model-resolve.py --explain  # full candidate table
+python3 /root/.hermes/scripts/audit-model-resolve.py --selftest # prove BOTH rails work
+```
+It reads the **active provider from the profile's own config.yaml**, picks the best auditor
+against it, and **declares the downgrade when it cannot get a different provider**. If nothing is
+available it exits non-zero — so no caller can claim a verified result on nothing.
+
+> **⚠️ BUG FIXED Sep 21 2026 — the auditor rail was silently single-rail.** The resolver read
+> `^provider:` **anchored at column 0**, but our configs nest the key under `model:` indented two
+> spaces. The regex **never matched** and the function fell through to a **hardcoded default of
+> `opencode-go`**. While we ran on opencode-go it was *coincidentally right*, so nothing looked
+> wrong. The moment we switched back to ollama-cloud it was **wrong**: it believed the worker was
+> opencode-go, excluded opencode-go from the candidates as if it were the worker's own rail, and
+> then labelled a **same-rail auditor** as *"cross-provider + cross-model (strongest available)."*
+> A false green in the one place whose entire job is to not produce false greens. Fixed to parse
+> the YAML properly; now correct on **both** rails with no edit when we switch, guarded by
+> `--selftest`. Related: the config is not the only column-0-anchored reader we have had — prefer
+> a real parser over a regex for nested keys.
+
+**Provider status history:** GLM-5.3-flash via **Z.AI is DEAD** (`1113 Insufficient balance`) —
+**do NOT route to it or name it as the auditor.** Ollama Cloud previously hit a weekly cap (429,
+resets weekly) — that cap is why the fallback rail exists and must keep working.
 
 **Rule of thumb:** Start with Flash. If it fails or output is wrong, retry on K2.7. Only reach for K3 when the answer is worth $15. Jordan's directive (Jul 27, 2026).
 
@@ -73,7 +109,7 @@ You don't need every model to be the best. You need a **cheap coder + a powerful
 
 | Pattern | Coder | Auditor | Cost vs using auditor for everything |
 |---------|-------|---------|--------------------------------------|
-| **Current** | DeepSeek V4 Flash (free) | GLM-5.3-flash / K2.7 (free) | Already free — both on Ollama Cloud |
+| **Current** | DeepSeek V4 Flash (Jr) | Kimi K2.7-code (Sr) | Both free on Ollama Cloud |
 | **Local fallback** | Nemo Tron 12B (free) | K3 (BlockRun — $3/M in, $15/M out) | ~90% cheaper than K3 for everything |
 | **Emergency** | Mistral 7B (free) | Claude Opus (pay-per-call via Gata $20/mo) | ~95% cheaper than Opus for everything |
 
@@ -106,7 +142,7 @@ When Jordan provides a clear task list from prior context (status report, build 
   - Touch only what you must
   - No "improving" adjacent code
 
-### Phase 3: REVIEW (AUDIT — GLM-5.3-flash or Kimi K2.7-code on Ollama Cloud)
+### Phase 3: REVIEW (Sr — Kimi K2.7-code on Ollama Cloud)
 - Security scan (no hardcoded secrets, no injections)
 - Plan compliance check
 - **Specific audit checks that catch real bugs:**
@@ -155,7 +191,7 @@ curl -s https://domain/<path> | grep -c "expected content"  # Content check, not
 - **Karpathy Gate:** If something seems wrong, stop and name the confusion
 ## Pre-Publish Audit Checklist
 
-Run through GLM-5.3-flash or Kimi K2.7-code (Ollama Cloud) before pushing to public repos:
+Run through **Kimi K2.7-code** (Ollama Cloud) before pushing to public repos:
 
 ### 1. Hardcoded Secrets
 - [ ] Any hardcoded API keys, tokens, or passwords?
@@ -188,11 +224,109 @@ Run through GLM-5.3-flash or Kimi K2.7-code (Ollama Cloud) before pushing to pub
 2. **Build easy to hard** — Quick wins first, they build momentum
 3. **No optimizing before it works** — Make it work, then make it fast
 4. **No refactoring without tests** — If there's no test, you can't refactor
-5. **No skipping audit** — Every task gets GLM-5.3-flash / Kimi K2.7 review before moving on
+5. **No skipping audit** — Every build gets a **Sr** pass (Kimi K2.7-code) before moving on
 6. **No "just one more feature"** — Scope creep kills submissions
-7. **No silent assumptions** — State what you're assuming or ask
+7. **No silent assumptions** — State what you're assuming in the log and keep going
+   > The trailing "or ask" was removed on Jordan's directive (Sep 21, 2026). It sat there as
+   > written permission to stop, and it produced ask-creep: 50 questions where the answer was
+   > already obvious. An assumption is not a question.
 8. **No drive-by improvements** — Touch only what you must
 9. **No declaring done without proof** — Verify persistence before stopping
+
+## Bug Discovery — Fix It, Do Not Ask (Jordan, Sep 21 2026)
+
+> *"A lot of times we find stopping points pretty often and instead of just continuing through
+> I'll be asked 50 questions to fix it… if we're actively doing stuff and you'll say 'hey, I
+> discovered this bug, do you want me to go ahead and patch that?' — by the fall, we should
+> already go ahead and do that."*
+
+**When you find a bug while working, fix it. Then report what you fixed.**
+
+Discovering a defect *inside work already in scope* is not a new decision — it is the work.
+Do not stop to ask permission to do the thing you were already sent to do.
+
+**What this looks like in practice:**
+- Find it → fix it → verify the fix → **log it** (what broke, what you changed, the proof) → next item.
+- The report is the deliverable. "I found X, fixed it as Y, verified by Z" — not "I found X, want me to fix it?"
+- An honest blocker still gets reported. But a *bug you can fix* is not a blocker.
+
+**Where planning DOES live** (and this is the distinction Jordan drew):
+- **Build queue / Jordan's list / pending** — for bigger projects, plans, things needing his call.
+- **Active work** — bugs found in flight get fixed in flight.
+Planning is deliberate. Working is not.
+
+**Stop and ask only for:** money movement · a public release · a legal/account/platform action ·
+an approval gate Jordan explicitly owns · a hard blocker with no path forward.
+Everything else: decide, act, log the assumption, continue.
+
+## The Jr/Sr Default (fleet directive, Sep 21 2026)
+
+**Every agent, on any build — not a Labs speciality.**
+
+```
+Jr  (DeepSeek V4 Flash)   write it, make it work, pass the tests      ~$0
+Sr  (Kimi K2.7-code)      read it back, hunt what Jr cannot see       spot-check
+```
+
+**The division of labour is the point.** Jr produces; Sr distrusts. **The author of code is the
+worst person to audit it** — they check it against what they *meant*, not what they *wrote*.
+Sr reads it cold and asks: *"what would make this print a confident wrong answer?"*
+
+### What Sr is for — and it is not style
+
+Not formatting, not preferences. **Silent wrongness.** Every item below passes a linter and a
+happy-path test, and every one produced a wrong answer in a single night:
+
+| Bug | What it printed |
+|---|---|
+| bare `except: return {}` | an entire balance block vanished — looked like "nothing to report" |
+| `0x`-prefixed topic filter | **"no rebalances"** with total confidence, having matched nothing ever |
+| action fn with no expiry check | a **10-day-old** stand-down, reported as current, daily |
+| hard-coded `int(21.33 * 1e6)` | the **wrong amount** sent, irreversibly |
+| missing `positionUsd` after a rewrite | **`$0.00/day`** beside a 163% APR |
+| stale "CONFIRMED" in a buy list | **"ZERO COQ pools above $50K"** — there was a $705K pool |
+
+**Six bugs. Not one raised an error.**
+
+### The checklist Sr runs
+
+- **Never swallow an exception bare.** A swallowed error is a false negative that reads as a fact.
+- **Empty because nothing happened, or empty because the check failed?** The output must say which.
+  "Unknown" is valid. "Zero" is not, unless measured.
+- **Verify the refusing direction.** A boundary never tested in the direction it blocks is not
+  known to work.
+- **Hard-coded value in an executing path?** Make it required, or give it an expiry that is checked.
+- **After rewriting a function, diff its RETURN SHAPE.** Callers depend on fields that vanish silently.
+- **After a patch, re-read the file and re-run the output.** A patch that didn't apply looks
+  identical to one that worked.
+- **Any number driving a decision must name its source** (chain > aggregator > config).
+
+### If Sr is unreachable
+
+Say so, label the work **unaudited**, and do not call it verified. **An unaudited build is a
+known state; an unaudited build called verified is how a bug ships.**
+
+### Calling Sr directly over HTTP (the gotchas)
+
+The `opencode-go` OpenAI-compatible endpoint (`https://opencode.ai/zen/go/v1/chat/completions`)
+needs **two** things beyond `Authorization` + `Content-Type`, and both fail in confusing ways:
+
+1. **`x-opencode-session: <uuid>` is REQUIRED.** Without it: `HTTP 400`
+   `{"error":{"type":"MissingSessionID"...}}` — which reads like an auth/model problem and is not.
+2. **The answer may be in `message.reasoning_content`, not `message.content`.** Kimi is a
+   reasoning model: `content` comes back `null`/empty and the real analysis sits in
+   `reasoning_content`. Reading only `content` yields a 0-char "successful" audit — a silent
+   false green. Read `content or reasoning_content`, and set `max_tokens` generously (6000+).
+
+Send a browser `User-Agent` too (Cloudflare bans bare client signatures).
+
+**Never trust a 0-char audit as a pass.** An auditor that returned nothing did not clear the
+work — treat empty output as unreachable and label the build unaudited.
+
+### The bug class worth naming
+
+**The false-value family** — a mechanism reporting success while doing nothing, or reporting a
+number it cannot actually compute. **A green that cannot go red is not a signal.**
 
 ## Parallel Subagent Builds
 

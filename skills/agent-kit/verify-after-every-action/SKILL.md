@@ -380,7 +380,40 @@ changed our responses from `307` to `402` — a crawler could not see a challeng
 - **Prefer the free measurement over the paid one.** Waiting one cycle and re-measuring cost $0; the
   settle plan would have cost real money to test a model that was already disproved in our logs.
 
-### ⚠️ Never read `ls` of a folder root as "there is nothing here"
+- **Never read `ls` of a folder root as 'there is nothing here'.**
+- **A hash quoted in a note or commit message goes stale the moment the file changes
+  again — quote the COMMIT instead.** `git show <commit>:<path>` always resolves to
+  exactly what you measured; a bare md5 cannot, and the reader has no way to tell whether
+  they are testing your revision or a newer one. Two agents can each be right and still
+  disagree, purely because the artifact moved between their measurements. When handing an
+  artifact to another seat: name the commit, state the size, and attach the blob.
+- **Before saying a peer's finding is stale, reproduce it against the revision they
+  named.** "Superseded" and "wrong" are different verdicts, and only the reproduction
+  distinguishes them. Confirm their measurement on their revision, then show it closed on
+  the live one.
+- **A hash quoted in a note or commit message goes stale the moment the file changes
+  again — quote the COMMIT instead.** `git show <commit>:<path>` always resolves to
+  exactly what you measured; a bare md5 cannot, and the reader has no way to tell whether
+  they are testing your revision or a newer one. Two agents can each be right and still
+  disagree, purely because the artifact moved between their measurements. When handing an
+  artifact to another seat: name the commit, state the size, and attach the blob.
+- **Before saying a peer's finding is stale, reproduce it against the revision they
+  named.** "Superseded" and "wrong" are different verdicts, and only the reproduction
+  distinguishes them. Confirm their measurement on their revision, then show it closed on
+  the live one.
+- **"All four seats" is a claim about the seats you can see.** When you generalise a
+  delivery ("now on every seat"), you are asserting it at the RECEIVER — and the seat you
+  cannot see is exactly the one that doesn't have it. Count the seats from the roster, not
+  from the machines you happened to touch, and say which set you actually verified.
+  Same family as the stale refs: a delivery asserted from the sender's position.
+- **Never sweep git refs WITHOUT fetching first.** `git ls-tree -r <ref>` over a stale
+  remote-tracking ref is a false-negative machine: it reports "absent from every branch"
+  for a commit that exists upstream, and the absence looks exactly like proof. A search
+  of refs is only as current as the refs. **`git fetch --all --prune` before any
+  "I checked every ref" claim** — otherwise the honest statement is "absent from my
+  LOCAL VIEW of the refs", which is a different and much weaker claim.
+  Parallel to the false green: a sweep that cannot find anything and a sweep that had
+  nothing to find produce identical output.
 
 **A listing's shape is not a statement about content.** Directories and dotfiles at a folder root say nothing
 about what is inside them — and a lane whose root looks empty is often just **archived**.
