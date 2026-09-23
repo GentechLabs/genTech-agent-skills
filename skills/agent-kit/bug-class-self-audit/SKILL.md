@@ -116,8 +116,48 @@ should leave behind a check that closes its entire class.
 - **Verify you're editing what actually runs.** Editing a stale mirror or a
   synced copy that gets overwritten produces work that changes nothing. See
   `source-of-truth-verification`.
+## Catching a failure ≠ preserving the cause: check WHICH STREAM carries it
+
+A wrapper that captures stderr is necessary and **not sufficient**. The cause may be printed to
+**stdout** — and a wrapper that suppresses stdout while keeping stderr preserves a stream that
+carries nothing, then honestly reports *"no stderr — the cause is missing upstream"*.
+
+Measured: `lfj-fee-snapshot.sh` captured `rc=$?` inside the `else` (correct) and kept stderr (correct),
+but the reader emitted its failure via a plain `print(...)` to **stdout**, which the wrapper sent to
+`/dev/null`. With every provider dead the record showed `exit 2` and **zero bytes** of cause.
+
+**Rule:** when a wrapper silences one stream to suppress success noise, the child's FAILURE path must
+be on the stream that survives. Either send causes to stderr in the child (`print(..., file=sys.stderr)`)
+or capture **both** streams in the wrapper and surface whichever is non-empty.
+
+**Prove it with a negative control on the OLD shape**: run the previous wrapper against a child that
+prints its cause to stdout only, and confirm it reports the cause as missing. If the old shape still
+shows the cause, your test is not exercising the gap.
+
+```bash
+OUT=$(mktemp); ERR=$(mktemp)
+python3 reader.py >"$OUT" 2>"$ERR"; rc=$?
+[ -s "$ERR" ] && tail -20 "$ERR"      # cause may be here
+[ -s "$OUT" ] && tail -5  "$OUT"      # ...or here. Capture both.
+```
+
 - **A check that can't fail is not a check.** Prove each check catches its bug
   by pointing it at the real (unfixed) code once.
+- **Prove a scan RAN before trusting its zero — assert a NON-ZERO count on a string you know
+  is present.** `[ -n "${VAR}" ]` proves the variable exists; it does not prove the search
+  had anywhere to look. A count of 0 from a tree you believe contains the string is the
+  signal, not the answer. Measured: the weak check passes when the variable is set but the
+  path is wrong (grep count 0, still "pass"); the strong check goes RED. Same shape as a
+  wrong corpus filename silently parsing 0 blocks instead of 117. **A zero is only
+  trustworthy once you have proved the search had somewhere to look.**
+- **An UNDEFINED variable used in a command FAILS SILENTLY — it is not a soft failure.**
+  `${VAR}/x` with VAR unset expands to `/x`, producing no output and no error, which is
+  indistinguishable from "nothing found". A portability refactor that swaps a literal path
+  for `${VAR}` without defining the variable therefore converts working commands into
+  silent no-ops, including security scans that then read as "clean". After any such
+  refactor, assert the expansion resolves — `echo "${VAR:-UNSET}"` must print a value, and
+  the real command must produce its expected output. A drift scan comparing file content
+  cannot see this: 150/150 files can match while 110 of them are broken at runtime.
 - **Hermeticity has TWO halves: the VERDICT and the TRANSCRIPT.** A check can be provably
   unable to flip a result (inert, never AND-ed into the verdict, exception path dead) and
   STILL not be machine-independent — if it prints host-specific output, on-machine and

@@ -63,16 +63,24 @@ Managing multiple family members' hubs, dashboards, and intelligence systems wit
 ### Deploying a Hub
 
 ```bash
-# Build in the GitHub Pages repo (source of truth)
-nano ~/repos/gentechlabs.github.io/jordan.html
+# Edit whichever copy is NEWEST (see below — it is not always the repo)
+nano <newest-copy>
 
-# Deploy to VPS
-sudo cp ~/repos/gentechlabs.github.io/jordan.html /var/www/gentechlabs/jordan.html
-sudo chown www-data:www-data /var/www/gentechlabs/jordan.html
+# Deploy to VPS (this is what nginx actually serves)
+sudo cp <newest-copy> /var/www/gentechlabs/<name>.html
+sudo chown www-data:www-data /var/www/gentechlabs/<name>.html
 
 # Verify
-curl -s https://gentechlabs.net/jordan.html | grep "<title>"
+curl -s https://gentechlabs.net/<name>.html | grep "<title>"
 ```
+
+**Rule: CHECK which copy is newest before editing — do not assume the repo is the source of truth.**
+Several copies of each hub exist and they drift. A stale copy editing session silently reverts
+live work: `/root/portfolio/Profiles/jordan.html` was ~4KB OLDER than the served
+`/var/www/gentechlabs/jordan.html`, so patching the "source" copy and redeploying would have thrown
+away tabs that were already live. Compare size and mtime across every candidate
+(`/var/www/gentechlabs/`, the repo, any per-profile dir), edit the newest, then refresh the others
+so nobody re-deploys the old one over your change.
 ├── Games/
 │   ├── Vanito-Travel/             # Vanito's Meta Ray-Ban app
 │   ├── GenTech-Atlas/             # Jordan's commercial product
@@ -89,7 +97,10 @@ curl -s https://gentechlabs.net/jordan.html | grep "<title>"
 │       ├── index.html             # Music Vault with inline player
 │       └── *.mp3                  # Track files
 ├── DeFi/
-│   └── defi-dashboard.html        # DeFi dashboard (Jordan)
+│   ├── jordan-defi.html           # Jordan's DeFi hub (per-person)
+│   ├── dadrian-defi.html          # Dadrian's DeFi hub (per-person)
+│   ├── defi-data-<person>.json    # ONE data file per person — never a shared array
+│   └── defi-dashboard.html        # LEGACY single-tenant dashboard — superseded, do not extend
 └── index.html                     # Portfolio (Jordan's professional face)
 ```
 
@@ -131,6 +142,61 @@ curl -s https://gentechlabs.net/jordan.html | grep "<title>"
 1. Main Hub (`hub-vanito.html`) → Music Dashboard (`Gaming/vanito-music-dashboard.html`)
 2. Music Dashboard → Main Hub (back link)
 3. Both display data from the same source (`hub-vanito-data.json`)
+
+### Per-Person Data Hubs — isolate STRUCTURALLY, not by convention
+
+When each person needs a dashboard over **their own live data** (their wallet, their LP position,
+their portfolio), give each person a **separate page AND a separate data file**, with the person's
+name **hardcoded into the page** at build time.
+
+```
+<person>-<thing>.html          # name baked in
+<thing>-data-<person>.json     # one file per person
+```
+
+- **No `?person=` URL parameter, no shared `{people: [...]}` array, no `default` branch in the
+  fetch.** With a parameter or a shared array, ONE rendering bug — an undefined index, a bad
+  default, a loop variable captured wrong — shows person A person B's money under A's name. With
+  the name baked in, the page physically cannot load another person's file.
+- **Generate from one template, substitute at BUILD time** (`__TENANT__` / `__NAME__` placeholders),
+  never at render time.
+- **Value each person in their OWN process** — `subprocess` with that person's env vars. A single
+  shared valuation module resolves its wallet at IMPORT time, so one in-process loop silently
+  values everyone with the first person's wallet.
+- **Prove the isolation with a grep, not with intent**: each generated page must reference exactly
+  one data file, and each data file must contain only its own person's identifiers.
+
+**Serve honest failure — never stale numbers.** A data-driven page must render an explicit error
+when its fetch fails (`Could not load position data — not showing stale numbers`). A page that
+quietly falls back to hardcoded values is visually identical to a working one, so the failure goes
+unnoticed for weeks.
+
+**A back-link must be CHECKED, not assumed.** A person without a hub page yet gets a back-link to a
+404 from their own dashboard. HEAD-check `<person>.html` at build time and fall back to the landing
+page; then curl every generated back-link and confirm it returns 200.
+
+**Keep it fresh by riding an EXISTING cron slot, not a new one.** Fold the data refresh into a job
+that already runs against the same people at a useful cadence — and make it **silent on success**
+(the page renders its own "updated" timestamp, so a refresh that worked is not news). Make the
+refresh **best-effort**: a hub refresh failure must never break the report a human actually reads.
+Verify freshness by reading the data file's own timestamp immediately after a run — if it is not
+seconds old, the refresh did not happen.
+
+### Verifying JSON served next to a page: use a BROWSER user agent
+
+An nginx rule can block a bare `curl` / `python-urllib` request for a `.json` file while the page's
+own `fetch()` works perfectly — because the browser sends a real user agent and a Referer. A model
+that tests with `urllib` sees a 403 and "fixes" a page that was never broken.
+
+```bash
+UA="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+curl -s -o /dev/null -w '%{http_code}\n' -A "$UA" \
+  -H "Referer: https://gentechlabs.net/DeFi/<person>-defi.html" \
+  https://gentechlabs.net/DeFi/<thing>-data-<person>.json
+```
+
+Test the JSON the way the page will fetch it, and assert the HTTP code — a 200 page with a 403 data
+file renders as an error box in the browser.
 
 ### DPAD Focus Management for Glass-Accessible Hub Pages
 

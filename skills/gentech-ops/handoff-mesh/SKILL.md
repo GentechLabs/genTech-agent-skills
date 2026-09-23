@@ -135,6 +135,37 @@ silent until the agent returns or it's resolved.
 | Handoff unresolved >7 days | Nightly maintenance auto-archives it |
 
 ## Pitfalls
+- **Answering a note is NOT closing it — the closure record must live in the INBOUND note.**
+  If your reply goes into your own outbound lane, the inbound note still reads as open to
+  every automated watcher, and the same message gets re-delivered. Observed: the same sync
+  report arrived three times because the inbound note carried no resolved marker and the
+  replies were filed separately. **Append a machine-readable closure record to the inbound
+  note itself** (bottom of the file), using the vocabulary `handoff-watcher.py`
+  `RESOLVED_MARKERS` actually matches: `status: answered`, `status: closed`, `status: [x]`,
+  `answered`, `filed`, `nothing owed`, `no further action`.
+
+  ```markdown
+  ---
+
+  ## STATUS: ANSWERED — closure record (machine-readable)
+
+  **Answering seat:** <seat>   **Closed:** <UTC ts>   **State:** CLOSED — nothing owed
+  <one short block per item: what was verified, with the evidence>
+  **Outbound handoffs filed:** <paths>
+  **One item left OPEN, not owed:** <if any>
+  **Nothing owed. No further action required on this note.**
+  ```
+
+  **Prove it cleared; do not infer from silence.** Run `python3 scripts/handoff-watcher.py`
+  and confirm it goes quiet for that lane — and check the PRE-closure text contained no
+  marker, so you know the marker changed the verdict rather than an unrelated fix.
+- **EDIT CORE, NEVER THE SEAT — a `skill_manage` patch lands on the SEAT copy and the next
+  sync destroys it.** Learned by doing it: patched the seat copy, ran `fleet_skills_sync.py`,
+  and the edit was rolled back while the sync printed *"replacing the seat copy destroys 1
+  file(s) present only in the seat"* — which I read past. **That warning is the signal, not
+  noise.** Either edit the CORE file directly
+  (`10-Labs/skills-distribution/<cat>/<skill>/SKILL.md`) then sync CORE -> seats, or promote
+  the seat copy into CORE first. A seat copy is a build artifact.
 - **Reading without reporting** — a handoff archived as "resolved" with no
   completion note is a silent failure. Always report what you did.
 - **No archive cleanup** — inboxes grow unbounded. Purge `_archive/` weekly.
@@ -164,6 +195,19 @@ silent until the agent returns or it's resolved.
   `status: completed` + a non-empty `output` is a verified round-trip. A target that is
   `running` is mid-turn: your DM is queued behind its current work, which is fine — just
   don't claim it landed until you see it.
+- **`hermes peer dm` BLOCKS until the remote agent replies — so a mid-turn target shows as exit
+  `124` (timeout), not as exit 0.** This is a third failure signature: exit 124 means the message was
+  very likely delivered and the target is simply busy generating a reply — NOT that the lane is
+  dead. Do not retry it in a loop or conclude the peer is down. **For a heads-up you don't need a
+  reply to, use `hermes peer run` from the start** — it returns a run id immediately and never
+  blocks a tool call:
+  ```bash
+  hermes peer run <peer> "..."        # -> run_<hex>: started   (returns in ~1s)
+  hermes peer status <peer> run_<hex> # -> running | completed
+  ```
+  ⚠️ **Also: `cmd | tail -5; echo "exit=$?"` reports TAIL's exit code, not the command's.** A piped
+  `peer dm` threw away a real `124` this way and looked like `exit=0` — a false pass of exactly the
+  kind this section exists to prevent. Capture with `out=$(cmd); rc=$?` or set `set -o pipefail`.
 - **Check the peer's health first** (`curl -s -o /dev/null -w '%{http_code}' http://<tailnet-ip>:<port>/health`).
   200 means the lane is up; it does NOT mean your specific message was read.
 - **A DM is never the record.** If it matters, it also goes to the vault lane. A silent DM
@@ -306,3 +350,66 @@ waiting. Do not re-send blindly — that double-delivers.
 **A hang is a diagnostic, not just a nuisance.** If `peer dm` hangs past a normal turn, suspect the remote
 agent's own provider — a remote seat on a rate-limited or dead provider (e.g. ollama-cloud 429) will stall
 exactly like this. Check the peer's provider before assuming the mesh is broken.
+
+## ⚠️ A return note in the WRONG LANE NAME is invisible — check WHERE you wrote, not your diligence
+
+**If a handoff keeps re-nudging after you answered it completely, test the watcher's matcher before
+doubting your own work.** The return lane is resolved by literal interpolation —
+`_reverse_lane(sender, receiver) -> "{receiver}-to-{sender}"`. When a seat has an **alias list**
+(`SEAT_LANES`, e.g. `"gentech-treasury": ["treasury","strategies","gentech-treasury"]`) the watcher
+KNOWS those are one seat's lanes, but `_reverse_lane()` picks a **single literal** with no alias
+resolution — so every other name is invisible to return-detection.
+
+Measured for the treasury seat; identical notes flip the verdict by location alone:
+
+| Where the note is | `_has_return_note` |
+|---|---|
+| `01-HANDOFFS/treasury-to-gentech/` (group-name form) | **False** |
+| `01-HANDOFFS/gentech-treasury-to-gentech/` (seat-name form) | **True** |
+
+The inbound lane uses the **seat-name** form (`gentech-to-gentech-treasury`), so the reply must too.
+Assert it with the matcher itself rather than assuming:
+
+```python
+spec = importlib.util.spec_from_file_location('hw', '<profile>/scripts/handoff-watcher.py')
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+m._has_return_note('01-HANDOFFS/gentech-to-gentech-treasury/<inbound>.md', '<sender>', '<receiver>')
+```
+
+**Two more blind spots in the same function:**
+- It scans only the lane **top level** — the nightly archiver moves notes into `_archive/`, so an
+  answered-but-archived return loses its evidence a second way.
+- It matches the inbound **topic slug** in the filename or body — a note named only by date answers
+  nothing. Keep the topic slug in the return filename.
+
+**Consequence: a complete answer reads as "no return" forever and re-nudges every cooldown**,
+manufacturing the exact impression the watcher exists to prevent ("this seat went silent"). Do not
+read a repeated nudge as a peer ignoring you, and never file the same answer a third time — find
+which of these three the watcher can see and satisfy it.
+
+## ⚠️ Use the fleet's OWN comparator — a hand-rolled dir scan INVENTS drift
+
+**Scanning skill dirs with your own hash of `md5sum` output that includes file PATHS produces false
+DIFFERS**, because CORE and a profile live at different absolute paths by design. Measured: a
+hand-rolled digest reported **4 spurious drift hits** on skills that were in fact identical;
+content-only digests then agreed everywhere. The false alarm looks exactly like the real drift you
+are hunting, so it costs a full round to disprove.
+
+Use the fleet's own tool — `00-System/agent-profiles/fleet_skills_sync.py --check` — whose
+`dir_digest()` is content-based and compares the **whole dir**, not just `SKILL.md`. It prints its
+own denominator (**150 skills**); a depth-2 enumeration undercounts at 127 (d1=21, d2=127, d3=2).
+
+**Two blind spots to hold together, both real, both seen on the same day:**
+- **Depth:** a `SKILL.md`-level compare reads clean while a `references/` file differs (7964 B in
+  CORE vs 10844 B on a seat). Zero drift at file level, real drift at dir level.
+- **Lane coverage:** a return-lane scan that reads one lane NAME reads clean while returns sit in
+  another. Zero drift at one scope, complete miss at another.
+
+**Pin a hash to its commit** (`<md5> @ <sha>`). A bare hash is indistinguishable from a stale or
+wrong one: a file that legitimately changed between your measurement and your reader's
+(11:59 `ba46b55c9` → 12:08 `91e84fee4`) makes a correct report look like an error. **Never revert
+on a hash mismatch before checking which commit moved it.**
+
+**And update CORE, never the seat alone.** Editing a seat's own `SKILL.md` creates the exact drift
+the sync exists to remove — one edit produced a 44-line seat-only divergence that the next
+`--check` would have flagged as real. Write to `10-Labs/skills-distribution/`, then sync out.
