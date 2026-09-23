@@ -59,14 +59,26 @@ If the docs fetch fails or times out, continue with the local skill and live API
 - Optional environment variable: `$HERENOW_API_KEY`
 - Optional Drive token variable: `$HERENOW_DRIVE_TOKEN`
 - Optional credentials file: `~/.herenow/credentials`
-- Skill helper paths:
-  - `${HERMES_SKILL_DIR}/scripts/publish.sh` for publishing sites
-  - `${HERMES_SKILL_DIR}/scripts/drive.sh` for private Drive storage
+- Skill helper paths — this skill's OWN scripts directory. `HERMES_SKILL_DIR` is **not** a
+  seat-wide variable and must not be set as one: this skill and `hermes-buzz-shared-profile`
+  each reference it, and they live in **different** `scripts/` directories, so a single fixed
+  value would point one skill at the other's scripts. Resolve it relative to this skill:
+
+  ```bash
+  SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"   # when running a script in scripts/
+  # or, from a skill-root shell:
+  # SKILL_DIR="/root/.hermes/profiles/$(basename "$PROFILE_DIR")/skills/productivity/here-now"
+  ```
+
+  Scripts: `${SKILL_DIR}/scripts/publish.sh` for publishing sites, `${SKILL_DIR}/scripts/drive.sh`
+  for private Drive storage. (Was `${HERMES_SKILL_DIR}` — undefined everywhere, so both helpers
+  failed silently against `/scripts/…`. Fixed 2026-09-22.)
 
 ## Create a site
 
 ```bash
-PUBLISH="${HERMES_SKILL_DIR}/scripts/publish.sh"
+SKILL_DIR="${SKILL_DIR:-/root/.hermes/profiles/${PROFILE_ID:-gentech}/skills/productivity/here-now}"
+PUBLISH="${SKILL_DIR}/scripts/publish.sh"
 bash "$PUBLISH" {file-or-dir} --client hermes
 ```
 
@@ -84,7 +96,8 @@ You can also publish raw files without any HTML. Single files get a rich auto-vi
 ## Update an existing site
 
 ```bash
-PUBLISH="${HERMES_SKILL_DIR}/scripts/publish.sh"
+SKILL_DIR="${SKILL_DIR:-/root/.hermes/profiles/${PROFILE_ID:-gentech}/skills/productivity/here-now}"
+PUBLISH="${SKILL_DIR}/scripts/publish.sh"
 bash "$PUBLISH" {file-or-dir} --slug {slug} --client hermes
 ```
 
@@ -99,7 +112,8 @@ Use a Drive when the user wants private cloud storage for agent files: documents
 Every signed-in account has a default Drive named `My Drive`.
 
 ```bash
-DRIVE="${HERMES_SKILL_DIR}/scripts/drive.sh"
+SKILL_DIR="${SKILL_DIR:-/root/.hermes/profiles/${PROFILE_ID:-gentech}/skills/productivity/here-now}"
+DRIVE="${SKILL_DIR}/scripts/drive.sh"
 bash "$DRIVE" default
 bash "$DRIVE" ls "My Drive"
 bash "$DRIVE" put "My Drive" notes/today.md --from ./notes/today.md

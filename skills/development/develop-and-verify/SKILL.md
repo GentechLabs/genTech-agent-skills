@@ -297,8 +297,78 @@ happy-path test, and every one produced a wrong answer in a single night:
   known to work.
 - **Hard-coded value in an executing path?** Make it required, or give it an expiry that is checked.
 - **After rewriting a function, diff its RETURN SHAPE.** Callers depend on fields that vanish silently.
+- **After a fix, re-audit — and re-test what the OLD code gave you for free.** A fix for a bug in a
+  text/data transformer silently drops behaviour the previous implementation had. Proven: replacing
+  `str.title()` with a custom title-caser fixed substring corruption (`solana`→`SOLana`) but lost
+  hyphen-boundary casing (`On-Demand`→`On-demand`) — a live regression in the same function, invisible
+  because every check counted fields instead of reading text. Ask: *what did the thing I replaced do
+  that I am no longer doing?*
+- **A single audit pass is not an audit.** Round 1 found an original bug; round 2 found the regression
+  introduced by fixing round 1. Audit the FIX, not just the original change.
+- **Fixing a bug class one call site short of the end is the normal failure.** When an audit reports
+  "`x or 0` on fields A, B, C", the fix belongs to the COERCION, not to A, B, C — otherwise the same
+  bug survives on the neighbouring fields and re-audit finds it. Proven: a missing-field→0 fix landed on
+  the four reported keys and left three adjacent ones bare; a later round found the *optional-field*
+  helper doing the same thing, which also re-opened a crash class an earlier fix had closed. Two rounds
+  lost to fixing call sites instead of the pattern. **Rule: fix the transform, then grep for the
+  transform.**
+- **A cross-check whose emitter does not exist is not a cross-check.** Adding a "wallet scanned must
+  equal wallet named" guard in the parent is inert if the child never emits the scanned address —
+  `.get()` returns None, the comparison is skipped, and the check can never fail while looking present
+  in the code. After adding any guard, confirm the INPUT it reads is actually produced, and prove the
+  guard fires by feeding it a mismatch. Same family: a tolerance scaled to the WRONG quantity (1% of
+  total capital to compare two valuations of the DEPLOYED amount) passes almost any real divergence.
+- **When you scale a threshold, check the direction and then check the OUTPUT.** A bin-step scaling
+  written as `30*step/10` instead of `30/step` produced a window that swallowed the entire position;
+  the code ran clean and nothing errored. The tell was the metric jumping 35.8% → 98.8%. A number that
+  suddenly reads "everything is fine" is a signal to inspect the window, not a result to report.
+- **Two independent valuations that agree are worth more than one confident number.** A "ledger says X"
+  and a "chain scan says X" that reconcile to <0.1% closed a weeks-old "the ledger under-reports by 6.7%"
+  ticket — the gap was a decode artifact, not a real discrepancy. Keep the cross-check LIVE (emit the
+  delta) rather than resolving it once: a divergence alarm that never reaches a human is not an alarm,
+  and a "we disagree" result must have its own display branch — otherwise it falls through to
+  "unavailable" and a check that ran and FAILED reports as a check that did not run.
+- **"Found a value" is not "found a working value."** A config/credential reader that returns the first
+  match will happily return a dead one. Probe the candidate (auth call, parse, exec) and assert the
+  outcome before using it. Proven: a dead 13-char key in a shared `.env` shadowed the live 57-char key in
+  the profile `.env` for any first-match reader — a 401 with no error at the point of selection.
 - **After a patch, re-read the file and re-run the output.** A patch that didn't apply looks
   identical to one that worked.
+- **When you change a value's CONTENT, keep its TYPE.** Concretising a value is not the same as
+  re-typing it. Proven 2026-09-22: a helper that replaced a RELATIVE path with a concrete one returned
+  an ABSOLUTE url; every consumer of that field concatenates a base, so a verifier received
+  `https://api.gentechlabs.nethttps://api.gentechlabs.net/v1/...` and 7 services that had passed one
+  run earlier were rejected (DISCOVERY READINESS 14/14 -> 7 rejects). Assert the shape, not just the
+  absence of the thing you removed — "no template remains" passes happily on a broken URL.
+- **A rail can be PERMANENTLY dead because it requires an input its source cannot provide.** The
+  worst member of the false-value family, because the refusal is CORRECT and therefore looks like
+  good engineering. Proven 2026-09-22: the regime classifier demanded 7d momentum before it would
+  name a regime ("a missing input is not a flat market" — right call). It read that momentum from
+  DexScreener's `pair.priceChange.h7d`, and **DexScreener does not publish h7d** — it returns
+  exactly `[m5,h1,h6,h24]`, verified live on both pools. So momentum was `None` on EVERY tick,
+  forever: the classifier refused correctly every time, the regime sat UNKNOWN, and downstream
+  `REGIME_SHAPE.get(unknown, "CURVE")` silently returned CURVE while a tilt map silently returned
+  its neutral fallback. **A dead rail that looked calm instead of broken.** Rule: for every field a
+  component REQUIRES, verify the producer actually emits it — do not infer it from the field's name
+  appearing in a schema or a sibling. Then check the consuming lookup's DEFAULT: `.get(key, default)`
+  on a decision table converts "we don't know" into "act as if the common case", which is how a
+  broken classifier wears a working disguise. An UNKNOWN that maps to a safe posture is fine; an
+  UNKNOWN that maps to the DEFAULT without saying so is a silent wrong answer.
+- **A provenance label can be a hardcoded lie.** A dict field named `source` was literally
+  `"source": "coingecko-btc"` — a constant in the writer — while the data came from a DexScreener
+  pool read and (after the fix) a CoinGecko AVAX series. It read as fact, it persisted into the
+  state file, and it sent a debugging session chasing BTC for an AVAX position. When a value's
+  origin is knowable, DERIVE the label from the code path that fetched it (a `momentum_source`
+  variable set at each branch), never type it once in the result dict. A stale label is worse than
+  no label, because it is confidently wrong.
+- **Never learn a value by scraping the SOURCE TEXT of the script that computes it.** Recurring
+  (3rd occurrence, 2026-09-22): a reader regexed `lfj-curve-deploy.sh` for `BID_NEAR`/`ASK_FAR`.
+  When that shell was changed to DERIVE those from a shared table and PRINT them, the numeric regex
+  matched a Python expression instead, found no number, and the plan degraded to `"legs UNREADABLE
+  — do not trust this plan"` 144x/day. A reader coupled to the *text* of its producer breaks the
+  moment the producer is refactored, and it breaks SILENTLY. Import the shared module and call it.
+  If a value must cross a language boundary, have the producer emit it as data (JSON/env), not as
+  source text to be pattern-matched.
 - **Any number driving a decision must name its source** (chain > aggregator > config).
 
 ### If Sr is unreachable
@@ -368,6 +438,16 @@ When the build plan has **independent module groups** (e.g., engine + UI), deleg
 - **FastAPI/uvicorn port conflicts** — Port 8080 is commonly occupied. Use 8088 or scan first
 - **FastAPI `request := Request` uses the class, not the instance** — `request := Request` in a route function assigns the `Request` class (a Starlette property object), not the injected request instance. FastAPI injects the request automatically when you add `request: Request` as a parameter. Fix: `async def get_price(request: Request, ...)` — never `request := Request` inside the function body
 - **Python f-string backslash in expression** — `f"...{', '.join(f'{k} (${v["amount"]})' for ...)}"` fails because f-string expressions can't contain backslashes. Fix: extract the inner expression to a variable first: `tier_str = ", ".join(...)` then `f"...{tier_str}"`
+- **`py_compile` passing is NOT the module importing** — A syntax check is blind to name resolution. A module compiles cleanly and still dies on import when a function is called at **module scope** but **defined further down the file** (Python runs top-to-bottom; a `def` below its first call is too late), or when a helper/global is referenced before it exists. A sweep reporting "N/N compile" has proven **nothing** about whether those files can RUN. Verify by importing, not compiling:
+  ```python
+  import importlib.util as u
+  s = u.spec_from_file_location('m', path); m = u.module_from_spec(s)
+  s.loader.exec_module(m)          # the real check
+  ```
+  Better still, run the tool's own `--help` or a dry-run. Caught live Sep 22 2026: a whole migration reported 86/86 files compiling while one could not be executed at all.
+- **A "last resort" fallback that calls itself is infinite recursion, not a fallback** — `except Exception: return _helper()` where `_helper` is the function you are already inside recurses until the stack dies. The final branch must return a **literal**. A fallback path that has never been executed is not a fallback — test it by simulating the unavailable dependency (raise the ImportError) and asserting the literal comes back.
+- **A caller in the deploy/sync manifest does not mean its CALLEE is** — When a wrapper script is enrolled for deployment but the script it *invokes* is not, the wrapper updates while the thing that actually runs stays stale — and the wrapper's own checks still pass. When enrolling a script, walk its **call graph** (what it `source`s, `bash`es, or `python`s) and enroll those too. Symptom: vault and deployed copies with **different line counts** — that is divergence, not formatting.
+- **A single-RPC post-state read can print the PRE-action balances after a SUCCESSFUL action** — Re-reading balances on the same connection that just broadcast can show the old state, which reads exactly like a failed transaction. Never present that as fact. Read a **second, different provider** and print an explicit **delta** (`before -> after (+X)`), plus a hard warning when a tx reported SUCCESS but shows zero movement: that is a **lagging node, not a failed operation** — and explicitly say **do NOT re-send**, because re-sending doubles the action.
 - **FastAPI module import side effects** — Extract business logic into standalone modules with no FastAPI dependencies
 - **pytest-asyncio async fixture mode** — Add `asyncio_mode = "auto"` to `pyproject.toml` under `[tool.pytest.ini_options]`
 - **SQLite `:memory:` path guard** — `os.path.dirname(":memory:")` returns `""`. Guard with `if dirname:` before `os.makedirs`

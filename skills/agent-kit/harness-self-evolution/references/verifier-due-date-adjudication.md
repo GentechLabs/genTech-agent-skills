@@ -139,3 +139,51 @@ location has moved, correct the record rather than repeating the old sentence.
 dates. It is useful for confirming the ledger is current (max evolve-N row id
 in execution-log.md should match it), but it tells you nothing about which
 predictions are due. Keep the two concerns separate.
+
+## ⚠️ The outcome corpus file list — copy these names EXACTLY, never from memory
+
+The grading corpus is **five** files, and two of them do **not** end in `.md`.
+The Aug-8 archive in particular has been re-misnamed in cycle entries three
+times (and twice by entries that had *just* documented the correct name), and a
+script that takes the wrong literal raises `FileNotFoundError` or — worse, if
+guarded — silently parses **0 blocks / 0 pids** instead of 117/111.
+
+```python
+files = [
+  'facts/prediction-outcomes.md',                                          # live: 0 grading headers
+  'facts/history/prediction-outcomes-archive-20260901T041648Z.md',         # every #135-#146 verdict
+  'facts/history/prediction-outcomes-archive-20260915T041933Z.md',
+  'facts/history/prediction-outcomes-archive-20260922T041713Z.md',         # archived head, 0 headers
+  'facts/history/prediction-outcomes.md-archive-20260808T041001Z',         # NO .md — 42 headers
+]
+for f in files: assert os.path.exists(f), f   # test -e EVERY name before parsing
+```
+
+Rules:
+- **Assert `os.path.exists()` on every name and print the per-file block counts.**
+  A count of 0 from the live file is correct (all verdicts get rotated to
+  `facts/history/`); a count of 0 from a file you *believe* holds grades means
+  the name is wrong or the corpus moved.
+- **Never write a path into the ledger that you did not `test -e`.** A cycle entry
+  that says "all five `test -e` = true" over a list containing a nonexistent path
+  is a fabricated receipt, however the derivation was actually run.
+- Archives from the Gardener appear in **both** shapes: `<name>-archive-<ts>.md`
+  and `<name>-archive-<ts>` (no suffix). Enumerate with a name-prefix glob, then
+  print the list, then read the files by their real names.
+- **Rotation completeness is provable against git**, so prove it instead of
+  adding up sizes: `git show <rotation-commit>^:facts/prediction-outcomes.md`
+  gives the pre-rotation file; its `head -N` must equal the archive content byte
+  for byte, and its tail must equal the live file. `833 archive + 100 live = 933
+  pre-rotation` verified exactly this way.
+
+## Grading tokens: the family is FOUR wide, and `CONFIRMED` counts as FULFILLED
+
+Raw first-wins tokens over the corpus read `FULFILLED 82 + CONFIRMED 10 +
+FALSIFIED 12 + PARTIALLY 2 + PARTIAL 3 + OPEN 1 + SKIPPED 1 = 111`. The standing
+header's `92 FULFILLED / 12 FALSIFIED / 5 PARTIAL` only appears after normalizing
+`CONFIRMED → FULFILLED` (the `VERDICT: CONFIRMED` family, older pids #1–#10) and
+unioning `PARTIALLY`/`PARTIAL`. Skip either normalization and the header looks
+like it changed when nothing moved. Likewise a single still-open pid can carry
+`OPEN` in its header and `Status: TRACKING CLEAN` in its body — report the
+partition (one non-graded pid), not the token, and say which line each reading
+came from.
