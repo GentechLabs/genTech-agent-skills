@@ -595,6 +595,42 @@ marker. The correct guard is a comparison against a second source (here: newest
 `^## evolve-N` in `facts/execution-log.md`) that refuses the write when the inputs
 disagree — refuse and report, never guess.
 
+### Locating a writer: grep the FIELD it writes, never the RENDERED line (entry 84)
+A forensic search for the process that writes a file must test the code that emits it, not the
+text it emits. Live failure: entry 83 found every long WHY line in `facts/witness-log.md`
+truncated to exactly 200 B and concluded *"the writer is **not a local script** … the cap cannot
+be fixed at source from here"* — on the strength of `grep -rl 'Severity: blocking' /root/vaults
+/root/.hermes` returning **0 hits**. The writer was `context-weight.py:119`
+(`"detail": item['detail'][:200]`), run nightly by the ENABLED cron `fcca23360df2`
+("Context Snapshot — Mess Hall", `6 0 * * *`). The literal never appears in the script because
+the writer assembles it from data (`f"- Severity: {w['severity']}"`). The 0 hits were the
+*evidence for* a false root-cause conclusion — the entry-69 phantom-literal class applied
+forensically. This is the third instance of "the test measured the wrong property", and the
+first where it closed an investigation wrongly.
+
+**Rule:** to find a writer, (a) `grep -rl '<the TARGET PATH or its basename>'` across
+`/root/vaults` and `/root/.hermes` — search for the filename, not a line of its content; (b)
+check the session store, which names the job directly:
+`sqlite3 <profile>/state.db "select id,session_id,tool_name,timestamp,substr(content,1,200) from messages where content like '%<filename>%' order by timestamp desc limit 20"`
+— the winning row is the one whose stdout says the file was written; (c) `sqlite3 ... "select
+id,session_id,timestamp,substr(tool_calls,1,300) from messages where tool_calls like '%<filename>%'"`;
+(d) read the job's `prompt` from `cron/jobs.json` for the script path it invokes. A writer
+inside an ENABLED cron means the corruption RECURS on the next run.
+
+**Corollary — hand-repairing a corrupted record is not a fix.** Restoring truncated lines
+(entry 83 did this correctly, byte-faithfully) leaves the corruption scheduled. Do not write
+"repaired" until the writer is either located-and-patched or proven absent by a
+filename-scoped search. Entry 83's repair held for exactly one day; entry 84's source fix is
+what makes it durable.
+
+### `str.count('## Critique Entry')` over-counts — anchor the grep (entry 84)
+The self-quoting pitfall, on the Critic's own verification step. After appending an entry whose
+Data Integrity section quotes `^## Critique Entry` = N, `text.count('## Critique Entry')` counts
+those quoted mentions too: live, the anchored `grep -c '^## Critique Entry'` returned **3**
+while `str.count(...)` returned **10**. Always verify with the anchored form
+(`grep -c '^## Critique Entry'`, or `sum(1 for l in text.splitlines() if l.startswith('## Critique Entry'))`)
+and report the anchored number.
+
 ## Tone Rules
 - No padding: "great work", "going well", "looks good" — FORBIDDEN
 - Doubt → CRITICAL
