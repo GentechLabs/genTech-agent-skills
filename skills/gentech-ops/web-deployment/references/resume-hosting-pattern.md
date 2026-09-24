@@ -120,6 +120,28 @@ Prompt outline (job id 877b19f24f9f):
    certs that finished, repos shipped in last month missing from project list
 4. Report: silent ("[SILENT]") when clean; short report when synced or stale
 
+## Drift-testing the repo copy: diff `origin/main`, never the working tree (measured 2026-09-23)
+
+`diff -q vault/Jordan_Master_Resume.md repo/resume.md` compares the vault against the clone's
+**working tree** — and the working tree can hold a rebuild that was never committed. On 2026-09-23
+the 15:04 rebuild (`Website: gentechlabs.net`, `60+ shipped builds`) had been copied into the clone,
+so the diff was clean, while `HEAD` and `origin/main` still carried the 12:01 text
+(`Portfolio: portfolio.gentechlabs.net`, `64 shipped public repos`). The markdown surface was a full
+rebuild stale and a diff-only run would have reported "[SILENT]".
+
+**Always diff the committed surface:**
+
+```bash
+cd /root/repos/gentechlabs.github.io
+git status --short resume.md            # ' M resume.md' = uncommitted drift
+GIT_TERMINAL_PROMPT=0 git fetch origin main -q
+git show origin/main:resume.md | md5sum # must equal the vault master md5
+```
+
+If they differ: `git add resume.md` — stage that file **alone** (the clone routinely carries other
+agents' unpushed commits), commit, push, then re-verify `git show origin/main:resume.md | md5sum`
+against the vault. Disclose any commits the push carried that were not yours.
+
 ## Content rules encoded (Jordan's standards)
 - Work GitHub = `github.com/gentechlabs` org (personal GentechLabs unused for work)
 - Portfolio URL = `gentechlabs.github.io` (after rename; `protojay4789.github.io` is dead)

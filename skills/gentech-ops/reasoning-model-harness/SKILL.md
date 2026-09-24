@@ -87,6 +87,21 @@ is useless; the same model called right is a weapon. Match the model to the
 task: reasoning models for hard problems, code models for generation, and
 manual build when the harness fights you.
 
+## 🚨 FIELD NAME TRAP — the right key DEPENDS ON THE ENDPOINT (corrected 2026-09-23)
+**`reasoning_content` is never the right key on Ollama Cloud.** But the correct key is not one name
+either — measured live on `kimi-k3`, same question, both endpoints:
+
+| endpoint | message keys | deliberation in | `usage` |
+|---|---|---|---|
+| `/v1/chat/completions` | `['content','reasoning','role']` | **`reasoning`** | returned |
+| `/api/chat` | `['content','role','thinking']` | **`thinking`** | `None` |
+
+An extractor reading `reasoning_content` gets `""` for both, and a *successful* 44K-char audit
+reports `reasoning: 0, content: 0, finish: length` — which reads exactly like "burned the budget in
+neutral." It did not. Read `content` for the answer in both cases; pick the deliberation key by
+endpoint. **DUMP `sorted(message.keys())` before concluding a model is broken or empty.** Costs one
+call and prevents a false "the model can't do it" verdict.
+
 ## Pitfalls
 - Don't retry the same reasoning model with a bigger budget — it just reasons longer, and (measured)
   it answers SHORTER. Tighten the budget, and frame the ask as a job rather than a question.

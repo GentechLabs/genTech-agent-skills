@@ -259,6 +259,62 @@ Planning is deliberate. Working is not.
 an approval gate Jordan explicitly owns · a hard blocker with no path forward.
 Everything else: decide, act, log the assumption, continue.
 
+## The Permanent-Fix Rule — fix the CLASS, not the instance (Jordan, Sep 23 2026)
+
+> *"Whenever we're fixing something, we want to look for permanent solutions to the bugs and the problems
+> that come up. So instead of fixing something in its temporary, we want to verify that it's a permanent
+> solution. That should be how it is going forward — for everybody and all the groups."*
+
+**Fleet-wide. Every seat, every fix.** A fix is not done when the symptom stops; it is done when the defect
+**cannot recur** — and you can say **why**.
+
+### The case that produced the rule (Treasury, Jun 30 2026)
+
+A monitor reported the wrong LP shape and a stale price. **Fixing the numbers would have been the temporary
+fix, and it would have come back the same day** — because the defect was not the numbers:
+
+- **three** copies of `.lfj-aae-config.json` existed with different data (one correct, **two stale**);
+- `HERMES_HOME` resolves differently in cron than in a shell, so scripts silently read a **stale** copy;
+- **two** cron jobs wrote the same dashboard JSON, so a correct write was **overwritten seconds later**.
+
+The permanent fix was `lp-monitor-v2.py`: hardcode the one true path, read only from config + live API, and
+**delete the shared intermediate file entirely** so there is nothing left to race over. The old jobs were
+**removed, not patched.** *"File locks and read-only flags are band-aids; removing the dependency is the
+cure."*
+
+### The test — run this before calling ANY fix done
+
+| Temporary (a band-aid) | Permanent (the fix) |
+|---|---|
+| Corrects the value | Removes the path that produced it |
+| Adds a lock / retry / flag around the race | **Removes the shared dependency** so no race exists |
+| Patches the one call site reported | Patches the **transform**, then greps for the transform |
+| Syncs the copies | **Deletes the stale copies — they ARE the bug** |
+| Works in this shell, this context | Works in cron, in a shell, and **after a restart** |
+| "Fixed" | "Fixed, **and here is why it cannot recur**" |
+
+**The highest-value move is almost always: delete the duplicate.** A second copy is not a backup when
+nobody knows which is authoritative — it is a coin-flip the code takes on every single run.
+
+### Prove it, do not assert it
+
+1. **State the class, not the instance.** *"This was not one wrong number; it was N readers of one file."*
+2. **Kill the recurrence path, then search for the shape again** — `grep` the old read, the old path, the
+   old helper. A fix one call site short of the end is the normal failure.
+3. **Guard it.** Add a regression check to the selftest so the defect fails **loudly** if it returns —
+   that is the step that converts "fixed" into "cannot silently recur."
+4. **Verify BOTH directions** — it fires when it should, and stays silent when it shouldn't.
+5. **Ask what a restart / update / redeploy would undo.** A fix that evaporates on the next deploy (an
+   uncommitted live patch, or a vault-only edit while cron runs the *deployed* copy) is temporary no matter
+   how correct it looks today.
+6. **Say "permanent" only with the reason attached.** "Permanent" is a claim, and an unfalsifiable claim is
+   the exact class this pipeline exists to catch. Write *why* it cannot come back — **if you cannot write
+   that sentence, you have a temporary fix; label it one.**
+
+**Boundary — what this must NOT be read as.** Permanence is a property of the *fix*, not a licence to
+rebuild. Rewriting a working subsystem to make it "more permanent" is scope creep (anti-temptation rule 1).
+The only question is *"will this defect return?"* — never *"could this be nicer?"*
+
 ## The Jr/Sr Default (fleet directive, Sep 21 2026)
 
 **Every agent, on any build — not a Labs speciality.**
@@ -369,7 +425,20 @@ happy-path test, and every one produced a wrong answer in a single night:
   moment the producer is refactored, and it breaks SILENTLY. Import the shared module and call it.
   If a value must cross a language boundary, have the producer emit it as data (JSON/env), not as
   source text to be pattern-matched.
-- **Any number driving a decision must name its source** (chain > aggregator > config).
+- **A monitor can be structurally blind to the EXACT condition it exists to catch — and it will
+  look healthy. FEED THE CLASSIFIER THE FAILURE OUTPUT; do not read the code path.** Proven
+  2026-09-23: both treasuries sat EMPTY all night and the Position Watchdog never spoke. The
+  re-center hit its flat-book branch, printed `"nothing to withdraw — flat"`, and **returned before
+  the idle and efficiency checks** — so it exited `rc=0` carrying text matching none of the
+  classifier's patterns (`IDLE CAPITAL|DRIFTED|OUT OF RANGE|REBALANCE NOW|⚠️`). Feeding the real
+  output to the classifier gave `ACTIONED=0 MATERIAL=0 ERROR=0` — silence on the one event the
+  monitor was built for. An early return is the usual culprit: it is upstream of every check that
+  could have flagged the condition, and it reads as harmless tidiness. Also note the inverse trap:
+  the same watchdog gate spoke for a **routine** action at 3am while staying quiet for a **material**
+  one — the urgency category was inverted. **Test rule: enumerate the conditions the monitor must
+  fire on, synthesize each one's output, and assert the classifier fires. A monitor never tested in
+  its firing direction is decoration.** Corollary: an hour mask on a cron suppresses the whole RUN,
+  not just delivery — masking 'quiet hours' this way silently blinds monitoring for those hours.
 
 ### If Sr is unreachable
 
