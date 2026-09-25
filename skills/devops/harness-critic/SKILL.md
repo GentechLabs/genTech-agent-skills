@@ -589,8 +589,27 @@ terminal plan, destroying the correct hand-written header. Worse, a prior Critic
 verbatim in the log — a standing destructive instruction of the same class as the `.tmp`
 purge advice that entry had to reverse.
 
-**Rule:** copy `facts/` to a temp dir and `HARNESS_DIR=<tmp> bash scripts/<refresher>.sh`
-against the copy; diff. Then patch the standing instruction in the log with a `SUPERSEDED`
+**Rule:** dry-run by passing the STATE FILE AS ARGUMENT 1, never by setting `HARNESS_DIR`:
+
+```bash
+cp facts/harness-state.md /tmp/dry/harness-state.md   # then deliberately corrupt a cell in the copy
+bash scripts/refresh-cron-table.sh /tmp/dry/harness-state.md   # writes the COPY; reads the live store
+bash scripts/refresh-next-events.sh /tmp/dry/harness-state.md  # same contract
+md5sum facts/harness-state.md   # must be unchanged vs. before
+```
+
+**`HARNESS_DIR=<tmp> bash scripts/<refresher>.sh` IS NOT A DRY RUN — it writes the LIVE
+file** (measured 2026-09-25, Critic entry 85). `refresh-cron-table.sh:38-47` and
+`refresh-next-events.sh:15-23` never read `HARNESS_DIR`; they read `${HERMES_HOME}` (set
+in every agent shell) and default `STATE_FILE` to `${HERMES_HOME}/harness/facts/harness-state.md`.
+Only `refresh-harness-state.sh:10-11` reads `HARNESS_DIR`, and it passes `"$STATE_FILE"`
+as arg 1 to the other two — which is why the trap went unnoticed by readers of this file
+for eight cycles. The entry-77 recipe below used the `HARNESS_DIR` form, so the "dry run"
+it prescribed mutated the live file, and every later reader who followed it did the same.
+Corrected here at the sync source; the live md5 stayed `c5fefdd0adb1fc6167125ab1b265445b`
+byte-identical under the arg-1 form.
+
+Then patch the standing instruction in the log with a `SUPERSEDED`
 marker. The correct guard is a comparison against a second source (here: newest
 `^## evolve-N` in `facts/execution-log.md`) that refuses the write when the inputs
 disagree — refuse and report, never guess.
