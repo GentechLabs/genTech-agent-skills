@@ -148,6 +148,43 @@ cd /tmp && python3 /root/text-to-cad/skills/cad/scripts/step \
 
 See `references/text-to-cad-pipeline.md` for detailed patterns.
 
+## Sprite & Animation Asset Generation (harvested 2026-09-25 — the hard case, with measured traps)
+
+Generating a character's animation frames is the part of this pipeline most likely to fail quietly,
+because **a game engine exposes drift instantly** — adjacent frames that drift in proportion, scale
+or silhouette read as a broken walk cycle, not a stylistic choice.
+
+**A bare prompt for "a sprite sheet, walk cycle, 8 frames" returns a picture of one.** You need a
+written **grid spec**.
+
+**The grid spec — every line matters:**
+- Rows/columns within the slicer's **6×6** cap. 16 frames as **4×4, never 2×8** (that is a local cut).
+- A canvas the grid divides **evenly**.
+- **One** scale, camera, facing and ground baseline.
+- The beats-per-frame range, with **the last frame matching the first** (this is the loop).
+- Generous margins. **No labels.** (A `background` enum names no colour — a solid field is prompt
+  wording.)
+
+**Read the delivered sheet BEFORE slicing:** count the cells, read the cell edges, and **count
+distinct poses** — a beat range naming a single end state can come back as **one held pose**. With no
+seed, a re-run is a *different* character, so take candidates from the sample-count parameter and
+approve one sheet before slicing.
+
+**⚠️ Alignment is a post step, NOT a prompt.** The body drifts between rows — in one measured run the
+grounded feet sat **87 px higher in the last row than the first**, and *neither anchoring language nor
+a layout template passed as a reference image moved it.* So: measure each tile's body box, shift it
+onto **one baseline and one horizontal centre** on a wider canvas so nothing clips, then re-upload
+and slice — frames edited locally never become assets. Then snap every kept tile with the same colour
+count and seed, and confirm the snapped tiles share one size before assembling.
+
+**Frames of one character should come from a VIDEO lane, not N image generations.** One render holds
+the identity for the whole action, instead of a fresh generation per frame drifting from its
+neighbour. Use the sheet route only when the task genuinely needs an exact grid or scripted beats.
+
+**Related traps:** a turnaround sheet passed as a video reference gets **animated as a grid** — use
+individual neutral-pose shots. See `film-production/seedance-video-production` for the consistency
+ladder, the 7-section prompt, and the "judge identity across the whole clip" rule.
+
 ## AI Spectator Mode (Planned)
 
 Drop the human player, let AI agents fight each other:

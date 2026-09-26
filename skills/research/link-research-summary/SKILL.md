@@ -26,6 +26,33 @@ When Jordan shares a URL, research it and provide a structured summary. Optimize
 
 ## ⚡ Web Research Toolkit (Jul 2026 — Firecrawl Replacement)
 
+### 🚫 NEVER draw a NEGATIVE from a docs dump you haven't proved complete
+
+**`llms.txt` / `llms-full.txt` are convenience indexes, not the documentation.** Mintlify (and similar hosts)
+publish `llms-full.txt` as a **curated subset that silently omits dedicated pages.**
+
+**Measured on Glider's docs (2026-09-25):** `llms.txt` listed **60 pages**; `llms-full.txt` was 49,818 chars and
+**did not contain pages that provably existed** — *"Patch strategy fees"* → absent; the
+`/v2/strategies/{strategyId}/fees` endpoint → absent. I searched the subset, found nothing, and published *"no fee
+mechanism is documented."* **It was wrong.** The mechanism is `GET`/`PATCH /v2/strategies/{strategyId}/fees`, with
+scopes `fees:read` / `fees:write` — sitting on a page the dump never included.
+
+**Searching a subset and finding nothing FEELS like evidence. It is not.** Same failure shape as the false PR
+receipts: **absence from a list is not absence.**
+
+**Three rules:**
+1. **Grep the actual PAGES before claiming something isn't documented.** On Mintlify, resolve real URLs from
+   `llms.txt` and fetch `https://docs.<host>/<page>.md` — the raw markdown works and renders nothing JS.
+2. **Prove the corpus is complete before drawing a negative from it** — probe for a page you *know* exists
+   (`"Create Strategy"` → present, `"Patch strategy fees"` → absent ⇒ the dump is partial, so the negative is void).
+3. **Search singular AND plural: `\bfees?\b`, not `\bfee\b`.** I nearly published "there is no fee mechanism"
+   because I searched the singular while the docs name it **`fees`** throughout.
+
+**When a peer agent or a DM partner contradicts one of your findings, re-verify immediately** rather than
+choosing a side. Treasury's correction was right, mine was wrong — the corrected line is worth more than the
+original claim.
+
+
 When Firecrawl/web_extract/browser tools are unavailable, use these curl-based tools:
 
 ### Jina Reader (any URL → markdown, no API key)

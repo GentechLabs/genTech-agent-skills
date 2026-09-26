@@ -25,7 +25,8 @@ Last updated: Jul 29, 2026
 | solana-foundation/awesome-solana-ai | PR #197 | ⏳ Awaiting human review | Greptile issues all fixed |
 | bitrefill/awesome-agentic-payments | PR #26 | ✅ MERGED | Listed in x402 + Ecosystem sections |
 | Scottcjn/awesome-agents | PR #36 | ✅ MERGED | Added to SDKs & Libraries |
-| Internet Court | PR #7 | ✅ MERGED | Vendored GenTech Agent Kit as partner skill |
+| Internet Court | PR #7 | 🔴 **FALSE RECEIPT — corrected 2026-09-25** | **PR #7 does not exist** — 404 anonymously *and* authenticated as `GentechLabs`. Our real PR here is **#25 (open, unmerged)**. The old "✅ MERGED — Vendored GenTech Agent Kit as partner skill" was never true: `vendored/` holds **33 partner dirs, no `gentech`**, `NOTICE.md` has **no gentech row**, and the full 1,024-path repo tree has **0 gentech paths**. We are **not** a vendored partner. |
+| **ALL 8 open PRs — invisible to logged-out readers** | *see registry* | 🔴 **open, unmerged, AND invisible** | Authenticated read 2026-09-25: `qntx/r402` #91 · `qntx/ra2a` #47 · `InjectiveLabs/iAgent` #15 · `GOATNetwork/agentkit` #9 · `solana-foundation/pay-skills` #233 · `ards-project/ard-spec` #84 · `BankrBot/skills` #669 · `internet-court` #25 — **all exist, all authored by `GentechLabs`, all state=open, none merged**, and **all 8 absent from anonymous PR listings** while control PRs in the same repos are visible. Root cause: the account itself is unsearchable (GitHub returns *"users cannot be searched… do not have permission to view"* even for an authenticated self-search). |
 | coinbase/agentkit | Issue #1364 | 🟡 Open | Proposed GenTech as community x402 provider |
 | TencentDB-Agent-Memory | PR #475 | 🟡 Open | Security hardening PR |
 | BankrBot/skills | PR #572 | 🆕 Submitted Jul 16 | GenTech Labs x402 Gateway skill |

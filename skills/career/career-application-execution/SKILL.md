@@ -403,6 +403,43 @@ Create standalone draft at `02-Labs/{Program}-Grant-Application-DRAFT.md`:
 |---|---------------|--------|-------|--------|-------|
 | 1 | Program Name | $X-Y | Focus area | 🟢 DRAFT READY | Apply: URL |
 ```
+## ⛔ READ COMPENSATION PER-ROW FROM THE ATS PAYLOAD — never from a neighbouring row
+
+**This shipped a wrong number to the user.** An ATS jobs API returns a *list* of postings, each with its own
+compensation block. Reading a range off the wrong row produces a **plausible, well-formed number attached to
+the wrong job** — the silent-killer class, in a resume context.
+
+**What happened:** an Ava Labs queue entry was "corrected" to claim the **Senior Forward Deployed Engineer**
+paid **$225,029–$337,543**, and the original **$143K–$179K** was declared "wrong by ~$80–150K". **The original
+was right.** $225,029–$337,543 is the **Senior Engineering Manager, Fortary Platform** row. The "correction"
+propagated into a brief delivered to the user.
+
+**Rules:**
+1. **Iterate the jobs array and print `title | location | compensation` together** — never index into a
+   neighbouring entry.
+2. **Never "correct" a figure you cannot re-derive per-row from the source.** A correction is a claim; it needs
+   the same evidence as the original.
+3. **When you fix a propagated error, record the error in the artifact** rather than quietly swapping the
+   number — otherwise the next reader re-derives the wrong value from the same bad reasoning.
+4. **A "correction" that reverses your own earlier claim is the highest-risk edit in the vault.** If it flips a
+   prior note, re-read the raw source before publishing.
+
+## Entry-level gates to check BEFORE recommending a role
+
+**A live posting is not an eligible posting.** Two administrative requirements are unfixable by skill — read
+them first:
+
+- **Student gates.** "Must be graduating in December 20XX or Spring 20XX" closes a New-Grad track to every
+  career-changer regardless of ability. **New-Grad and internship tracks are pipeline roles — read the
+  graduation-date line before presenting one as an option.**
+- **Degree gates vs experience gates are different, and the experience gate is the real one.** The consistent
+  hard gate across FDE hiring is *"shipped and maintained real, live systems"* — **not** a degree. Screen on
+  demonstrated production work; do not treat a non-CS background as disqualifying.
+- **Always scan the WHOLE board for the weaker sibling posting.** Where a New-Grad role is student-gated, an
+  **internship** on the same board often says *"pursuing **or received** a degree"* — which admits graduates.
+- **Timeline honesty:** the widely-quoted "6 months to FDE" assumes an **experienced developer**; sources
+  converge on **18–24 months** without a production-engineering background. **Quote the right one.**
+
 ## RELATED SKILLS
 
 - `career-platform-research` — research → evaluation → recommendation phase

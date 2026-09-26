@@ -918,7 +918,7 @@ Non-exhaustive. Repos we've submitted to or identified as high-value targets:
 | brave-experiments/private-x402-gateway | ~100 | Privacy gateway | ✅ PR #8 submitted |
 | srotzin/hive-rosetta | ~30 | x402 compliance | ✅ PR #2 submitted |
 | itublockchain/hackmoney-router402 | ~50 | x402 router | ✅ PR #9 submitted |
-| internet-court/internet-court-skill | ~30 | Agent skills | ✅ PR #7 submitted |
+| internet-court/internet-court-skill | ~30 | Agent skills | ✅ PR **#25** open, unmerged (**verified authenticated 2026-09-25**) — NOT #7. A "PR #7 ✅" claim was never true (404 anonymously *and* authenticated). Not yet a vendored partner (33 partner dirs, no `gentech`). |
 | sanafi-onchain/sanabot-skills | ~20 | Agent skills | ✅ PR #3 submitted |
 | x402-foundation/x402 | ~2k | x402 protocol reference | ✅ PR #2905 submitted Jul 19 — commit signing blocked 🆕 |
 | xenia-project/xenia | 7k | Xbox emulator | ✅ PR #2356 submitted |
@@ -935,3 +935,34 @@ Non-exhaustive. Repos we've submitted to or identified as high-value targets:
 | **Scottcjn/awesome-agents** | ~500 | Agent frameworks | ✅ **PR #40 submitted Jul 18** — MERGEABLE/CLEAN, no comments |
 
 Zero bot-rejected PRs. Every submission passes template checks on first try.
+
+## ⛔ NEVER RECORD A PR AS MERGED/SUBMITTED WITHOUT AN AUTHENTICATED PER-PR READ
+
+**False receipts shipped in our own registry and sat green for weeks.** Rows claimed PRs that do not exist — and they
+cited a *lower, real-looking* number than our actual PR, which is exactly why nobody re-read them.
+
+- **"Internet Court PR #7 ✅ MERGED — vendored as partner skill"** — PR #7 does not exist (404 anonymously *and*
+  authenticated). Our real PR is **#25**, open. We are **not** a vendored partner: 33 `vendored/` directories, none
+  ours; no `NOTICE.md` row; 0 gentech paths in the full 1,024-path repo tree.
+- **"PR #6 merged into GOAT agentkit, PR #7 submitted"** — on `GOATNetwork/agentkit` #6 belongs to `pankaj148` and #7
+  to `ExpertVagabond`; neither is ours, neither is merged. **Ours is #9** (open). The `❌ PR #6 auto-closed` row above
+  is the same false class.
+
+**⚠️ Every `✅ PR #N submitted` row in this seed list is the same class of claim and is NOT independently verified.**
+Treat them as *claimed*, not *confirmed*, until an authenticated read re-proves them. A tracker row is not proof.
+
+**Rules:**
+1. **Record a PR number only after `gh api repos/<owner>/<repo>/pulls/<n>` returns it.**
+2. **Verify authenticated whenever a subject token exists.** The repo's public PR list omits our PRs entirely, so an
+   anonymous read yields a **false negative that masquerades as a finding.**
+3. **Absence from a public listing is NOT evidence of absence.** Our account is unsearchable — GitHub answers even an
+   authenticated self-search with *"users cannot be searched… do not have permission to view."*
+4. **`per_page=100` silently truncates** repos with more PRs than that (`r402` 133, `pay-skills` 257, `BankrBot/skills`
+   640). Paginate until a short page, or you will "prove" a PR absent by only reading page 1.
+5. **A merge claim needs the merge commit, not a status word.** Never write ✅ MERGED from memory or from a sibling row.
+6. **Correcting a receipt is itself a claim.** If your correction reverses an earlier entry, re-read the source
+   authenticated before publishing it — a "all 8 PRs ABSENT" draft was produced exactly this way mid-fix and was wrong.
+7. **A contents-API directory count can include files** — count directories from the git tree API
+   (`vendored/` reads 35 from contents, 33 from the tree).
+8. **Patching a skill and then syncing from the vault will silently revert your patch** if you patch the seat copy.
+   Patch the canonical vault copy first, then propagate outward.
