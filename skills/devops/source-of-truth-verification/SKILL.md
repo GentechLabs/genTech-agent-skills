@@ -148,6 +148,14 @@ session and left the queue accurate.
   at. Read `/proc/<pid>/cwd` on the *currently running* process first.
 - **A capability claim written by you last session is still a claim.** Notes
   degrade. Re-grep rather than trusting your own prior summary.
+- **When two of your own notes disagree, neither is authoritative — probe the cheap fact
+  before publishing either.** A later note contradicting an earlier one is the highest-risk
+  edit in the vault: the newer text reads as the correction, so it propagates while the wrong
+  value wins. Hostnames, endpoints and paths are the cheapest facts there are to settle
+  (`getent hosts <name>`, `curl -s -o /dev/null -w '%{http_code}' <url>`), and a **non-existent
+  host reads exactly like a live one in prose** — NXDOMAIN and a working service are
+  indistinguishable to a reader. Probe it, correct in place, and record *what* was wrong so the
+  next reader cannot re-derive the wrong value from the same reasoning.
 - **Don't fix bugs you find in the mirror.** If the mirror is stale, its bugs
   are usually already fixed upstream. Diff against the live copy before
   "fixing" anything you spot there.

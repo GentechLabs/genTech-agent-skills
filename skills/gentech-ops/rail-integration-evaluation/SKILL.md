@@ -1,6 +1,6 @@
 ---
 name: rail-integration-evaluation
-description: "Use when Jordan shares a chain/rail to evaluate."
+description: "Use when asked to evaluate a chain, rail, venue, or platform — HQ handoffs included."
 version: 1.0.0
 author: Gentech
 license: MIT
@@ -26,6 +26,13 @@ settlement rail, tokenized-equity platform, or agentic-payment network.
    - Order/transaction types (market/limit, proxied vs managed).
    - Sandbox/testnet + faucet (can we validate with no real money?).
    - Which chains it settles on (is it on one of OUR home chains — Avalanche/Base/Solana?).
+   - **The chain set may be QUERY-ONLY, and a zero mention of our home chain IS the finding.** A
+     tenant-configured platform publishes no fixed chain table, so count mentions of each home chain
+     in the FULL docs text before assuming support; proven — `avalanche`/`43114`/`AVAX` appeared zero
+     times while `solana` appeared 206, and the docs then told you to query the enabled set rather
+     than read a list. Absence from the docs is a constraint to state, not an assumption to make in
+     either direction: do not assume unsupported, and never assume supported because the product is
+     "multi-chain". Say which axis you measured on.
    - **Verify "does an API exist" via the docs INDEX, not a guessed URL.** A 404 on
      `docs.example.com/docs/<product-name>` proves nothing — the page may just not exist
      at that path (verified false-negative risk on Jupiter Universal Deposit, Sept 2026:
@@ -261,6 +268,56 @@ marketplace/API/listing problem:
   until the first defaults. Before capital: hedge-cost drag on headline APY, lockup/redemption
   terms, KYC/permission gating (institutional-grade usually ≠ wallet-enterable), young
   contract risk. Compare REALIZED net APY — never chase a launch-week print.
+
+## Worked example — a STRATEGY-PROVIDER venue (the FOURTH classification)
+
+Some platforms are neither a capital rail, a personal tool, nor a yield venue: they are a
+**marketplace where someone else's capital runs YOUR strategy**. The treasury is on the SUPPLY
+side — a provider, not a depositor — so the whole rail scorecard is the wrong instrument and
+"does it support our home chain / our wallet" is the wrong first question.
+
+- **Classify by which side of the trade we sit on.** Ask: does this platform move OUR capital
+  to a venue we control (rail), or does it distribute our STRATEGY to capital we do not control
+  (venue-for-us-as-supplier)? A gated B2B API, enrolled portfolios, an owner-signed payout path
+  and a provider console are the markers of the second. Name the bucket before researching
+  chains and gas — otherwise you evaluate a supply arrangement with a demand-side rubric.
+- **The monetization test is a CHANNEL test, and the tell is ASYMMETRY between the two sides.**
+  A distribution channel documents its terms (enrollment, referral, revenue share, payout); a
+  producer-side SDK documents none, because it stops at the venue boundary. Proven: a peer
+  platform's SDK had zero hits for distribution/enrollment/revenue-share concepts while the
+  candidate's docs described enrollment and a settable fee — decisive for *channel-adjacent, not
+  competitor*. **Count the terms on BOTH sides and compare**; a competitor would need the same
+  distribution machinery, and its absence is the finding.
+- **A platform can be COMPLEMENTARY in category while being strictly LESS expressive than the
+  tool we already run** — that makes it a distribution target, not a replacement. Check whether
+  its strategy model (target weights + a rebalance schedule) can even represent our edge (an
+  intent/backtest framework): if only a simple rebalancing subset maps, "integrate" means selling
+  the subset, and saying so is part of the verdict.
+- **Find the fee MECHANISM by its unit, not its marketing name** — see the vocabulary rule in
+  `claim-provenance`. Here the platform had no revenue share at all; it had a **tenant-scoped
+  per-transaction fee we set ourselves** (`swapBps`-style, an "integrator fee" in bps), charged
+  on the output side of every swap. That is structurally our own x402 model, and it inverts the
+  "no cut means free labour" fear from the opposite direction.
+- **The publish/private flag is the MONETIZATION SWITCH, not a listing toggle.** A tenant-scoped
+  fee means: as provider AND distributor we set the fee and earn; if we publish the strategy for a
+  third party to enrol, THEIR tenant sets it and we earn whatever their configuration says.
+  Publishing to discovery without deciding this deliberately is the free-labour outcome. Read the
+  flag as an economic decision and flag it as the load-bearing one in the writeup.
+- **Check whether the platform owns the implementation we think we own.** A provider console that
+  also assigns "select assets, assign weights, set rebalance timing" and a provider-managed
+  signing key means we own the THESIS and the platform owns the IMPLEMENTATION — a smaller
+  surrender than "we contribute nothing", still a dependency, and the honest split belongs in the
+  report.
+- **Verify the fee ACCRUAL path before treating the mechanism as income.** A documented, settable
+  fee with no documented accrual/payout address is a fee you cannot yet collect: say so as a
+  narrow open question ("where does it accrue, how is it paid out?"), not as "there is no fee".
+- **Verdict shape for this bucket: Watch + borrow, and the console key is a JORDAN decision.**
+  When the platform cannot touch our capital (wrong chains), the fee only pays if we own
+  distribution, and nothing is currently blocked, the correct ask is to PARK the key request with
+  the accrual question attached — requesting an account is a human-gated step, never an agent's
+  action. Borrow the mechanisms worth copying (signed/idempotent authorization bound to a chain
+  set, session-key states as TYPED errors rather than silent no-ops, and metadata explicitly
+  labelled "display only, not a computed return" — our ESTIMATE-vs-MEASURED rule, productised).
 
 ## Worked example — Blackhole rail build (Sept 8 2026) — building a rail on a fork
 - **Ask:** Jordan greenlit Blackhole (ve3,3 DEX, Avalanche) as the next yield rail for the

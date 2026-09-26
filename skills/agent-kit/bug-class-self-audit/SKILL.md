@@ -73,6 +73,38 @@ right**. Make simulation-vs-formula agreement the acceptance test.
    A per-source gap test must key on "read nothing from it", not on "had no files":
    files-present-but-unreadable is the same silent skip one level down.
 
+10. **read-failure-as-value** — a read that FAILED renders identically to a read that
+   returned a real value, and every downstream decision inherits it silently.
+   Measured, one hour, four defects: a failed `eth_call` returns `0x` and `int('0x',16)`-style
+   decoding makes it **0** (our own probe printed "LP shares 0" for a live position — the
+   call had REVERTED); a lagging node answers with the PRE-transaction value; a wrong
+   selector reverts and reads as "this function does not exist"; a tool that CRASHES after
+   broadcasting exits non-zero and reads as "nothing was sent". *Fix:* every value that can
+   be unread must be able to say **UNKNOWN + why** and must NEVER render as a zero. Ask the
+   CHAIN, not the tool's exit code — and re-read before believing a write took effect.
+   **A single read of a value a transaction just changed is not evidence** — poll the tx's
+   own block (measured: an approve MINED but a one-shot re-read returned the OLD value, so a
+   fail-closed refused a leg that should have landed).
+
+## Seam rules (where these bugs actually live)
+
+- **A guard implemented STRICTER than its purpose turns a small miss into a total outage.**
+  A re-center guard meant "never deploy a one-sided book" was written as "abort if the ratio
+  optimisation failed" — so a ratio miss emptied the whole position. Ask what the guard
+  MEANS, not what is convenient to test.
+- **A selector that is silently ignored behaves exactly like a correct one.** `TENANT=x`
+  where the code reads `STEWARD_TENANT` sent three runs to the WRONG wallet, printing nothing.
+  Same shape as a fix that only fires behind a non-default flag. Make identity resolution
+  PRINT what it resolved, and refuse on a mismatch rather than defaulting.
+- **A recovery path can manufacture the fault it repairs.** A flat-book recovery that read
+  `"curve" if shape=="curve" else "ask"` deployed HALF a two-sided book, so every repair
+  reproduced the one-sided state the guard existed to prevent. Walk the repair path and ask
+  whether it can produce the condition it is fixing.
+- **Catching a failure ≠ preserving its cause.** A subprocess run WITHOUT `capture_output`
+  left a failed deploy recorded as one line, `exit=1`, with no leg output — undiagnosable
+  tomorrow. Always capture the child's stdout+stderr, print its tail, and on failure name
+  the cause or state plainly that none was preserved.
+
 ## Tune for false positives — or the audit gets ignored
 
 A self-audit that cries wolf is worse than none: it trains everyone to ignore

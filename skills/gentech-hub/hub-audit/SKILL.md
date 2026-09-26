@@ -220,7 +220,7 @@ curl -I "https://raw.githubusercontent.com/.../hub-vanito-data.json"
 }
 ```
 
-**Reference:** `references/missing-hub-data-files.md` — Complete creation guide and templates.
+**Reference:** `references/missing-hub-data-files.md` — ⚠️ *not written.* That path is named in this doc but exists on no seat and has never been in git. The creation guide the pointer promises is the JSON template directly above plus the Issue-1 steps below — read those; do not go looking for the file.
 
 ### Issue 2: Static Hub (No Live Data)
 
@@ -500,6 +500,68 @@ def verify_data_on_github(repo_owner, repo_name, path, token):
 
 ## Pitfalls
 
+### Removing a DOM Node Without Its Writer Blanks the Page
+
+When you delete a tile/row from a hub generator, delete the JS that writes to it **in the same
+edit**. A writer left behind behaves one of two ways, and the difference is an outage:
+
+- `document.getElementById("x").textContent = v` — **throws a TypeError on null**. Inside a single
+  render pass this aborts **every field below it**, so the page goes blank rather than dropping one
+  tile. The symptom looks like "the whole page is broken", not "a tile is missing".
+- `const dset = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; }`
+  — null-safe, silently no-ops, no harm.
+
+**Check which form the writer uses BEFORE removing the node:** `grep -n 'getElementById("x")' <generator>`.
+If it is the direct form, remove or guard it in the same change. Removing a node and leaving its
+writer is how a tidy-up becomes an outage.
+
+### A Card Emitted After the Container Closes Renders Full-Bleed
+
+A block placed **after** the page wrapper's closing `</div>` is outside the max-width container.
+It renders full-bleed and unaligned with every other card — this reads to the user as "the page
+looks jumbled up", and it is a layout leak, not a style choice.
+
+**Check:** count `<div` vs `</div>` (already in Step 2) **and** confirm the last card sits inside
+the wrapper. Balanced div counts plus correct nesting order is the proof; balanced counts alone
+can still hide a card in the wrong container.
+
+### Verify a JS-Rendered Page by Running Its OWN Script (tag balance is not proof)
+
+Tag balance proves the document **parses**. It does not prove the page **renders** — a shipped
+script can throw on the first field and leave everything below it blank while the HTML is perfectly
+valid.
+
+To prove what a reader actually sees:
+
+1. Slice the page's `<script>` **byte-for-byte out of the SERVED html** (never a re-implementation —
+   a re-implementation proves only that your copy works).
+2. Run it in node under a minimal DOM shim plus a `fetch` shim that reads the local data files.
+3. Print the `textContent` of the element ids that matter.
+4. **Run it twice**: once against the real payload, once against a deliberately degraded one (e.g.
+   `{"status":"unknown"}`). One run alone proves nothing about the failure path.
+
+`scripts/render-page-check.js` does this. `threw: None` plus the expected values is the proof.
+A node that should have been removed reads `<unset>` — which is the assertion for the removal itself.
+
+## Presentation Rules for Hub Pages
+
+Standing preferences for what a hub page shows. These are about **emphasis**, not deletion.
+
+- **Lead with the FLOW, not the stock.** The headline is what the position is EARNING over a period
+  (a rate), not how much capital sits in the pool. A stock is the wrong headline for a book that
+  churns.
+- **Demote, never delete.** When a number stops being the headline, drop it lower on the page but
+  keep it in the JSON payload, where it still drives decisions. Removing it from the view is not
+  removing it from the system.
+- **Do not surface the operator's idle admin gas float.** Wallet dust set aside for gas is not a
+  position and not the reader's business. Show the autonomous **decision** (HOLD / act, and why),
+  not the pocket change — the reader should come away knowing the system manages itself.
+- **UNKNOWN, never 0.** Any read that cannot be produced renders `UNKNOWN` *with its reason*. A `0`
+  means "measured, and it is genuinely zero". A `0` that means "could not read it" is the most
+  repeated bug class in these hubs.
+- **Put the picture at the top.** For a position/liquidity page the shape chart goes above the
+  numeric tiles: what the money looks like first, the numbers underneath.
+
 ### Don't Assume No News Is Good News
 Just because the hub loads in browser doesn't mean it's correct. Check the actual data values and timestamps.
 
@@ -546,23 +608,39 @@ mv /tmp/hub-audit-report.md ${VAULT_DIR}/11-Mess Hall/hub-audit-$(date +%Y%m%d).
 **Scripts:**
 - `scripts/check-hub-tags.sh` — Automated tag balance verification
 - `scripts/check-hub-data.sh` — Data source validation and URL testing
+- `scripts/render-page-check.js` — Run a hub page's OWN `<script>` under a DOM shim to prove it
+  actually renders (healthy payload + degraded payload). Tag balance is not proof of rendering.
 
 **References:**
-- `references/github-pages-build-errors.md` — Common build failure patterns
+- `references/github-pages-build-errors.md` — ⚠️ *not written* (named here and in `## References` below, but absent from every seat and from git). The build-failure patterns are the numbered Issues above and the Deployment Verification checklist.
 - `references/github-merge-conflict-resolution.md` — How to fix merge conflicts in JSON data files on GitHub
-- `references/missing-hub-data-files.md` — Creating placeholder data files for new hubs
+- `references/missing-hub-data-files.md` — ⚠️ *not written* (see the inline JSON template in Issue 1).
 - `references/personal-hub-link-pattern.md` — Link pattern for personal hubs (Christel, Vanito, others). Always use deployed GitHub Pages URLs, not raw GitHub markdown files.
 
 Use these scripts for automated audits and quick checks.
 
 ## References
 
-- `references/github-pages-build-errors.md` — Common build failure patterns
+- `references/github-pages-build-errors.md` — ⚠️ *not written* (duplicate of the Linked Files pointer above; see the numbered Issues in this doc).
 - `scripts/check-hub-tags.sh` — Tag balance verification script
 - `scripts/check-hub-data.sh` — Data source validation script
 
 ## Version History
 
+- **1.8.1** (Council 2026-09-26) — Corrected two dangling reference pointers:
+  `references/github-pages-build-errors.md` and `references/missing-hub-data-files.md` were named in this
+  doc (twice each) but existed on no seat and in no git revision. They are now marked *not written* with a
+  pointer to the inline material that actually carries the guidance, instead of authoring files that would
+  only duplicate the issue list and the Issue-1 JSON template. Found by the Council's reference-resolution
+  check while promoting the 09-25 hub-audit pitfalls into the shared core.
+- **1.8.0** — Added Pitfalls: removing a DOM node without its writer blanks the page (direct
+  `getElementById().textContent` throws on null inside the single render pass; a `dset`-style
+  null-guarded writer no-ops safely — check which form before removing). Added: a card emitted
+  after the container closes renders full-bleed (div balance plus nesting order is the proof).
+  Added: verify a JS-rendered page by running its OWN shipped script against a healthy AND a
+  degraded payload — tag balance is not proof of rendering. Added `scripts/render-page-check.js`
+  and a Presentation Rules section (lead with the flow not the stock; demote don't delete; never
+  surface the idle gas float; UNKNOWN never 0; picture at the top).
 - **1.7.0** (Sep 3, 2026) — Added pitfalls: stale-data-with-zero-errors → check producer cron exists (orphaned sync script pattern); single-probe flap ≠ down (IPv6/Cloudflare transient).
 - **1.6.0** (Sep 3, 2026) — Added Issue 10 (webroot deploy gap: nginx webroot ≠ Pages repo; verify the SERVING target). Deployment Verification checklist extended.
 - **1.5.1** (Jul 25, 2026) — Updated hub inventory: Christel removed, Academy student template added.

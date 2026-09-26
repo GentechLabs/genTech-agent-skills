@@ -948,6 +948,53 @@ Any hit whose underlying task is verified complete is a live false ask. Each del
 
 **Cross-reference:** `completion-registry` (canonical done-source) and `verify-after-every-action` (verify the effect, not the command) are the same principle at different layers: the command succeeding ≠ the task done; the task done ≠ the record updated.
 
+### Anti-Pattern 17: A Check That Cannot Match the Artifact Reports Green
+
+**Bug pattern:** A verifier's pattern — regex, grep, date format, path template — cannot match the text it is
+supposed to police. It finds nothing, calls that a pass, and the pass is reported as a fact. No exception is
+raised, so nothing is ever investigated. This is the same class as Anti-Pattern 15 (frozen constant) and the
+silent `try/except`, one layer up: the *instrument* is blind, not the data.
+
+**Three real instances, all found by asking "could this check have failed?" rather than "did it fail?"**
+
+1. A parity guard's chain-line regex was `Networks?:\s*([^\n]+)`, but the served line is `- **Networks**: …`. The
+   regex matched nothing, `check()` returned 0 problems, and the guard declared our public surface in parity
+   **over a wrong chain list** — for days, silently, including a cron fire that delivered nothing.
+2. An error-log monitor grepped for `25/Sep/2026` (the **access**-log date form). nginx's error log stamps
+   `2026/09/25`, so the count was **always 0** — and `error.log: 0 entries` was reported as a clean reading
+   while the file held ~190 entries.
+3. A probe that checked a pair of paths counted them together and reported "two paths that do not exist, all
+   404" — while one of the two served `200` correctly. The grouped counter could not express the real answer.
+
+**Fix — the known-positive test, before any green is believed:**
+
+```bash
+# Every verifier needs a positive control: feed it the shape it is meant to catch.
+grep -c '25/Sep/2026' /var/log/nginx/error.log   # 0  <- pattern can never match
+grep -c '2026/09/25'  /var/log/nginx/error.log   # 193 <- the real instrument
+
+# And exercise the detector against a synthetic positive, not just the live clean input:
+python3 verify.py --selftest   # must include a case that MUST go RED
+```
+
+Rules that follow:
+
+- **Know your log's date format per file.** nginx `access.log` = `DD/Mon/YYYY`; nginx `error.log` = `YYYY/MM/DD`.
+  The same for any two artifacts from one product — never reuse one's format in the other's pattern.
+- **A regex that matches 0 lines is a failed check, not a passing one.** Assert the match count is non-zero
+  (or that the line it needs was found) and say so, before interpreting the absence of problems.
+- **Never report a negative result from a check you have not seen produce a positive.** If you cannot
+  construct a positive control, print `UNCHECKED` — that is a truthful state; `clean` is not.
+- **Fix the detector AND the repairer.** A filter applied in `check()` (e.g. ignore `HTTP 402` when counting
+  services) is invisible to `repair()` if the repair path loops its own patterns without it — which is how a
+  doc's `HTTP 402 pay-per-call` got rewritten to `HTTP 14 pay-per-call` by the very tool checking it.
+- **Aggregate last, per-key.** Grouping two keys (two paths, two hosts, two methods) before comparing hides
+  the case where they disagree. Diff and count per key; group only for the summary line.
+
+**Generalisation:** *a verifier that cannot fail is worse than no verifier, because its green is trusted.*
+When reviewing any verification code, the first question is not "does it find the bug?" but "what would it
+have to see to say RED — and can its pattern actually match that?"
+
 ## Health Tracking + Workflow Enforcement Layer (NEW — Jul 2026)
 
 **Problem:** Jordan caught that cron jobs were running without verification, and workflow gaps existed (no "develop → verify → troubleshoot" enforcement, no health tracking).
