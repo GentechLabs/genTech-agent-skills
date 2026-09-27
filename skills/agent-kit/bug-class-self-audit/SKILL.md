@@ -2,7 +2,7 @@
 name: bug-class-self-audit
 description: "Use when hardening a system or after fixing bugs."
 tags: [audit, self-healing, verification, core-pattern]
-version: 1.0.0
+version: 1.1.0
 author: Gentech
 trigger: "When Jordan says 'audit', 'what could I be missing', 'self-heal', or after fixing any bug — turn the fix into a permanent check."
 ---
@@ -85,6 +85,27 @@ right**. Make simulation-vs-formula agreement the acceptance test.
    **A single read of a value a transaction just changed is not evidence** — poll the tx's
    own block (measured: an approve MINED but a one-shot re-read returned the OLD value, so a
    fail-closed refused a leg that should have landed).
+
+11. **zero-headroom** — a value is computed to be EXACTLY enough, leaving no slack for the gap
+   between the READ that sized it and the ACTION that spends it. Measured twice in one day on
+   this system, two different rails, one shape:
+   - **gas price**: `eth_gasPrice` sits exactly ON the current base fee, and the base fee moves
+     every block. Tx built one tick later is BELOW the floor -> invalid -> never propagates.
+     The node still returns a hash and the caller waits out a 200s receipt timeout for a receipt
+     that cannot arrive (measured: 0.097612 vs a 0.100841 floor).
+   - **allowance**: `approve(router, exactly_what_we_plan_to_spend)`. The router sizes its pull
+     from live pool state at execution time; one bin of drift upward and the pull exceeds the
+     allowance. WAVAX answers a short pull by REVERTING, which the router reports as
+     `TokenHelper__TransferFailed()` (**0x32e2717a**) -- an error that names the token helper and
+     sends the reader hunting a token bug that does not exist (measured: approved exactly
+     0.051992, reverted; the same leg simulated clean minutes later with slack).
+   *Rule:* **never price an action at the floor.** The gas PRICE (not just the limit) carries a
+   multiplier; an allowance is a CEILING, not a spend, so approve the wallet's full balance --
+   it cannot over-spend and it absorbs all drift. *Check:* grep every send path for a raw
+   `eth_gas_price` and every `approve(` for an exact amount. A correct fix lands as ONE shared
+   helper (`_gp(w3)` / `gas_reserve.gas_price_wei()`), never as a per-file copy.
+   *Tell:* when a fix is small, cheap, and mechanical, sweep the WHOLE domain in the same pass --
+   two instances found apart are two incidents reported apart.
 
 ## Seam rules (where these bugs actually live)
 

@@ -1,5 +1,5 @@
 ---
-version: "1.0"
+version: "1.1"
 name: lyrics-writing
 description: Write song lyrics in various styles — chorus structure, repeated phrases, genre conventions, and user preference evolution
 category: creative
@@ -245,6 +245,28 @@ This is what it looks like when you pay the cost
 ```
 
 **Detection:** User requests "high-energy rap" or "hype track."
+
+### Bass / Dubstep (Spoken Word Vocals)
+
+> Promoted into the shared core by the Council, 2026-09-27 — authored on **pixel**; content unchanged. The same
+> promotion carried pixel's *never write a slur* rule, the ID3 `PIC`/`APIC` cover-art rule, and the
+> `whisper` → **faster_whisper** correction in step 8 (`whisper` is not installed on the box; measured).
+
+**The defining rule: the vocal is an INSTRUMENT, not a story.** Bass music is built around its drops; the topline exists to set them up. A conventional verse-chorus lyric is the wrong shape no matter how good the words are.
+
+**When the collaborator says "make it more dubstep" / "make it harder," cut the WORD COUNT by roughly 60% and rebuild the arrangement.** A pass at ~180 words became ~70 and only then read as the genre. Concretely:
+
+- **Architecture, not verse-chorus:** `[Intro]` → `[Build]` → `[Drop]` → `[Break]` → `[Build]` → `[Drop]` → `[Outro]`. Two drops minimum; the second is the pay-off.
+- **The catchphrase becomes the CHOP.** Stutter the character's own signature phrase under the drop — `go ahead — go ahead — go ahead`, marked `(chopped, pitched down)`. Repetition is the point; a chopped phrase is the genre's lead instrument, not lazy writing.
+- **Drop calls.** The line right before a drop is a cue, not a lyric: a count (`Four... three... two`) or call-and-response (`(call) when I say go —` / `(response) AHEAD`).
+- **A reload before the second drop.** The rewind is authentic to the genre and announces that the best part is coming back.
+- **Leave space.** Silence and sub-bass carry the section. If a line neither sets up a drop nor sits inside one, cut it.
+- **Half-time feel** at the intro and break — note it in the bracket.
+- Put genre and tempo in the header (`Jordan · Dubstep · 140 BPM`).
+
+**The fingerprint survives the conversion.** A genre switch changes the *arrangement density* only — the character's pronoun habit, signature construction and fillers are what make the vocal theirs (see `references/real-person-voice.md`). A real-life line dropped into the break is the strongest available character moment, but it is also the only non-drop device in the track: offer to cut it for a leaner read rather than deciding silently.
+
+**Detection:** User asks for "dubstep", "bass", "140", "harder", or to convert an existing lyric into a drop structure.
 
 ### Post-Hardcore / Screaming J-Rock
 
@@ -847,7 +869,25 @@ Stay patient and offer variations quickly without over-explaining.
 - **Vocal tone in section header**: Vocal direction goes in the section header itself via the `**[Section — Tone]**` format, NOT as a standalone bracketed line inside the section.
 - **Duet vocals need per-line labels**: For duets, label EACH LINE with `[MALE]`, `[FEMALE]`, or `[BOTH]` on its own line above the lyrics, NOT just a general section header.
 - **Saving without permission**: Do NOT save song lyrics to files, hub JSON, or GitHub until user explicitly says to. Keep songs in chat only. Premature saves break the iterative workflow and frustrate the user.
-- **Mixing up song names vs MP3 metadata**: When user sends audio recordings, the local cache filenames (`audio_xxx.mp3`) are meaningless. The true title lives in the MP3's ID3 tag. ALWAYS run `ffprobe -v quiet -show_entries format_tags "<path>"` to extract the real title before naming the song.
+- **Never write a slur into a lyric, under any spelling.** When asked to add one — including "spell it differently" — decline plainly and without a lecture, then immediately offer the alternative that fills the same musical slot: a one-syllable hype word (`GO`, `NOW`, `DEEP`, `LOUD`) lands the same drop call, and the character's own catchphrase usually already is the hook. Say no once and pivot back to the work; do not treat it as a negotiation or re-litigate it on later turns.
+- **Mixing up song names vs MP3 metadata — and hunting the vault for art that is already inside the file**: When user sends audio recordings, the local cache filenames (`audio_xxx.mp3`) are meaningless. The true title lives in the MP3's ID3 tag. ALWAYS run `ffprobe -v quiet -show_entries format_tags "<path>"` to extract the real title before naming the song.
+- **The song's COVER ART is very often in that same tag** (`PIC` on ID3v2.2, `APIC` on v2.3+). When the collaborator says "the cover art of that picture" about a track he just sent, **extract it out of the file FIRST** — do NOT search the vault or the repo for a candidate image and edit the nearest thing that looks plausible. Guessing a lookalike wastes a render and lands as a hard correction.
+  ```python
+  d = open(path,'rb').read()
+  size = (d[6]<<21)|(d[7]<<14)|(d[8]<<7)|d[9]          # ID3v2 syncsafe tag size
+  tag = d[10:10+size]
+  i = 0
+  while i < len(tag)-6:
+      fid = tag[i:i+3]; fsz = (tag[i+3]<<16)|(tag[i+4]<<8)|tag[i+5]
+      body = tag[i+6:i+6+fsz]
+      if fid in (b'PIC', b'APIC'):
+          enc = body[0]; etype = body[4]               # ptype 3 = front cover
+          term = b'\x00\x00' if enc == 1 else b'\x00'
+          k = body.find(term, 5)
+          open(f'cover_ptype{etype}.jpg','wb').write(body[k+len(term):])
+      i += 6 + fsz
+  ```
+  **Walk the frames using the DECLARED frame size — never scan the tag for JPEG/PNG magic bytes.** A raw-magic scan overruns into the following frame (two 197 KB pictures in one tag produced two overlapping 199 KB extractions, both wrong); slicing by `fsz` gives exact, intact files. Verify each extracted file loads in PIL before using it.
 - **Character count eroding on iterative trim**: After multiple "lower by X" requests, the song can drift below a good size. If user asks for many small trims (100→200→100), watch the total and suggest adding content back if it falls below ~2500 chars for a full 3-verse song.
 - **Edits after final approval**: If a user approves a song ("let's go for it") and then immediately asks for more changes (character trim, add screaming, duet format), treat the approval as "concept approved but needs polish." Keep iterating until they explicitly say stop or switch topics.
 
@@ -861,7 +901,14 @@ Stay patient and offer variations quickly without over-explaining.
 6. **Character count iterative trimming**: user may ask to "lower it by X" repeatedly (100 → 200 → 100). Use `len(song)` in execute_code to check current length. Shorten by: condensing line pairs, dropping filler words ("the", "that", "just"), tightening vocal tone tags, merging short phrases into one line. Each pass trim ~100–200 chars. Do NOT degrade meaning — keep chorus hooks intact. If total drops below ~2500 for a 3-verse song, flag that more cuts will hurt quality.
 7. **Do NOT save to files / hub / GitHub without explicit permission.** Keep the song in the conversation only until the user says "save it" or "add it to the hub." Premature saving frustrates the iterative workflow. After user says "let's go for it" or equivalent approval, still wait for an explicit save instruction — approval and save are separate signals.
 8. **Transcribe user recordings** — when user sends audio files of them singing:
-   - Run `whisper --model base --language en "<audio_path>"` to extract lyrics
+   - Transcribe with **faster_whisper** — the `whisper` CLI is NOT installed on this box:
+     ```python
+     from faster_whisper import WhisperModel
+     m = WhisperModel("base", device="cpu", compute_type="int8")
+     segs, info = m.transcribe("<audio_path>", beam_size=1)
+     for s in segs: print(f"[{s.start:6.1f}] {s.text.strip()}")
+     ```
+     A ~3-minute track finishes well inside a minute at `base`/`int8`; allow a background process if the file is long. This applies to **voice notes as well as songs** — when the audio landed in the profile's `cache/audio/`, transcribe it and read the result before asking the collaborator to retype anything; ask only when the file is genuinely empty or silent.
    - Run `ffprobe -v quiet -show_entries format_tags "<audio_path>"` to get the real song title from ID3 metadata (the MP3's own title tag is authoritative — do NOT guess the title from lyrics alone)
    - Save transcribed lyrics to vault at `Travels/music/<person>-<kebabed-title>.txt`
    - Add the mp3 to GitHub (`music/<person>/`) — watch for `.gitignore` blocking `**/*.mp3`, add `!music/<person>/*.mp3` exception to .gitignore if needed
