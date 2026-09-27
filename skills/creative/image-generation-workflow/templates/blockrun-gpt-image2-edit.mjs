@@ -34,6 +34,11 @@ Painterly semi-realistic anime, 8K, masterpiece. NOT a photograph, NOT a real pe
 No watermark, no text, no extra limbs, no deformed anatomy.`;
 
   console.error('Generating with gpt-image-2 (img2img edit)...');
+  // ⚠️ SIZE — match the SOURCE image's aspect ratio. The render is rebuilt at whatever
+  // aspect you pass, so passing the wrong one silently re-composes the whole scene
+  // (framing, subject scale, negative space). Read it first:
+  //   python3 -c "from PIL import Image;print(Image.open('<src>').size)"
+  // Non-square is fine ('1536x1024' works). Assert the output matches the source.
   const result = await client.edit(prompt, sheetUri, { model: 'openai/gpt-image-2', size: '1024x1024' });
   const url = result.data?.[0]?.url;
   if (url) {

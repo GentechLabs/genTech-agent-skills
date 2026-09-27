@@ -328,6 +328,25 @@ under `skills/` are overwritten nightly: `30 4 * * *` runs `cp -r
 `~/.hermes/profiles/<p>/skills/…` survives at most a day, and its own "verified" claim decays
 with it.
 
+### A digest published for a file the cycle KEEPS WRITING is a phantom (entry 87)
+The entry-82 rule above covers a digest that never existed because the work never happened.
+The mirror case: the work happened, but the digest was measured **mid-flight** — before the
+cycle's own later writes to the same file. Live example: entry 86 published
+`facts/harness-state.md`'s post-render digest as `6138517e1c338907b34a4b05b5f0006e`;
+re-measured across all **130** revisions of that file in git, **no revision has ever carried
+that digest** (pre-render `f08a7e22…`, post-cycle committed `687774e8…`), and the literal now
+appears only inside `facts/critique-log.md` — the claim quoting itself. Cause: the Critic
+re-renders the computed blocks and *then* writes its own `## Last Action` /
+`## Critique Status` / header into the same file, so the object it commits is not the object
+it measured.
+
+**Rule:** publish digests of the **committed revision**, re-measured after the LAST write of
+the cycle: `git show HEAD:<path> | md5sum`. Never publish a digest captured between two
+writes to the file it names. If a figure must be quoted before the file is frozen, label the
+moment ("pre-write md5 … ; committed-revision md5 …"). A de-duplicated check exists and is
+cheap: `for r in $(git log --format=%h -- <path>); do git show $r:<path> | md5sum; done | grep -c <claimed>`
+must be >= 1 for any digest that claims to be a revision of that file.
+
 ### Action-type monoculture
 Track the diversity of RECOMMENDED_ACTION types across the last 7 days. If all actions are the same type (e.g., all `update_script`), flag as CRITICAL even if each individual change is valid. The audited agent is not exploring its action space.
 

@@ -1,7 +1,7 @@
 ---
 name: hub-audit
 description: "Audit GenTech hubs for stale data, broken HTML, and live data issues. Prevents GitHub Pages build failures and ensures dashboards stay fresh."
-version: 1.7.0
+version: 1.9.1
 author: gentech
 tags: [gentech, hub, audit, dashboard, github-pages, html, validation]
 ---
@@ -543,6 +543,15 @@ To prove what a reader actually sees:
 `scripts/render-page-check.js` does this. `threw: None` plus the expected values is the proof.
 A node that should have been removed reads `<unset>` — which is the assertion for the removal itself.
 
+**A RED from this kind of harness is a claim about the HARNESS until proven otherwise.** The check
+depends on a DOM shim, a `fetch` shim and a slice of the page's own source, and each of those is a
+belief that can be wrong — so a failure sends you to fix the page when the fault is in the check.
+Both bugs found while building one such harness were **its own**: a boundary marker that captured
+prose instead of code, and a DOM stub that captured the FIRST definition and never saw the later
+one. Before editing the page, re-read the harness: which exact bytes did it slice, and which stub
+did it actually bind? Then confirm the harness can go RED on a real fault (run it against a
+deliberately broken payload) — a check that has only ever been green is not evidence.
+
 ## Presentation Rules for Hub Pages
 
 Standing preferences for what a hub page shows. These are about **emphasis**, not deletion.
@@ -559,6 +568,28 @@ Standing preferences for what a hub page shows. These are about **emphasis**, no
 - **UNKNOWN, never 0.** Any read that cannot be produced renders `UNKNOWN` *with its reason*. A `0`
   means "measured, and it is genuinely zero". A `0` that means "could not read it" is the most
   repeated bug class in these hubs.
+- **An honest zero must EXPLAIN itself — a bare `$0.00` is indistinguishable from a broken page.**
+  The inverse of the rule above: where a zero is real (capital deployed but out of range, so nothing
+  is being collected), print the zero *with its cause* — `WHY THIS IS $0.00 — the book is OUT OF
+  RANGE, fully deployed and collecting nothing`. A reader cannot tell a true zero from a failed
+  render, so a page that shows one without a reason trains them to distrust every number on it.
+- **One RATE, several horizons — never several independently-computed numbers.** When a page shows
+  earnings per day / week / month, derive all three from a SINGLE rate (multiply it out) and say in
+  the card that they are the same rate at three spans. Three independent estimates can disagree with
+  each other and with the goal shown beside them, and a reader who spots the contradiction stops
+  trusting the whole page.
+- **Reuse the rate that already drives the goal.** If a rank/target figure elsewhere on the page
+  computes its own "per day", do not introduce a second source for the tiles — the page would then
+  print two different per-day numbers. Where a genuinely different second source exists, carry it in
+  the payload with its provenance rather than averaging two things that answer different questions.
+- **Label an estimate as an estimate, in the artifact.** A figure projected from the deployed book is
+  not realised income, and the tile must say *estimated* — the reader is who will otherwise quote it
+  as settled. Pair it with the note that realised fees are the ledger's job.
+- **A request to remove something from the PAGE is not a request to remove the FEATURE.** "Take the
+  auto-compound out, I don't mean the feature, I mean on the page" is a display change: swap the
+  tiles and the card, leave the mechanism and its payload fields untouched. Read the scope from the
+  sentence — *on our pages* is a lens change, never a deletion — and say in the reply which of the
+  two you did.
 - **Put the picture at the top.** For a position/liquidity page the shape chart goes above the
   numeric tiles: what the money looks like first, the numbers underneath.
 
@@ -627,6 +658,17 @@ Use these scripts for automated audits and quick checks.
 
 ## Version History
 
+- **1.9.1** (Council 2026-09-27) — The 1.9.0 material was authored on **gentech-treasury** and never reached the
+  shared core, so three seats ran the older copy until the Council's drift gate caught it. **Promoted here
+  byte-for-byte — no content changed.** The gate was green because every copy of this file is seat-agnostic: the
+  divergence was invisible to anything but a file-by-file hash across all four seats.
+- **1.9.0** — Presentation Rules extended for earnings/rate readouts: an honest zero must explain
+  itself (a bare `$0.00` is indistinguishable from a broken page); one RATE across several horizons
+  rather than several independently-computed numbers; reuse the rate that already drives the goal
+  so the page cannot print two per-day figures; label a projection as *estimated* inside the
+  artifact; and a request to remove something from the PAGE is a display change, never a feature
+  removal. Added: a RED from the render harness is a claim about the HARNESS until proven
+  otherwise (slice boundaries and DOM stubs were the two bugs that made it lie).
 - **1.8.1** (Council 2026-09-26) — Corrected two dangling reference pointers:
   `references/github-pages-build-errors.md` and `references/missing-hub-data-files.md` were named in this
   doc (twice each) but existed on no seat and in no git revision. They are now marked *not written* with a

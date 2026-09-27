@@ -135,3 +135,29 @@ one-line note) so the next person does not "fix" the divergence by syncing it.
 - **The detector:** `fleet_skill_drift_audit.py` (same dir as the sync). Sync answers "does
   the fleet match the core?"; the audit answers "are there files on every seat that should be
   identical and are not?" Run the audit before trusting a green `--check`.
+
+## Lessons that cost a session each (measured 2026-09-26)
+
+**1. A drift gate is a detector, not a cure.** It reached **0**, then read **3 eleven hours
+later on the same day** — every one a seat that had *learned something* since the last pass.
+Regrowth is the expected behaviour of a working fleet, so a green 0 is a **moment, not a
+state**: re-run the audit, then **act** on it. Promoting the newer seat copy *into the core*
+is the only edit that persists; a seat-only edit is reverted at the next sync.
+
+**2. Measure direction per file before promoting — "superset" is a claim, not a fact.** A run
+that had identified five residuals as strict supersets was wrong **twice**: one held genuine
+halves (43 lines only on one seat, 54 only on the other) and another was a union. A blind
+promote would have silently deleted live procedure. Diff **every** candidate, then merge.
+
+**3. Never promote a skill as `SKILL.md` alone.** The sync's unit is the *directory*
+(`rmtree` + `copytree`), so a core copy holding one file while a seat holds five will **delete
+the other four, on a schedule, reported as a routine `updated`.** Copy the whole directory and
+the union of its references.
+
+**4. A size in a hygiene report is not a saving until the inode is checked.** Two overlapping
+false positives in one run: a **symlinked directory** measured as its target (a "648 MB stale
+artifact" was a 0-byte link to the *live* cache — `os.walk` descends symlinked dirs even when
+`dirsize()` skips symlinked files), and a **hardlinked** toolchain counted as a duplicate copy
+(**true reclaimable 0**). Group by inode, check `st_nlink`, and never recommend a delete from a
+size alone.
+

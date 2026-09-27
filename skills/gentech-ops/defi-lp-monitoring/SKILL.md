@@ -1158,6 +1158,176 @@ tasks:
 
 **Key Insight:** Every Gentech task, big or small, needs verification. This turns reactive problem-solving into proactive reliability engineering.
 
+## The Efficiency Score Is A GEOMETRY Score — Never Trade On It
+
+> Promoted into the shared core by the Council, 2026-09-27 — authored on **gentech-treasury**; content
+> unchanged. Two references arrived with it: `references/leg-orientation-semantics.md` and
+> `references/posture-layer-system.md`.
+
+`fee_efficiency.efficiency(price, low, high, shape)` answers one question only: **how close is spot
+to where this shape was BUILT to earn.**
+
+- `bid-ask`: `2 * |n - 0.5| * 100` — peaks at the EDGES. Our 15 bid + 30 ask build puts the junction
+  at `n0 = 15/45 = 33.3%`, so **a correctly-built bid-ask reads ~33% for most of its life** and drops
+  toward 0 when spot sits at the trough.
+- `curve`: `(1 - 2*|n - 0.5|) * 100` — peaks at the CENTRE.
+
+**Two consequences, and both have bitten us:**
+
+1. **The score CANNOT go high while the book is correctly placed.** It is not a fee measure. Read
+   live: a healthy book scored **20.3% as a bid-ask and 79.7% as a curve** at the same instant. That
+   side-by-side is a **TRAP** — the curve only reads high because its formula peaks at the centre,
+   which is where the price happened to be. The moment price moves, the curve is the one that goes
+   dead. `efficiency()` on the ALTERNATIVE shape is informational only and must never be a switch
+   trigger.
+2. **Acting on the score churns the book — but the churn is NOT the expensive part, and saying so is
+   its own bug.** Measured: **27 withdraw+rebuild cycles in one day** across two books ($146 and
+   $28), at 10–76 minute intervals. The reason this is wrong is that the score does not improve after
+   a re-centre — it is a function of WHERE SPOT SITS, not of how the book is built. **Before adding an
+   action to a metric, ask whether the action can move the metric.** A rule that fires correctly on a
+   metric that cannot improve is pure cost.
+
+   **The cost was then measured, and it is one cent.** ~3 txs of gas ≈ `$0.0100` per rebuild against
+   `$1.70–$4.28`/day of fees — **0.2–0.6%**. So do NOT reach for cost as the argument against
+   re-centring: frequent re-centring IS the strategy, and it is precisely what the thin-margin
+   operators skip. **Standing doctrine: "some people don't rebalance as often as we do and that's why
+   they don't make as much money as we do."** The defect is the TRIGGER (a geometry score that cannot
+   improve), never the frequency. **Never argue against an action on cost grounds without computing
+   the cost** — count the events, price the gas, divide by the income the action protects, report the
+   ratio. An unmeasured "this is churning" is the error, not the finding.
+
+**Rules:**
+- The **regime owns the shape** (one-shape-authority). The efficiency trigger may REPORT an
+  alternative shape but must never switch it. A curve is correct only when the market read actually
+  says `RANGE_BOUND` — never as a reaction to a low score.
+- **Trigger on real fee income** (the fee ledger / LFJ fee snapshots), never on the geometry score.
+- **Diagnose low efficiency before acting on it:** at the junction = working as designed; dragged
+  mid-range or one-sided = a real reason to act. `at_designed_geometry()` exists so a spec-built book
+  is not punished for its own baseline — and its tolerance must be **two-sided (a floor AND a
+  ceiling)**, or the same reading describes a perfect edge placement and a merely nominal one.
+- A reader that prints `leg_orientation` must refuse a verdict on unreadable geometry (see
+  `references/leg-orientation-semantics.md`) — a crossed book is not an inverted one.
+- **A CORRECT book renders exactly like a broken one, so the surface must carry the check's verdict.**
+  A bid-ask puts spot in the trough of the V **by design**, and a failed tilt swap produces a
+  similar-looking flat leg — so a human reads a healthy book as "stuck in the middle" and asks for a
+  rebuild of a position that is already right. Any surface that DRAWS the shape must state, from the
+  SAME server-side check that would raise an alarm, whether the shape is **correct / faulty / cannot
+  judge** — one source of truth, never a second opinion re-derived in the page. Keep "cannot judge"
+  its own neutral state: it is neither healthy nor an alarm. Apply the check to EVERY tenant by
+  default; a detector that lies on one book lies on the others, and cross-tenant disagreement is the
+  cheapest way to catch a false alarm you introduced yourself.
+
+## The shape CLASSIFIER must know every width we DEPLOY — and must be able to say "no legal geometry"
+
+`lfj_shapes.shape_of_bins()` names a book's shape from its bin COUNT by nearest match against a fixed
+width table (curve 25 = 12+13, bid-ask 45 = 15+30). **That table is a snapshot, and adaptive band
+width moves the target.** Once `adaptive_geometry()` began tightening widths, the engine deployed
+geometries the classifier's table did not contain — and a real in-house book fell between the two
+entries and was named the WRONG shape, silently, with no error.
+
+- **Enumerate the domain the PRODUCER can emit** — import the geometry module's own constants and vary
+  them to generate the widths — never re-type the table by hand. A hand-copied table goes stale the
+  first time the producer changes.
+- **Return "matches no legal geometry", not the nearest match. A nearest-match classifier never fails;
+  it only lies.** Then every caller must handle the empty answer by falling back to the **recorded**
+  label and SAYING so — an unknown that silently becomes the common shape is the false-value class.
+- **A PARTIAL book is not a wrong shape.** Fewer bins than any legal geometry usually means a leg was
+  partly sold off (normal after a trend), not a malformed position. Render it as its own explained
+  state, never as a mismatch alarm.
+- **ONE classifier, imported by every reader.** A hub/dashboard that re-derives the shape with its own
+  private rule drifts from the engine, and the page then contradicts itself (see
+  `treasury-report-truth`). After touching the classifier, grep every reader for a second
+  implementation — a private `_shape_of`, a local `min(..., key=...)`, a ternary over the shape names —
+  and collapse them onto the shared module. **Never classify by pattern-matching the producer's source
+  text**; import it and call it, or a refactor breaks the reader silently.
+- **Verify both directions:** every deployable width classifies correctly, AND an illegal count returns
+  the explicit unknown rather than a guess.
+
+## The layers DETECT but do not SELECT — the missing posture decision
+
+The doctrine supplies every input and no decision layer: the efficiency trigger can compute an
+alternative shape and then re-deploys the SAME shape, the macro calendar has no automatic switch, and
+there is no posture vocabulary in the code at all. See `references/posture-layer-system.md` for the
+ratified layer system, the finite posture set, and the standing directive behind it (fee efficiency
+prime, sentiment as the first input, protection outranking opportunity). **A doctrine rule can be
+fully written and have no live caller** — verify each one before reporting the capability as present.
+
+## Every Tilt Must Be MEASURED After It Is Attempted — and "Not Lagging" Must Be PROVEN
+
+Two rules that stop a silent no-op and a phantom excuse. Both were settled on-chain.
+
+### 1. The achieved ratio must be READ back, never assumed
+
+Both legs deploy 100% of whatever they hold (`BID_RATIO=1.0` / `ASK_RATIO=1.0`), so the entire
+**directional tilt lives in exactly ONE place: the swap step.** If that swap fails, the book still
+deploys, still reads in-range, and the tilt **silently did not happen** — the position keeps whatever
+composition the market left it, which can be the exact inverse of the intent. Measured: a book being
+built toward 70/30 landed at **98.8% USDC / 1.2% WAVAX** and nothing said so.
+
+- After the tilt swap, read the REAL balances and **print achieved vs target** as an explicit step
+  (`_verify_ratio(...)`, step `[4c]` of the re-center). A post-swap check that can only print "ok" is
+  worthless; it must be able to state the achieved split AND name the divergence.
+- The usual silent blocker is an **allowance wall**, not a price condition: a missing or over-granted
+  approval reverts the swap while the deploy proceeds. Test `_approval_needed` against a sane maximum,
+  not against an exactly-expected value.
+- **A one-sided book is the visible symptom** — a flat leg is the tell that the tilt never swapped.
+- Tilt direction is a user judgment call (`50-50` while still pumping vs `70-30` overnight chop); the
+  CODE's obligation is only to land the requested ratio and prove it did.
+
+### 2. "Not synced" is usually the DISPLAY cadence, not a lagging RPC — tell them apart
+
+A hub data job on `*/10` means the page is **up to 10 minutes behind the chain by design**
+(staleness observed 11s and 77s on consecutive reads). Before blaming RPC lag, ask the same facts of
+**several independent providers** (`swap_readiness.py`): head block, balance, allowance, nonce from
+3–4 endpoints.
+
+| result | meaning | action |
+|---|---|---|
+| values agree across providers, small block spread (2–4) | **NOT lag** — the read is real | gap is elsewhere: display cadence, or a real book defect |
+| values diverge across providers | genuine lag / divergent node | re-read before acting; never rebalance on it |
+| an endpoint errors or returns `0x` | **unreadable, not zero** | treat as no data — never as "flat" |
+
+State which of the three you found. Calling a display-cadence gap "lag" sends the next session
+hunting an infrastructure fault that does not exist; acting on a lagged read is worse.
+
+## Band width must be sized from the MEASURED tape — and the widening lever has a ceiling
+
+A band is a claim about the market: *"price will stay inside me."* Size it from the tape, not from a
+constant, and re-check it — a band narrower than the market's own range guarantees a re-centre and its
+gas for no fee gain.
+
+- **Compare the band's width to the observed RANGE over the window that governs the shape.** Measured:
+a band **4.81%** wide against a tape that had swung **5.44%** over twelve hours — the market could not
+stay inside a band sized for a different scenario, so the book was structurally out of range before it
+was deployed.
+- **Let the SCENARIO pick the width, within bounds:** widen when the book is OUT OF RANGE (it needs
+room), tighten when the tape is RANGEBOUND and earning (same capital, concentrated on the chop that is
+actually happening). Bound it **two-sidedly** — never wider than the shape's default, never narrower
+than a fraction of it — so the function widens the CHOICE without loosening the LIMIT.
+- **Check that the lever CAN move before wiring it.** A widening branch clamped above by a ceiling the
+shape already sits at is inert: it returns the same width for every input and looks like a working
+rule. Measured: one shape's default width WAS the configured maximum, so every widening request came
+back unchanged — **report that honestly rather than emitting an illegal width**, and treat raising the
+ceiling as a user decision, never something the geometry layer grants itself.
+- **Prove the bounds both ways in a test** — one case that widens, one that clamps, one that tightens,
+and the case where the ceiling makes it a no-op.
+
+## A rule that fires on ONE reading is the wrong shape for a structural condition
+
+Some conditions are settled by a single reading because they are arithmetic, not trends — a book
+sitting where it cannot earn is one of them, since no second sample changes the geometry. This is the
+same argument already accepted for out-of-range (*"that is arithmetic, not a trend"*), so a
+confirmation window in front of it is pure delay on a provably-idle position.
+
+**The threshold is PER SHAPE, and one global number is a defect.** A score is meaningless without the
+shape that produced it: for one geometry a mid-range reading is the *worst* case (it earns nothing in
+its own trough) while for another the SAME reading is the design point (it earns at its centre).
+Measured: a single low-efficiency threshold sat below one shape's permanent resting score, so the
+trigger fired on a textbook-correct book every cycle, withdrew it, and rebuilt the identical
+configuration — **the machine punishing its own design.** State the rule separately for each shape,
+against each shape's designed geometry, and drive the pivot off which side of its OWN design point the
+reading sits. A pivot is the prime directive ACTING (change the shape), not a re-centre dressed as one.
+
 ## Pitfalls
 **Pitfalls:**
 - **Git divergence after reader push** — The on-chain reader commits and pushes `defi-data.json` every 10 min. If other processes (gaming hub sync, POE2 sync, nightly hub sync) pushed between reader cycles, the reader's push is rejected as non-fast-forward. The reader's `pull --rebase` can then create merge conflict artifacts (`<<<<<<< Updated upstream`) in the remote file, corrupting the dashboard data. **A second form of corruption:** a `git merge` (not rebase) can commit unresolved conflict markers into the file, with the same result. Fix (rebase scenario): `git fetch origin && git reset --hard origin/main && re-run reader`. Fix (merge-commit scenario — corruption already on origin): `git show <pre-merge-commit>:path > path` then commit+push the clean version. See `references/git-divergence-resolution.md` for both scenarios.
