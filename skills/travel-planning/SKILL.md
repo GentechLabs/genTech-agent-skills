@@ -221,12 +221,30 @@ This could be a travel companion product — most travel apps focus on booking. 
 - Include both current and neighboring country rules (for multi-country trips)
 - Update checklist with visa-specific items (eTravel, proof of funds, insurance)
 
-**Thailand 2026 example (proven June 2026):**
-- 60→30 day visa reduction (May 19, 2026 Cabinet approval)
-- 20,000 Baht cash proof of funds (randomly enforced at immigration)
-- Zero tolerance enforcement (Phuket driving, cultural respect)
-- Mandatory health insurance under review
-- Reference: `Travel/Thailand-2026.md` in vault
+**Destination entry requirements — the 9-question gate:**
+Before a destination is treated as chosen, run it through **`references/destination-entry-requirements.md`**.
+That file is the reusable framework (length+purpose, proof of funds, onward travel, arrival card, autogate
+eligibility, passport validity, season, regional side-effects, currency) with Thailand worked through as the
+example. **A destination with unanswered questions is UNVERIFIED — not "fine by default".**
+
+**Thailand 2026 — CORRECTED 2026-09-27 (this block previously carried two errors):**
+- **30-day visa-free, tourism only — effective 15 September 2026** (four Royal Gazette orders, 31 Aug 2026).
+  ⚠️ The old line here read *"60→30 day visa reduction (May 19, 2026 Cabinet approval)"* — the **Cabinet date is
+  not the effective date**, and quoting it made a rule that was already live in September look proposed.
+  **Record the EFFECTIVE date, not the approval date.**
+- **Proof of funds: 20,000 THB/person, 40,000/family** under the tourist visa exemption (VOA/transit 10,000/20,000).
+  ⚠️ **The old line said "20,000 Baht CASH" — that is WRONG.** Accepted is baht, an equivalent in another
+  currency, **or documents proving access to an equivalent amount** — a bank statement qualifies.
+  **Do not tell Jordan to carry cash he doesn't need to carry.**
+- **TDAC mandatory** — online within **72h before arrival**, no earlier than 3 days out.
+- **Autogates: departure ✅ fully live; ARRIVAL ⚠️ expansion still in progress** (approved in principle 17 Aug
+  2026). A first-time visitor may still need a staffed counter; **a repeat visitor is the better candidate but
+  it is still not a guarantee — carry the proof anyway.**
+- Season: **Nov–Feb is PEAK** (prices up) while floods pull down — **the forces oppose, so a "cheaper because
+  of floods" story is unproven.** Gulf side (Samui/Phangan) rough Nov–Dec.
+- Zero tolerance enforcement (Phuket driving, cultural respect). Health insurance under review.
+- Full detail: `references/destination-entry-requirements.md`
+
 
 ### 6. Cron Job Price Monitoring (Automated)
 
