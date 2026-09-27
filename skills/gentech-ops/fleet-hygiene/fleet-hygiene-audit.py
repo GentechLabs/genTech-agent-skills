@@ -521,6 +521,219 @@ def find_oversized_skills(limit=100_000, warn_at=80_000):
     return findings
 
 
+# ─────────────────────────────────────────── skill-size MAINTENANCE (nightly)
+#
+# Jordan, 2026-09-27: "we should add this to maintenance so it gets looked at every night"
+#
+# The detector above ALREADY ran nightly — that was never the gap. The gap was that it
+# re-reported the same static list every night, so nothing was ever actioned, and two files
+# sat 3 characters from permanently frozen before anyone noticed. A warning that never
+# changes is not maintenance, it is wallpaper.
+#
+# What was missing is the two things a maintenance pass adds over a report:
+#   1. MEMORY  — a ledger, so we can see GROWTH, not just size. A file at 88k that is stable
+#                is fine; a file at 82k that gains 3k a night is the emergency.
+#   2. A DECISION — one ranked list, grouped per skill (not per seat), naming what is next.
+#
+# Grouping is per skill identity, so the same skill on four seats is ONE finding with a
+# count. The ledger stores one entry per skill, so the arithmetic stays honest.
+
+SKILL_SIZE_LIMIT = 100_000
+SKILL_WARN_AT = 80_000
+SKILL_LEDGER = HERMES / "profiles" / "gentech" / "cache" / "skill-size-ledger.json"
+LEDGER_HISTORY_MAX = 90          # ~3 months of nightly points
+ACT_NOW_DAYS = 14                # projected to cross the cliff inside two weeks
+
+
+def _skill_identity(path):
+    """Which skill is this, ignoring which seat it sits on?
+
+    Duplicated across seats by design, so /root/.hermes/profiles/<seat>/skills/<ID>/SKILL.md
+    collapses to <ID>. Archive copies keep their path shape (they are separate files that
+    happen to share a name) but are tagged so they never masquerade as the live skill.
+    """
+    key = path.split("/skills/", 1)[-1]
+    return key
+
+
+def _load_skill_ledger():
+    try:
+        with open(SKILL_LEDGER, encoding="utf-8") as fh:
+            d = json.load(fh)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_skill_ledger(ledger):
+    try:
+        SKILL_LEDGER.parent.mkdir(parents=True, exist_ok=True)
+        tmp = str(SKILL_LEDGER) + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(ledger, fh, indent=1, sort_keys=True)
+        os.replace(tmp, SKILL_LEDGER)      # atomic — a crash mid-write must not
+                                           # leave a corrupt ledger that reads as "no growth"
+    except OSError:
+        pass
+
+
+def _growth_per_day(history, now):
+    """Chars/day from the ledger's own history. None when there is not enough signal.
+
+    Deliberately requires a real time SPAN (>=1 day) so a single run, or two runs minutes
+    apart, cannot invent a rate. A fabricated slope would mis-rank the whole list.
+    """
+    pts = [p for p in history if isinstance(p, (list, tuple)) and len(p) == 2]
+    if len(pts) < 2:
+        return None
+    t0, s0 = pts[0]
+    t1, s1 = pts[-1]
+    days = (t1 - t0) / DAY
+    if days < 1.0:
+        return None
+    return (s1 - s0) / days
+
+
+def build_skill_pressure_maintenance(now=None):
+    """Nightly skill-size maintenance: rank by DANGER, ledger the growth, name what is next.
+
+    Returns a dict so callers can render or assert on it; never deletes or edits anything.
+    """
+    now = now or time.time()
+    items = find_oversized_skills(limit=SKILL_SIZE_LIMIT, warn_at=SKILL_WARN_AT)
+
+    # group per skill identity
+    grouped = {}
+    for it in items:
+        ident = _skill_identity(it["path"])
+        g = grouped.setdefault(ident, {
+            "skill": ident, "seats": [], "sizes": [], "live": 0, "archived": 0,
+            "largest_section": "", "largest_section_chars": 0,
+        })
+        g["sizes"].append(it["size"])
+        g["seats"].append(it["profile"])
+        if "/.archive/" in it["path"]:
+            g["archived"] += 1
+        else:
+            g["live"] += 1
+        if it.get("largest_section_chars", 0) > g["largest_section_chars"]:
+            g["largest_section_chars"] = it.get("largest_section_chars", 0)
+            g["largest_section"] = it.get("largest_section", "")
+
+    ledger = _load_skill_ledger()
+    hist = ledger.get("history") if isinstance(ledger.get("history"), dict) else {}
+
+    rows = []
+    for ident, g in grouped.items():
+        size = max(g["sizes"])                 # a skill is as large as its largest copy
+        g["size"] = size
+        g["chars_to_cliff"] = max(0, SKILL_SIZE_LIMIT - size)
+        g["headroom_pct"] = round(100.0 * g["chars_to_cliff"] / SKILL_SIZE_LIMIT, 1)
+
+        # record this observation, then measure growth over the retained window
+        seen = list(hist.get(ident) or [])
+        if not seen or seen[-1][1] != size:
+            seen.append([now, size])
+        seen = seen[-LEDGER_HISTORY_MAX:]
+        hist[ident] = seen
+
+        rate = _growth_per_day(seen, now)
+        g["growth_per_day"] = None if rate is None else round(rate, 1)
+        if rate and rate > 0:
+            g["days_to_cliff"] = int(g["chars_to_cliff"] / rate)
+        else:
+            g["days_to_cliff"] = None
+
+        if size >= SKILL_SIZE_LIMIT:
+            g["tier"] = "UNEDITABLE"
+        elif rate and rate > 0 and (g["days_to_cliff"] or 9999) <= ACT_NOW_DAYS:
+            g["tier"] = "ACT NOW"
+        elif (rate and rate > 0) or size >= 95_000:
+            g["tier"] = "WATCH"
+        else:
+            g["tier"] = "PARKED"
+        rows.append(g)
+
+    # rank: uneditable first, then soonest projected cliff, then raw size
+    tier_rank = {"UNEDITABLE": 0, "ACT NOW": 1, "WATCH": 2, "PARKED": 3}
+    rows.sort(key=lambda r: (tier_rank[r["tier"]], r["days_to_cliff"] or 10**6, -r["size"]))
+
+    ledger["updated_at"] = now
+    ledger["limit"] = SKILL_SIZE_LIMIT
+    ledger["warn_at"] = SKILL_WARN_AT
+    ledger["history"] = hist
+    _save_skill_ledger(ledger)
+
+    return {
+        "scanned_rows": len(items),
+        "skills": len(rows),
+        "live": sum(1 for r in rows if r["live"]),
+        "archived": sum(1 for r in rows if r["archived"]),
+        "rows": rows,
+        "tiers": {t: [r for r in rows if r["tier"] == t] for t in tier_rank},
+        "ledger": str(SKILL_LEDGER),
+    }
+
+
+def render_skill_maintenance(m):
+    """The nightly report. Short, ranked, and it names ONE next file."""
+    L = []
+    nxt = m["rows"][0] if m["rows"] else None
+    L.append("🧹 SKILL-SIZE MAINTENANCE — nightly")
+    L.append("")
+    L.append(f"   {m['skills']} skills over {SKILL_WARN_AT // 1000}k "
+             f"({m['live']} live, {m['archived']} archived) "
+             f"across {m['scanned_rows']} files.")
+    if nxt:
+        d = nxt["days_to_cliff"]
+        rate = nxt["growth_per_day"]
+        if rate:
+            when = (f"projected to cross in ~{d}d" if d is not None
+                    else "growing, but not fast enough to project a crossing")
+            when += f" at +{rate:,}/day"
+        else:
+            # No rate is NOT the same as no growth. On the first run (or the first run after
+            # a gap wider than the retained history) there are not two readings a day apart,
+            # so no slope can honestly be computed yet. Saying "no measured growth" would
+            # read as "this file is stable" — a claim we have not earned.
+            when = "baseline taken — growth rate available after the next nightly reading"
+        L.append(f"   NEXT DUE: {nxt['skill']}")
+        L.append(f"      {nxt['size']:,} chars — {nxt['chars_to_cliff']:,} from the cliff "
+                 f"({nxt['headroom_pct']}% headroom); {when}")
+    L.append("")
+
+    for tier in ("UNEDITABLE", "ACT NOW", "WATCH"):
+        rows = m["tiers"][tier]
+        if not rows:
+            continue
+        L.append(f"── {tier}  ({len(rows)})")
+        for r in rows:
+            seats = f"{r['live']} live seat(s)" + (f", {r['archived']} archived" if r["archived"] else "")
+            extra = ""
+            if r["growth_per_day"]:
+                extra = f" — +{r['growth_per_day']:,}/day"
+                if r["days_to_cliff"] is not None:
+                    extra += f", crosses in ~{r['days_to_cliff']}d"
+            L.append(f"   • {r['skill']}")
+            L.append(f"       {r['size']:,} chars, {r['chars_to_cliff']:,} to the cliff"
+                     f" ({seats}){extra}")
+            if r["tier"] == "UNEDITABLE" and r["largest_section"]:
+                L.append(f"       largest ## section: \"{r['largest_section']}\" "
+                         f"({r['largest_section_chars']:,} chars) — extraction candidate")
+        L.append("")
+
+    parked = m["tiers"]["PARKED"]
+    if parked:
+        L.append(f"── PARKED  ({len(parked)}) — warned by size, but stable and/or well clear")
+        L.append("   " + ", ".join(f"{r['skill']} ({r['size']:,})" for r in parked[:8])
+                 + (f" … +{len(parked) - 8} more" if len(parked) > 8 else ""))
+        L.append("")
+
+    L.append(f"   Ledger: {m['ledger']}")
+    L.append("   (nothing was edited or deleted — this ranks the work. Splitting is a human decision.)")
+    return "\n".join(L)
+
+
 def selftest():
     """
     Plant a real failure for each detector and prove it is caught.
@@ -725,6 +938,65 @@ def _selftest_body():
         hl_a.unlink(missing_ok=True)
         hl_b.unlink(missing_ok=True)
 
+    # 5. SKILL-SIZE MAINTENANCE: the ranking and growth logic must be able to go RED.
+    #    Three separate claims get planted failures, because each is a way the maintenance
+    #    pass could be confidently wrong: (a) it must not invent a growth rate from a single
+    #    observation, (b) it must rank a fast-growing file ABOVE a larger stable one, and
+    #    (c) it must project a crossing date from a real measured slope.
+    try:
+        lroot = Path("/root/.hygiene-maint-history.json")
+        one_point = {"history": {"x/SKILL.md": [[NOW, 82_000]]}}
+        r_one = _growth_per_day(one_point["history"]["x/SKILL.md"], NOW)
+        # two points minutes apart must ALSO not yield a rate (needs a real day of span)
+        r_tight = _growth_per_day([[NOW - 600, 80_000], [NOW, 84_000]], NOW)
+        # a real 4-day slope of +1000/day
+        r_real = _growth_per_day([[NOW - 4 * DAY, 80_000], [NOW, 84_000]], NOW)
+        ok_a = r_one is None and r_tight is None and r_real is not None
+        print(f"  5a. growth needs real span -> {'RED ✓' if ok_a else 'FAILED (invents a rate)'}"
+              f"  [1pt={r_one}, 10min={None if r_tight is None else round(r_tight,1)}, "
+              f"4d={None if r_real is None else round(r_real,1)}]")
+        ok &= ok_a
+
+        # (b)+(c) ranking: a small fast-grower must beat a big stable file
+        fast = {"size": 84_000, "chars_to_cliff": 16_000, "growth_per_day": 2_000,
+                "days_to_cliff": 8, "tier": "ACT NOW", "skill": "fast/SKILL.md",
+                "live": 1, "archived": 0, "largest_section": "", "largest_section_chars": 0,
+                "headroom_pct": 16.0}
+        big = {"size": 97_000, "chars_to_cliff": 3_000, "growth_per_day": None,
+               "days_to_cliff": None, "tier": "WATCH", "skill": "big/SKILL.md",
+               "live": 4, "archived": 0, "largest_section": "", "largest_section_chars": 0,
+               "headroom_pct": 3.0}
+        ranked = sorted([big, fast], key=lambda r: (
+            {"UNEDITABLE": 0, "ACT NOW": 1, "WATCH": 2, "PARKED": 3}[r["tier"]],
+            r["days_to_cliff"] or 10**6, -r["size"]))
+        ok_b = ranked[0]["skill"] == "fast/SKILL.md"
+        proj = int(fast["chars_to_cliff"] / fast["growth_per_day"])
+        ok_c = proj == 8
+        print(f"  5b. fast-grower ranks first -> {'RED ✓' if ok_b else 'FAILED (bigger wins)'}"
+              f"  [first={ranked[0]['skill']}]")
+        print(f"  5c. projects the crossing    -> {'RED ✓' if ok_c else 'FAILED (bad date)'}"
+              f"  [16,000 / 2,000 per day = {proj}d]")
+        ok &= ok_b and ok_c
+
+        # (d) the ledger must not lose a reading, and must not duplicate an unchanged one
+        saved = SKILL_LEDGER
+        globals()["SKILL_LEDGER"] = lroot
+        hist = {"x/SKILL.md": [[NOW - DAY, 82_000]]}
+        _save_skill_ledger({"history": hist})
+        back = _load_skill_ledger()
+        ok_d = back.get("history", {}).get("x/SKILL.md") == [[NOW - DAY, 82_000]]
+        print(f"  5d. ledger round-trips        -> {'RED ✓' if ok_d else 'FAILED (lost data)'}")
+        ok &= ok_d
+        globals()["SKILL_LEDGER"] = saved
+    except Exception as e:
+        print(f"  5. skill maintenance      -> FAILED ({type(e).__name__}: {e})")
+        ok = False
+    finally:
+        try:
+            Path("/root/.hygiene-maint-history.json").unlink(missing_ok=True)
+        except OSError:
+            pass
+
     print()
     print("  RESULT:", "ALL DETECTORS CAN GO RED ✓" if ok else "SOME DETECTORS ARE STUCK GREEN ✗")
     return 0 if ok else 1
@@ -770,6 +1042,16 @@ def main():
         sections.append(("OVERSIZED SKILL.md (>=100k = UNEDITABLE; >=80k = warn)", sk))
     except Exception as e:
         errors.append(f"oversized_skills: {e}")
+
+    # Skill-size MAINTENANCE (Jordan, 2026-09-27: "add this to maintenance so it gets looked
+    # at every night"). The section above re-reported a static list nightly and nothing was
+    # ever actioned. This adds the ledger + ranking so the report names ONE next file and its
+    # measured growth rate, instead of restating the same 22 lines forever.
+    maint = None
+    try:
+        maint = build_skill_pressure_maintenance()
+    except Exception as e:
+        errors.append(f"skill_maintenance: {e}")
 
     total_findings = sum(len(s[1]) for s in sections)
     reclaimable = sum(f.get("reclaimable", 0) for s in sections for f in s[1])
@@ -817,6 +1099,13 @@ def main():
     if reclaimable > 0:
         print(f"   TOTAL RECLAIMABLE IF ACTED ON: {humansize(reclaimable)}")
         print("   (nothing was deleted — this only looks. Deletion is a human decision.)")
+    if maint is not None and maint["rows"]:
+        # NOT gated on --quiet: in this script `--quiet` only suppresses the "clean"
+        # one-liner, and the nightly cron job passes --quiet. Gating here would have
+        # rendered the maintenance section NOWHERE — which is precisely the class of bug
+        # (a report that can never be seen) this section exists to prevent.
+        print()
+        print(render_skill_maintenance(maint))
     if errors:
         print("\n   ⚠ DETECTOR ERRORS — results above are INCOMPLETE:")
         for e in errors:

@@ -881,6 +881,60 @@ unset GITHUB_TOKEN && gh auth status   # falls back to hosts.yml
 ```
 The token sources (env → secrets/github-token → gh auth token) must stay in sync; the `.env` copy is the one that silently poisons every Hermes session. Always verify with `gh api user` (identity check) rather than trusting `gh auth status` (which lies when env shadows hosts.yml).
 
+### Pitfall 18: `git add -A` on a multi-writer tree sweeps another seat's in-flight work
+
+**Symptom:** A commit you wrote shows files you never touched — another agent's script, a log, a half-wired test.
+The message is about your work; the diff is partly theirs. Worst case: a *money-path* file lands in a
+commit that a job wrote automatically and neither agent chose.
+
+**Cause:** The vault (`/root/vaults/gentech`) is a **single shared working tree** that gentech,
+gentech-treasury, gizmo and pixel all write to — and they all author commits as the **same git identity**,
+so a swept file is indistinguishable from the sweeper's after the fact. `git add -A` stages whatever
+anyone has in flight. This is not a merge conflict; it is a **transaction nobody intended**.
+
+**Rule:** `git add -A` is never safe on a shared vault. Name your paths.
+
+Use the purpose-built tool:
+```bash
+python3 /root/.hermes/scripts/vault-commit.py -m "msg" -- <path> [<path> ...]
+python3 /root/.hermes/scripts/vault-commit.py --status    # show foreign dirty files, commit nothing
+```
+It refuses to run without an explicit path list, refuses paths that look like another writer's live work
+(unless `--force`), and prints every dirty file it did **not** commit — so nothing is swept or forgotten silently.
+
+**For scripts that must commit automatically,** drive the exclusion from the ownership registry rather than
+hardcoding names, so it cannot drift and it binds whoever edits the registry next:
+```python
+import json
+excl = ""
+try:
+    with open(f"{VAULT_DIR}/00-System/FILE-OWNERSHIP.json") as f:
+        for p in json.load(f)["money_path"]["files"]:
+            excl += f" ':(exclude)10-Labs/agent-kit-self-tracking/{p}'"
+except Exception:
+    excl = " ':(exclude)10-Labs/agent-kit-self-tracking/'"   # fail CLOSED, never sweep blind
+subprocess.run(f"cd {VAULT_DIR} && git add -- .{excl} && git commit -m '{msg}'", shell=True)
+```
+Then print what was left behind. **A sweep must never be silent.**
+
+**Prove it with a negative control** — on a scratch repo, dirty one money-path and two ordinary files:
+```
+OLD (git add -A):        STAGED  ordinary_a, money_path_file, ordinary_b
+NEW (registry exclude):  STAGED  ordinary_a,                   ordinary_b
+```
+If the money-path file appears in the NEW staged set, the exclusion string is wrong (check the pathspec
+is relative to the repo root, and that `-- .` is present — `git add -- <excludes>` alone stages nothing useful).
+
+**Why it is worse than it looks:** on the money path a half-written file that gets committed is not a
+conflict to resolve later — it is the state of a system that signs transactions. The blast radius is a
+transaction, not a merge.
+
+**Session source:** Sep 27, 2026 — `nightly-maintenance.py` (04:30 UTC cron) ran `git add -A` on the vault
+while Treasury had `sync-treasury-scripts.sh` + an untracked test in flight; the job would have committed
+and pushed them under `nightly: <date>`. Found during a self-audit against the new file-ownership rule.
+Two earlier commits had already swept Treasury's work under an unrelated message — content intact,
+attribution wrong.
+
 ### Pitfall 16: One-shot cron sweeps for rate-limited GitHub work
 
 When a batch of GitHub API work (repo create + fork + PR + list) is blocked by the GraphQL bucket, don't retry in-session. Schedule a one-shot cron for ~3 min after the bucket reset (`gh api graphql -f query='query { rateLimit { resetAt } }'` gives the exact time) with the full task list, `unset GITHUB_TOKEN` as step 0, and a verify-after-every-task requirement. Report remaining quota at the end. This turns a rate-limit wait into an autonomous batch.
