@@ -64,6 +64,29 @@ right**. Make simulation-vs-formula agreement the acceptance test.
    refuse to pass on zero. Distinguish the zero states — no source dir at all
    (misconfiguration) vs source dir genuinely empty (a real clean) vs files
    present but unreadable (a silent miss). Only the middle one is a pass.
+   **The near-miss variant — a search that finds nothing because the string was slightly
+   wrong.** Measured twice in one session, from both sides: Treasury searched their own jobs for
+   `x402` and got 0 (nearly reporting our x402 work did not exist); asked to explain why a
+   sentinel looked dead, a `grep 'owner exited before finishing'` returned 0 while the DB
+   literally contained `owner exited before a durable terminal state` — the real text, one clause
+   longer. The tool answered correctly and the ANSWER WAS MEANINGLESS, because "matches 0" was
+   read as "no such thing exists". *Fix:* a negative result from a PATTERN search is never
+   evidence of absence — print the count of things EXAMINED, and when the count is 0 say
+   "0 matched (this proves nothing about existence)", never "none found". Re-run with a shorter
+   anchor before concluding anything is missing.
+   **The mirror variant — a pattern rule cannot adjudicate prose that is ABOUT the pattern.**
+   Same class, opposite direction: here the search finds things and the FINDINGS are meaningless.
+   Measured 2026-09-28, with ground truth known: a thank-you note that *explains why keyword
+   ask-detection fails* is itself flagged as owing an answer by the very rules it describes —
+   `your call` (L20, praise: "your call to merge the union was right"), plus `can you` / `please` /
+   `?` where the note is **quoting the false positives it is describing**. Both the narrow and the
+   wide net flag it. The reverse also held the same night: the pixel note whose header read
+   `1 question for you` was missed because no list contained that phrase.
+   *Both directions are the same defect:* a document that DISCUSSES asks contains the vocabulary of
+   asks, and a document that merely MENTIONS a question reads exactly like one that asks it.
+   *Fix:* never parse intent from prose. A closure's truth lives in an explicit machine field
+   (outcome + return_note), or in a human read — not in a regex over sentences. If a rule must scan
+   prose, it may only ever RAISE FOR REVIEW, never decide.
 9. **partial-coverage green** — the aggregate hides a dead component. A check
    that passes on a TOTAL can still be covering 3 of 4 sources: one source's dir
    moves, empties, or becomes unreadable, the others keep the total non-zero, and
@@ -264,6 +287,16 @@ python3 reader.py >"$OUT" 2>"$ERR"; rc=$?
   an INFO line that is never AND-ed into the result — **and wrap it**, or an exception in
   an informational probe becomes a failure and the false red comes back through another
   door.
+- **Prove hermeticity by running the suite TWICE, nothing changed in between.** A test can
+  look hermetic and still escape its sandbox: if any helper derives a path by walking up
+  from the fixture (e.g. `closure_path()` walking three dirs to find the vault), a fixture
+  placed too high resolves to the SHARED scratch dir — so run 1 is 11/11 and run 2 is 9/11
+  with nobody having touched the code. Interacting writes are the tell: a
+  guard-DISABLED branch from case 4 survives and poisons case 1 on the next run. So the
+  negative control can manufacture the very failure that looks like a broken merge.
+  **Idempotence is part of hermeticity** — one clean run proves nothing. Assert the
+  sandbox explicitly (`closure_path(fixture)` must land INSIDE the temp dir) so the
+  layout cannot silently regress, and run it three times consecutively before claiming it.
 - **After hardening a check, re-run the negative control.** A hermeticity fix can quietly
   make the suite unfalsifiable — green on a broken tool. Regress the thing the check
   guards, in a copy, and confirm the suite still goes RED.

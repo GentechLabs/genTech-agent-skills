@@ -109,7 +109,7 @@ otherwise — check the files before agreeing it is done.
 ```bash
 for p in <profiles>; do
   printf "%-18s " "$p"
-  python3 -c "import yaml;d=yaml.safe_load(open('/root/.hermes/profiles/$p/config.yaml'));\
+  python3 -c "import yaml;d=yaml.safe_load(open('REDACTED-PROFILES_DIR/$p/config.yaml'));\
 print(d['model'].get('provider'), (d.get('fallback_providers') or [{}])[0].get('provider'))"
 done
 ```
@@ -736,10 +736,10 @@ The `.env` file MUST use `ZAI_API_KEY` (not `GLM_API_KEY`):
 
 ```bash
 # .env - CORRECT
-ZAI_API_KEY=301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
+ZAI_API_KEY=REDACTED-GLM_API_KEY
 
 # .env - WRONG (config.yaml references ${ZAI_API_KEY}, won't find this)
-GLM_API_KEY=301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
+GLM_API_KEY=REDACTED-GLM_API_KEY
 ```
 
 **Renewal Pattern:**

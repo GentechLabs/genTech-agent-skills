@@ -63,9 +63,47 @@ is not written down is an intent nobody can triage against.
 1. **READ** every job's recorded outcome — `last_status`, `last_error`, `last_delivery_error`,
    `failure_streak`, `enabled`. These fields already exist; **a field nobody reads is not a
    monitor, it is a diary.**
-2. **HEAL** — re-fire a failed **SCRIPT** job **once**, immediately. Most failures are transient
+2. **CLASSIFY** — apply self-exemption, then the paused-broken rule, then the healthy-silent rule
+   before any heal or speak step. (See the sub-rules below for the exact ordering.)
+3. **HEAL** — re-fire a failed **SCRIPT** job **once**, immediately. Most failures are transient
    (lagging RPC, rate limit, node timeout) and the retry clears them.
-3. **SPEAK** only about what healing could not fix — and only once per distinct problem (rule 3).
+4. **SPEAK** only about what healing could not fix — and only once per distinct problem (rule 3).
+
+#### The classification rules (applied in this order)
+
+**PAUSED IS NOT RETIRED — a disabled job with a failure record is still a finding.**
+
+`enabled: false` ends retries, not accountability. A paused job that left a `failure_streak`
+behind it is a broken thing we stopped trying to fix. Report it as `PAUSED_BROKEN` with its intent
+and last error, **unless** the pause carries an explicit, machine-readable reason that says it was
+deliberately retired (`archived`, `deprecated`, `migrated`, `user_paused`).
+
+Why: a sentinel that skips every disabled job cannot distinguish "we turned this off on purpose"
+from "this thing broke, we hit pause, and now it rots silently." The latter is how a money cron
+disappears for three days while everyone assumes it is healthy.
+
+**Classification order, hard:**
+1. `is_self()` — sentinel/health jobs: exempt, never report on itself.
+2. `enabled == false`:
+   - reason in `{"archived", "deprecated", "migrated", "user_paused"}` → **silent** (legitimate retirement);
+   - any other reason or no reason, and `failure_streak > 0` or `last_status == "error"` → **PAUSED_BROKEN finding**;
+   - otherwise → silent.
+3. `last_status == "ok"` and no error → silent.
+4. `heal` branch — retry once if script exists and idempotent.
+5. Remaining unhealed failures → finding.
+
+The PAUSED_BROKEN branch must run **before** the heal branch, so a paused job can never be
+re-fired. A refactor that moves the `is_self()` or pause checks below the heal call re-introduces
+the exact outage this ordering prevents. Pin the ordering with a test that asserts `is_self()` and
+`PAUSED_BROKEN` return before the heal call site.
+
+**Rule: every deliberate pause must declare its reason.** A pause with no reason is a bug report
+waiting to happen. Write the reason into the job's metadata (`pause_reason`) or registry entry at
+the same moment you pause it; a reason added afterwards is indistinguishable from a cover-up.
+
+**Rule: a PAUSED_BROKEN finding uses the same debounce as any other finding.** It is not a special
+class that re-alerts every tick; it alerts once, then stays silent until the condition changes or
+the job is unpaused and fails again.
 
 **Rule: HEAL BEFORE SPEAKING, and treat a silent successful retry as the ideal outcome.** The
 fleet repaired itself and nobody was woken up for it. An alarm that fires on a transient blip
@@ -225,3 +263,9 @@ python3 …/cron_health_fleet.py --reset-state          # forget everything
   reporting the same problem, each of which then goes quiet on its own. One state, one voice.
 - **A new file not in the sync manifest** never reaches the executed copy; it looks written and
   does nothing. Enrol the tool, the wrapper and the registry together, then verify md5.
+- **Skipping disabled jobs blindly** — `enabled: false` hides both deliberate retirement AND a
+  broken job we paused in panic. Distinguish them by `pause_reason`; report the latter as
+  `PAUSED_BROKEN`.
+- **Moving the classification checks below the heal call** — a refactor that reorders `is_self()`
+  or `PAUSED_BROKEN` after `heal()` can re-fire a paused or non-idempotent money job. Pin the
+  ordering with a test that targets the heal **call site**, not the function definition.

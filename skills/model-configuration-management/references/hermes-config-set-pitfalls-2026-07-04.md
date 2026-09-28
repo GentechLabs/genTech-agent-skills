@@ -31,7 +31,7 @@ The CLI added entries at the **bottom of the file** (lines 765-798) as root-leve
 
 # Lines 765-798 (root level - DUPLICATE)
 zai:
-  api_key: 301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
+  api_key: REDACTED-GLM_API_KEY
   base_url: https://open.bigmodel.cn/api/paas/v4/
   type: openai_compatible
 

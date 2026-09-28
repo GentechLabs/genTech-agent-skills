@@ -19,6 +19,7 @@ End every evaluation with a clear "borrow vs spit out" verdict — not a generic
 2. **Identify the core mechanisms** — what primitives does it actually implement? Name them concretely (e.g. "delegation scope narrowing", "trust scoring", "quota-aware should-run", "evidence lineage").
 3. **Map each mechanism against our stack** — a table is clearest: `| primitive | we already have | borrow? |`. Mark `✅ already have` vs `🔴 real gap` vs `🟡 partial`.
 4. **Verify it actually runs** — don't just read it. If self-contained, run it (`python3 file.py` or the repo's run command) to confirm before calling it real. A repo that "reads well but doesn't run" is a red flag. For a *skill/prompt* repo (agents, personas, curricula) "runs" means read the operational file end to end — the SKILL.md or system prompt is the artifact, and the enforcement text inside it is where the mechanism lives.
+5. **Cross-check the math / invariants independently** — for any code that computes numbers (finance, risk, rates, percentages, APR, runway, PnL), **re-derive the formula from the docstrings and sweep it against the shipped code with your own probe.** A green test suite is only evidence that the test author believed the same thing; a randomized invariant sweep is evidence the code actually conserves the property. Report the number of cases and any mismatches explicitly. A mismatch is a `100×` unit discrepancy more often than a sign error, so check units first.
 5. **Check whether it's really a product for us, not just a tool** — a shared artifact with our exact feature can be a **competitor's implementation or a customer's requirement list** rather than a build candidate. Name which one before assigning work.
 5. **Borrow / spit out verdict** — be explicit:
    - **BORROW (the meat):** the 1-3 mechanisms worth taking into our design. Name each + where it wires in (skill, queue item, module).
@@ -60,11 +61,18 @@ that yields a *different* set of "meat" items means the first pass was associati
 principled. Pick the frame (does it make us decide alone? what do we already sell?) and let it
 determine the keep-list, so two passes agree.
 
+**Pitfall: unit inconsistency across sibling modules is the most dangerous kind of correctness.**
+Two functions in the same org, both named `apr`, returning a FRACTION in one module and a
+PERCENT in the other is not a test failure — it is a semantic failure. Always compare units
+across adjacent outputs before calling the math verified, and state the unit explicitly when
+reporting a number.
+
 ## Key pitfalls
 - **Empty allow-list must mean DENY, never ALLOW.** Caught a real security bug in awesome-llm-apps' trust layer: an empty `allowed_actions` set originally read as "all allowed" (least-privilege hole). In ANY delegation/permission logic we build, an empty allow-list must deny.
 - **Borrowing a mechanism ≠ adopting the dependency.** Often the right move is porting a ~200-line core into our own design (LoopX state kernel, trust-layer core), not installing their tool. Keeps us independent and avoids building around corporate-owned or churn-heavy projects.
 - **Verify the tool actually solves the problem before recommending a key/cost.** e.g. kroger-mcp still needed a Kroger API key — it wrapped the blocker, didn't remove it. Don't oversell a repo with an external credential gate the user can't pass.
 - **Re-anchor on the real problem.** When Jordan clarifies the true goal (e.g. "the Cookbook is about substitutions, not grocery prices"), re-evaluate against the real problem, not the initial framing.
+- **When you correct your own finding, say so in the report — and update the skill, not just the log.** A wrong suspicion (e.g. "their CI is red") that you later disprove should be **withdrawn publicly** and the corrected conclusion stated. Do not leave the wrong claim in the transcript for the next agent to read as fact.
 
 ## Output shape Jordan expects
 Lead with the verdict, not the architecture explainer:
@@ -79,6 +87,11 @@ Lead with the verdict, not the architecture explainer:
 - Mechanisms worth adding to our design → `agent-handoff-enforcement`, `considerations.md`, build queue, or a new spec under `09-Green Room/specs/`.
 - Deep-dive analysis notes → `09-Green Room/specs/{topic}-deep-dive.md` (or `03-Projects/Research/`).
 - Vault changes should follow the wiring: one link can trigger multiple vault files (spec + queue item + skill patch).
+
+## Support references
+- `references/vault-routing-file.md` — how to route vault writes efficiently before scanning.
+- `references/port-and-verify-mocked-backend.md` — porting a mechanism and testing it against a mocked backend without API cost.
+- `references/independent-math-verification.md` — when the repo computes numbers: re-derive, sweep, and check units across modules.
 
 ## Working examples (Aug 3, 2026)
 - **LoopX** (state kernel / control plane, 680★) → borrowed: explicit user gates, quota-aware `should-run`, evidence-lineage stubs; rejected: the tool + Feishu projection + Bytedance-adjacent control plane. Wired into `agent-handoff-enforcement` skill; spec at `09-Green Room/specs/loopx-a2a-handoff-borrow.md`.

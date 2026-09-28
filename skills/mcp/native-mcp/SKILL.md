@@ -458,7 +458,7 @@ mcp_servers:
   company_api:
     url: "https://mcp.mycompany.com/v1/mcp"
     headers:
-      Authorization: "Bearer sk-xxxxxxxxxxxxxxxxxxxx"
+      Authorization: "Bearer REDACTED-OPENROUTER_API_KEYxx"
       X-Team-Id: "engineering"
     timeout: 300
 ```
@@ -485,7 +485,7 @@ mcp_servers:
   company_api:
     url: "https://mcp.internal.company.com/mcp"
     headers:
-      Authorization: "Bearer sk-xxxxxxxxxxxxxxxxxxxx"
+      Authorization: "Bearer REDACTED-OPENROUTER_API_KEYxx"
     timeout: 300
 ```
 
