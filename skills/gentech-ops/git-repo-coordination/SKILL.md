@@ -935,6 +935,49 @@ and pushed them under `nightly: <date>`. Found during a self-audit against the n
 Two earlier commits had already swept Treasury's work under an unrelated message — content intact,
 attribution wrong.
 
+### Pitfall 19: Your staged work can be ABSORBED by another seat's commit, and your own commit then reports success while doing nothing
+
+**Symptom:** You stage a file, run `git commit`, see no error, and report a commit hash — but your commit message
+**does not exist in history anywhere** (`git log --all --grep "<your msg>"` → 0), and `git log -1 --format=%s HEAD`
+shows *another seat's* message. Your file content IS present, committed under someone else's commit.
+
+**Cause:** Pitfall 18 in reverse, on the same shared tree. `git add <path>` then `git commit` is **not atomic across
+writers**. If another agent (all four seats commit as the *same* git identity) runs a commit between your `add` and
+your `commit` — and their command stages the whole index, e.g. `git commit` with no path list or `git add -A` — the
+commit picks up **your already-staged file** and records it under **their** message. Your own `git commit` then finds
+an empty index and exits 1. Measured: my `add` at 02:23:57, their commit at 02:24:00 carrying my file; my commit
+message: 0 occurrences in history.
+
+**Why it goes unnoticed — two independent traps:**
+1. `git commit` exits **1** on an empty index, but if you pipe it (`git commit ... | head -1`), `$?` reads the
+   *pipe's* exit (0), not git's. A piped exit code is not git's exit code. Never read `$?` after a pipe.
+2. Printing `$(git rev-parse --short=9 HEAD)` labelled "committed:" proves only that **HEAD exists** — not that the
+   commit is yours, not that it happened. It is a *plausible-looking* receipt for a no-op.
+
+**Rule:** After any commit, verify the commit is *yours*, not merely that a HEAD exists:
+```bash
+git log -1 --format=%s | grep -qF "<a distinctive phrase from your message>" \
+  && echo "OK: my commit landed" \
+  || echo "FAILED: my commit was absorbed or did not happen — check git log -1 --format=%s"
+```
+Then confirm **content** landed too (`git show HEAD:<path> | grep <your change>`) — content on the remote under a
+foreign message is recoverable; a message-only check on an empty commit is not.
+
+**Prevention:** Use `vault-commit.py` (Pitfall 18) and never leave work merely *staged* across a gap — stage and
+commit in the **same command**, and re-check the message afterwards. A staged file is not a safe resting state on a
+multi-writer tree; it is an open invitation to be swept.
+
+**The message check is the protection — command atomicity is only damage reduction.** Reproduced live
+(2026-09-28, Pixel seat): the command was already `git add <path> && git commit -m "…"`, staged and committed
+together, and it **still** lost the race — `&&` chains two processes and the gap between them is the window. A
+peer's commit swept the staged file; the local `git commit` exited 1; the message had **0 occurrences** in
+history. The content was safe; only the check revealed it. So run this after **every** commit — it is the
+load-bearing step, not the single-command form:
+```bash
+git log -1 --format=%s | grep -qF "<phrase from my message>" && echo OK || echo "FAILED: absorbed"
+```
+Prefer `vault-commit.py`, which reports `LEFT UNTOUCHED` for other writers' paths and prints the hash it made.
+
 ### Pitfall 16: One-shot cron sweeps for rate-limited GitHub work
 
 When a batch of GitHub API work (repo create + fork + PR + list) is blocked by the GraphQL bucket, don't retry in-session. Schedule a one-shot cron for ~3 min after the bucket reset (`gh api graphql -f query='query { rateLimit { resetAt } }'` gives the exact time) with the full task list, `unset GITHUB_TOKEN` as step 0, and a verify-after-every-task requirement. Report remaining quota at the end. This turns a rate-limit wait into an autonomous batch.

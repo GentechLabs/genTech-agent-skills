@@ -669,6 +669,34 @@ while `str.count(...)` returned **10**. Always verify with the anchored form
 (`grep -c '^## Critique Entry'`, or `sum(1 for l in text.splitlines() if l.startswith('## Critique Entry'))`)
 and report the anchored number.
 
+### Verify the class you claim, not the classes that are easy to check (entry 88)
+A checker that audits N-1 of N cell classes while printing a universal success string is
+worse than no checker: it converts "not measured" into "verified". Live example (entry 88):
+the harness-state refresh wrapper shipped in entry 86 read back census, status timestamps
+and Next Events rows, and printed `all computed cells match the live store` — but
+`grep -c 'provider' <script>` was **0**. The Provider cell is the one cell class commit
+`88e6229` had already falsified on 4/4 rows while asserting byte-equality (entry 75), i.e.
+the exact defect the table was made computed to prevent. Falsified live: with the refreshers
+stubbed so the checker could not repair the fault, four Provider cells set to
+`FALSIFIED-PROVIDER` produced the universality sentence and **rc=0**.
+
+**Rule:** every success string enumerates what was actually read
+(`census + status + next-events + provider cells all match`), never a universal claim. And
+for each rendered cell class, prove the checker can fail: perturb one cell in a scratch copy
+with the refreshers stubbed and require a non-zero rc. A class with no falsification
+control is not covered, whatever the message says.
+
+**Corollary — a near-miss fix is a finding, not a private correction.** The first edit here
+landed in `/root/.hermes/scripts/provider-auto-switch.py`; the runtime executes
+`$HERMES_HOME/scripts/provider-auto-switch.py`
+(`hermes_cli/cron.py:562-565` `_scripts_dir_for_cron() → CRON_DIR.parent/"scripts"`;
+`tools/cronjob_job_args.py:365-384` `_validate_cron_script_path`). Same filename, same
+`systemctl` call, same `.bak-` lineage — different file, and the two had drifted for 11 days
+(the live copy lacked a guard the other had). **Before publishing any "FIXED" claim on a
+script, read `md5sum $HERMES_HOME/scripts/<name>` on the path the resolver names, not on the
+path you happened to edit.** If two copies of one script exist, gate/fix both and publish
+both digests — and treat the drift itself as a finding.
+
 ## Tone Rules
 - No padding: "great work", "going well", "looks good" — FORBIDDEN
 - Doubt → CRITICAL

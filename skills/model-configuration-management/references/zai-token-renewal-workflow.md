@@ -35,10 +35,10 @@ The `.env` file is at: `${PROFILE_DIR}/.env`
 
 ```bash
 # CORRECT
-ZAI_API_KEY=301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
+ZAI_API_KEY=REDACTED-GLM_API_KEY
 
 # WRONG (config won't find it)
-GLM_API_KEY=301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
+GLM_API_KEY=REDACTED-GLM_API_KEY
 ```
 
 **Why:** The `config.yaml` providers section references `${ZAI_API_KEY}`. If you only set `GLM_API_KEY`, Hermes can't find the key.
@@ -48,7 +48,7 @@ GLM_API_KEY=301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
 Test the token directly to confirm it works:
 
 ```bash
-export ZAI_API_KEY=301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
+export ZAI_API_KEY=REDACTED-GLM_API_KEY
 
 curl -s https://open.bigmodel.cn/api/paas/v4/chat/completions \
   -H "Content-Type: application/json" \
@@ -103,7 +103,7 @@ grep -A5 '^zai:' ${PROFILE_DIR}/config.yaml
 **Expected output:**
 ```yaml
 zai:
-  api_key: 301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe
+  api_key: REDACTED-GLM_API_KEY
   base_url: https://open.bigmodel.cn/api/paas/v4/
   type: openai_compatible
 ```
@@ -127,7 +127,7 @@ ZAI_API_KEY=some_key
 ```yaml
 # config.yaml - HARDCODED (bad practice)
 zai:
-  api_key: 301c64ba77334ff396e48ecd313201f1.Tg3XUkaookgzPDKe  # Direct value
+  api_key: REDACTED-GLM_API_KEY  # Direct value
 
 # .env - MISSING
 # No ZAI_API_KEY here

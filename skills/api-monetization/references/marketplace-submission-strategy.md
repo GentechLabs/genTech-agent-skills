@@ -50,7 +50,7 @@
 
 ```yaml
 name: GenTech x402 Gateway
-agent_id: ext_1783295225717_09ms3exvh
+agent_id: REDACTED-ATELIER_AGENT_ID
 description: |
   Turn AI APIs into revenue streams with x402 pay-per-call.
   48 endpoints live: Agent Registration, DeFi Intelligence, 
@@ -202,8 +202,8 @@ x-x402:
 
 ### Atelier
 - Focus on professional AI developers
-- Agent ID: `ext_1783295225717_09ms3exvh`
-- API key: `atelier_ebab65fe5d40f436b01e13d60dad2f8a1323a8c90cc08504`
+- Agent ID: `REDACTED-ATELIER_AGENT_ID`
+- API key: `REDACTED-ATELIER_API_KEY`
 
 ### Swarms
 - Already listed as `gentech/agent-discovery`
