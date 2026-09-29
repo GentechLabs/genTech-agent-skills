@@ -23,6 +23,33 @@ batch of false "uneditable" flags on files that patched fine.
 At or over the cap, **every** edit is refused: no corrections, no new lessons, nothing. The skill keeps
 loading, so it looks healthy — it is the writes that are dead.
 
+**Measured, so the shape of the failure is not guessed:** an over-cap `SKILL.md` written straight to disk
+**loads IN FULL** — the platform's own test writes a 200,000-char file and asserts `skill_view` returns it
+*"no truncation at the storage layer"* — and the apply that installs it is a plain `rmtree` + `copytree`
+that never consults the cap at all. **So there is no truncation and no refusal: the seats get a skill that
+reads perfectly and that no seat can ever add a lesson to.** The cap is enforced on WRITE
+(`skill_manager_tool.py`, `MAX_SKILL_CONTENT_CHARS = 100_000`), and only there.
+
+## ⚠️ `skill_manage` edits the SEAT copy — never the vault core
+
+**The tool operates inside the profile's `skills/` dir.** Measured: a patch against a skill whose core copy
+sits in `10-Labs/skills-distribution/` landed in `/root/.hermes/profiles/<seat>/skills/...` while the core
+file's hash did not move.
+
+**The consequence is the reason this section exists: a shared core is edited ONLY by direct file writes, and
+direct file writes do not consult the cap — so a core can cross 100,000 chars invisibly.** The gate that
+refuses a seat is unreachable from the file that overwrites every seat. It has already happened once: a core
+reached **103,752 chars** by a dozen ordinary lesson appends, and the next apply would have installed it
+fleet-wide.
+
+**Two rules follow, and the second is the one that stops it recurring:**
+
+1. **Edit the CORE copy on disk (that is the source of truth), then update the seats with the sync** — never
+   "fix" a seat copy: the next apply destroys it silently.
+2. **A size check belongs in the APPLY path, beside the existing batch-size refusal — because the tool's own
+   gate can never see the file the apply is about to copy.** Checking the core before `copytree` is the only
+   place the check is reachable.
+
 **Sweep the whole fleet, not the seat you happen to be in** — the same skill exists on every seat and
 they drift:
 
@@ -37,6 +64,31 @@ for p in glob.glob('/root/.hermes/profiles/*/skills/**/SKILL.md', recursive=True
 **Treat 90k as the action threshold, not 100k.** A skill parked at 88–99k is a skill whose *next*
 ordinary lesson silently fails to land, and the failure surfaces weeks later as "that fix never got
 recorded." Headroom is the feature.
+
+## ⚠️ The cap gates ANY `skill_manage` write — extraction MOVES the problem, it does not cap it
+
+**The 100,000-char limit is a module constant on the WRITE path, not a `SKILL.md` rule.** It fires on any
+content `skill_manage` writes — `references/` files included. So "the skill fits now" is a statement about
+one file at one moment, not about the skill.
+
+**Measured 2026-09-28:** `develop-and-verify/SKILL.md` was over the cap and its pitfalls ledger was extracted
+to `references/pitfalls.md` (69,923 chars). That reference then went **69,923 → 72,925 chars inside half an
+hour** of continued work. **A reference is append-only by nature.** Extraction buys headroom; it does not
+create a ceiling — the same failure returns at the new path, and it is the same failure: the file loads and
+reads perfectly while every write against it refuses.
+
+**Three consequences:**
+
+1. **Watch the reference, not just the `SKILL.md`.** The thing you must budget is the whole skill dir.
+2. **Any audit or guard for this must scan the WHOLE skill dir.** A `SKILL.md`-only check misses *exactly the
+   file the extraction created* — the one most likely to be over, because that is where the bytes went.
+3. **When a reference approaches the cap, split it BY THEME into sibling references, and move settled
+   entries to a `-archive` sibling** rather than deleting them. Same rule as extraction: preserve, relocate.
+
+**And the installing step must REFUSE, not warn.** `fleet_skills_sync.py` carries a pre-flight
+(`MAX_SKILL_CHARS`, exit 4) that refuses to install any over-cap file. Refusal rather than a warning is
+deliberate: that apply runs unattended at 04:30, and **a `[WARN]` there has no reader** — which is this same
+defect one layer up. *A check whose output nobody can act on is a log line.*
 
 ## Procedure — extract to `references/`, never delete
 

@@ -66,6 +66,7 @@ the path is the only mechanism that works fleet-wide without editing every cron 
 - [ ] **Declares its own degradation** rather than silently using a weaker path
 - [ ] **Placed in the shared core**, not one profile's `skills/`
 - [ ] **Verified on more than one seat** before calling it done
+- [ ] **Tests and guard scripts ship in the SAME deploy manifest as the artifact they verify** — a test with no sanctioned propagation path is a seat-only build artifact and will drift silently
 
 ## The gate (step (c) — a check that runs, not a convention)
 
@@ -160,4 +161,26 @@ artifact" was a 0-byte link to the *live* cache — `os.walk` descends symlinked
 `dirsize()` skips symlinked files), and a **hardlinked** toolchain counted as a duplicate copy
 (**true reclaimable 0**). Group by inode, check `st_nlink`, and never recommend a delete from a
 size alone.
+
+**5. A test without a deploy manifest drifts exactly like the code it tests.** The canonical
+`test-handoff-watcher-closure.py` was **6 checks behind** in gizmo's seat copy because the test
+had no sanctioned propagation path while the watcher it validated was deployed fleet-wide. A
+verification asset that lives in the same logical package as the artifact must share the same
+deploy mechanism, or it will become stale and then the artifact can drift with a green suite.
+
+- Tests are source-of-truth assets, not ad-hoc probes. Add them to the same fleet deploy script
+  as the artifact they cover, and write a manifest that records which seats received them.
+- A `--check` mode must be able to report seat drift by comparing the manifest digest against
+  the live file — a green result is only evidence when the checker would have gone red if drifted.
+- If the test is a file that cron executes, do **not** make it a symlink; cron refuses paths that
+  resolve outside the profile's `scripts/` dir. Use a byte-identical copy inside `scripts/` and
+  guard it against the canonical test in the core.
+- Prove the drift checker can actually fail by injecting a controlled mutation (append one byte
+  to a seat copy), running `--check`, confirming it reports the divergence, then restoring and
+  re-confirming green. An unfalsifiable guard is worse than no guard.
+
+**6. Fleet verification tools must be testable without touching production.** A guard that can
+only be validated by mutating the live artifact risks leaving a real defect behind if the run
+is interrupted between plant and restore. Test the guard against a scratch copy or a temporary
+seat path, never against the canonical deployed file.
 

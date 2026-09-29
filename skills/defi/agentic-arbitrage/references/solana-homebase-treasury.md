@@ -8,7 +8,7 @@ Solana home base.
 ## The loop (earn → bridge → yield → pay)
 ```
 Agent earns USDC via x402 (any chain)
-   → bridge EVM→Solana (Across adapter, sub-5s)
+   → bridge EVM→Solana (deBridge DLN — the ONLY live EVM→Solana venue we have)
    → deploy USDC on Solana (Jupiter-routed)
    → regime gate decides: accumulate (yield) vs trade (SOL/TAO via Jupiter)
    → pay services from Solana wallet (sub-cent gas)
@@ -21,8 +21,13 @@ Agent earns USDC via x402 (any chain)
 - `solana_homebase.py` — orchestrator wrapping status/bridge/buy/pay, DRY_RUN by default.
 - `tranche2_demo.py` — one-command demo for the grant reviewer (live quotes + bridge
   quote + allocation plan).
-- `solana_bridge_adapter.py` — Across Base/Avalanche → Solana USDC (in
-  `10-Labs/AAE-Dry-Powder-Vault/agent/`).
+- `solana_bridge_adapter.py` — ⚠️ **DEAD — DO NOT WIRE.** It makes **no network call at all**
+  (`grep -c "requests\.\|urllib\."` → 0); every "quote" is arithmetic over its own constants, and
+  the "0.08%" that reached the Tranche-2 submission was `ACROSS_LP_FEE_PCT` 0.06 +
+  `ACROSS_RELAYER_FEE_PCT` 0.02 declared in that file. Its named primary (Across) serves **no**
+  EVM→Solana route. The live replacement is
+  `10-Labs/agent-kit-self-tracking/bridge_quote.py` (deBridge DLN, real quotes, fail-closed).
+  Kept only as a record; it is wired into nothing and referenced by no cron.
 - Yield engine + close executor + regime gate: `yield_lp_engine.py`,
   `gta_close_executor.py`, `regime_gate.py` (Phase A/B/C of the treasury).
 
@@ -33,7 +38,13 @@ Agent earns USDC via x402 (any chain)
 - Quote `GET https://api.jup.ag/swap/v1/quote`; Swap `POST https://api.jup.ag/swap/v1/swap`
 - Sign `swapTransaction` (base64 → VersionedTransaction) with a `solders` Keypair;
   send via RPC. **Always use median priority fee, not max** (`getRecentPrioritizationFees`).
-- Solana USDC bridge via Across (Base SpokePool `0xb4a8d45647445EA9FC3E1058096142390683dBC2`).
+- Solana USDC bridge via **deBridge DLN** — the only live EVM→Solana venue we have. ⚠️ The line
+  here previously named **Across** with a Base SpokePool `0xb4a8d45647445EA9FC3E1058096142390683dBC2`.
+  **Both were wrong, corrected 2026-09-28 by live re-measurement:** Across returns
+  `ROUTE_NOT_ENABLED` (400) for base/arbitrum/ethereum → solana, while the controls
+  base→arbitrum and base→ethereum return **200** — the route is disabled, not our request.
+  `agentic_bridge.py`'s own header already flags that address as **a stale Base SpokePool**.
+  Our own wallet key was checked against the wallet, not the skill.
 
 ## Pitfall — dry-run/quote must NOT require a signing keypair
 `gta_solana_leg.py` originally called `_keypair()` BEFORE the dry-run branch, so a

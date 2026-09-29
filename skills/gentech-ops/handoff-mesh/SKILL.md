@@ -183,6 +183,18 @@ silent until the agent returns or it's resolved.
   actually went out — a missing wake is indistinguishable from a stalled agent.
 
 ## Pitfalls — delivery confirmation (learned the hard way)
+- **A message with shell metacharacters must go in via STDIN, not as an inline argument.** Passing
+  prose with backticks, `|`, `()`, `<>`, `$` or `—` inline makes the SHELL die before `hermes peer dm`
+  ever runs: `bash: syntax error near unexpected token ')'`. The failure looks like a delivery problem
+  and is not — nothing was sent. Write the message to a file and pipe it:
+  ```bash
+  hermes peer dm --json <peer> < /tmp/msg.txt > /tmp/dm.json 2>&1
+  ```
+  Omit the positional argument and the message is read from **stdin**; no escaping needed. Confirm
+  success by parsing the JSON reply, not by the exit code:
+  `python3 -c "import json;print(json.load(open('/tmp/dm.json')).get('reply'))"`.
+  **Also: `--json` must precede the target** (`peer dm --json gentech`, not `peer dm gentech --json`) —
+  reversed, argparse reads the message as an unknown argument and refuses.
 - **`hermes peer dm <peer> "..."` prints the reply and exits 0 — silence is NOT proof of
   delivery.** A queued turn, a mid-turn target, or a run that produced no output all look
   identical to success: exit 0, no text. Never report "DM sent" on that alone.
@@ -210,8 +222,34 @@ silent until the agent returns or it's resolved.
   kind this section exists to prevent. Capture with `out=$(cmd); rc=$?` or set `set -o pipefail`.
 - **Check the peer's health first** (`curl -s -o /dev/null -w '%{http_code}' http://<tailnet-ip>:<port>/health`).
   200 means the lane is up; it does NOT mean your specific message was read.
+- **A generated message that reports age/state must carry its own measurement time, or stale
+  and live become indistinguishable.** The handoff watcher nudges with lines like
+  `open 10h, no return` computed at the moment the sweep runs, but the message is delivered
+  (or replayed) later. Without an `AS OF HH:MMZ` stamp and a stale-warning, the receiver has
+  no way to know whether the nudge is current or an old sweep that simply arrived late — and
+  will treat a stale nag as a fresh finding. Always timestamp measurement-derived claims in the
+  message body itself; don't rely on channel metadata or assume the receiver will check the
+  state file. See `references/measurement-time-in-generated-messages.md`.
 - **A DM is never the record.** If it matters, it also goes to the vault lane. A silent DM
   plus no vault note means the handoff exists nowhere.
+- **Do NOT report a handoff as undelivered because Obsidian Sync failed — on this box, git IS the
+  delivery.** All four VPS seats read the SAME path on the SAME filesystem
+  (`VAULT = "/root/vaults/gentech"`, verified by inode + device + md5, not by assumption), so a
+  `git commit` is immediately legible to every seat with **no `ob sync` step involved**. Obsidian Sync
+  is what carries the vault **OFF the box**: Forge (desktop) and Jordan's Obsidian clients.
+
+  | receiver | delivered by | does `git push` alone reach them? |
+  |---|---|---|
+  | the four VPS seats | the shared filesystem | ✅ yes — immediately |
+  | Forge (desktop, separate machine) | Obsidian Sync / its own clone | ❌ no |
+  | humans (Jordan's Obsidian) | Obsidian Sync | ❌ no |
+
+  **Never report a quota error as a fleet-wide communication stop.** The opposite belief makes agents
+  re-send work the reader already has, or declare a handoff undelivered while its bytes are sitting on
+  the reader's disk — and it turns an off-box transport problem into a false fleet-wide outage.
+  Measured 2026-09-28 after `vault-handoff-lifecycle` and a seat copy of `agent-coordination` were both
+  found teaching the false wording. State your transport consequence in terms of **which receiver**.
+  Full detail: `00-System/vault-transport-protocol.md` (git-tracked, so every seat can read it).
 
 ## Pitfalls — a hash-bound closure that your own tooling rewrites
 
@@ -244,6 +282,35 @@ legacy record          -> CLOSED (legacy-hash) (back-compat)
 ```
 A binding that ignores *all* change is worse than one that over-fires: it would silently accept a
 genuinely edited handoff. Always verify the mechanism still detects what it exists to detect.
+
+**Read the RECORD before the MARKER — and never let prose outrank it.** The closure verdict is a
+tri-state and the order you consult it in is load-bearing:
+
+```
+closed is True  -> resolved      (record exists, hash matches)
+closed is False -> OPEN          (REOPENED: source changed since closure -- THIS WINS over any marker)
+closed is None  -> fall through  (no record / unverifiable -> legacy prose parsing)
+```
+
+The watcher's `is_resolved()` did the opposite — `if _marker_hit(text): return True` returned
+*before* the record was read — so on any note carrying a marker word the fail-closed reopen was
+**inert**. Measured: close a note, reopen or edit it so the record goes stale; `is_closed()` returns
+`(False, 'REOPENED…')` and `_closure_says_closed()` returns `False`, yet `is_resolved()` returned
+`True` because the marker matched first. A reopened handoff read RESOLVED by the only thing that acts
+on it. The `False` direction is the dangerous one and it was exactly the direction the ordering got
+wrong — stale prose overriding a reopen. Fix: record first, marker second, with the tri-state `None`
+fall-through preserved so no note with an unusable record changes behaviour (strict superset).
+
+**To reverse a closure, `reopen` it — never delete the record.** `handoff_closure.py close|check|audit`
+had no reopen, so the only way to reverse one was to **delete the record file**: evidence destroyed,
+reason unrecorded, indistinguishable from tidying up — the exact unreceipted action the tool exists to
+eliminate. Use `reopen <handoff> --by <agent> --reason "<why>"`; it rewrites the record **in place**
+(`state: open`, `reopened_by`, `reopened_at`, `reopen_reason`), deletes nothing, and refuses without a
+reason. It is deliberately **not** a bypass of the stale-hash path — `is_closed()` already reopens a
+source-edited handoff automatically. It covers the other case: the **source is unchanged** and the
+closure was simply wrong (a missed live ask, a premature close). There the hash still matches, nothing
+detects it, and before `reopen` existed the only signal was a deletion.
+
 
 ## Pitfalls — a closure trigger that reads only prose
 
@@ -336,10 +403,32 @@ English description and produce different bytes.
 
 `hermes peer dm <peer> "<msg>"` delivers the message **and prints the reply**, which means the command
 does not return until the remote agent has finished its entire turn. On a long handoff this blocks for
-minutes and can hit any shell timeout (observed: a 400s timeout on a Forge handoff).
+minutes.
+
+**NEVER wrap `hermes peer dm` in your own shell timeout** (`timeout 420 hermes peer dm ...`). The tool
+already carries its own deadline — `DM_TIMEOUT_S = 600` in `hermes_cli/subcommands/peer.py` — and it
+**prints the correct interpretation itself** when that deadline hits:
+
+> `accepted the message but its turn is still running after 600s: the message is already in its Bot
+> Chat (session …) and will be answered there. The reply cannot come back on this call. Do NOT resend.`
+
+Wrap it anyway and you kill it before its own handling runs, then read **exit 124** and conclude the
+transport hung. You measured **your** deadline and reported it as the peer's. This exact error was made
+by two agents independently (both concluded "genuine hang, not a slow wait" from a self-imposed
+`timeout 420` / `400s`) and circulated as fact in handoffs for a week — correcting a *one-sided
+measurement* with a one-sided measurement. Before blaming the transport, check whether you set the limit.
 
 **A timeout does NOT mean the message failed to send.** The message was delivered; the sender gave up
 waiting. Do not re-send blindly — that double-delivers.
+
+**The accurate model (four outcomes, not two):**
+
+| observed | meaning |
+|---|---|
+| exit 0 **with** reply text | round-trip complete — done |
+| exit 0, **no** text | queued / mid-turn / silenced — verify with `peer run` + `peer status`; never report "sent" on this alone |
+| **exit 124** (or the 600s message) | **DELIVERED** and the peer is still working — do NOT resend |
+| `peer run` run_id itself timing out | deep remote queue, not a dead lane |
 
 - **Long handoff / wake → `hermes peer run <peer> "<msg>"`** — starts the turn asynchronously and returns a
   run ID. Read the result with `hermes peer status <id>`; stop it with `hermes peer stop <id>`.
@@ -413,3 +502,69 @@ on a hash mismatch before checking which commit moved it.**
 **And update CORE, never the seat alone.** Editing a seat's own `SKILL.md` creates the exact drift
 the sync exists to remove — one edit produced a 44-line seat-only divergence that the next
 `--check` would have flagged as real. Write to `10-Labs/skills-distribution/`, then sync out.
+
+## ⚠️ The `INBOX/<seat>/` layout is READABLE by the watcher but NOT closable by the closure tool
+
+Found 2026-09-28 while answering a fleet notice. `handoff-watcher.py` **does** scan
+`01-HANDOFFS/INBOX/<group>/` (`find_open()` walks `INBOX` by group), but
+`handoff_closure.py close` **cannot close a note there**:
+
+```
+ValueError: cannot derive a return lane from
+  '01-HANDOFFS/INBOX/gentech-treasury/2026-09-28-FLEET-ob-sync-github-dm.md'
+  (expected <sender>-to-<receiver>/<file>.md)
+```
+
+`_lane_parts()` only understands `<sender>-to-<receiver>/<file>.md`. So a note in the new
+inbox layout **nags forever and cannot be recorded closed** — the layout is half-wired.
+36 INBOX notes existed fleet-wide when measured.
+
+**What to do instead — use the INBOX's own convention** (`01-HANDOFFS/INBOX/README.md`,
+step 4: *"tick the checkbox and move the file to `_archive/`"*):
+
+1. Append a resolution block to the note itself, headed with a word the watcher reads
+   (`Status: answered`, `answered`, `filed`, `nothing owed`, `no further action`) and naming
+   your return file by its full path.
+2. `mv` it into that inbox's `_archive/`.
+3. Commit — **including the move**, and check whether the note was ever tracked at all.
+   A note whose sender could not push is untracked, so `git mv` fails with
+   *"not under version control"*; use plain `mv` + `git add -A` on the inbox dir.
+
+**Do not point a closure record at your own reply.** Closing your outbound reply with
+`handoff_closure.py` writes a record into `<sender>-to-gentech-treasury/_closed/`, i.e. it
+treats your reply as a handoff *received by you*. That is a false record — delete it.
+**A closure record is for an inbound note; a reply is recorded by the note it answers.**
+
+### A name is a claim — validate the value satisfies it
+A field called `seconds` that was produced by `timestamp[:23]` on a `YYYY-MM-DD HH:MM:SS,mmm` log line **retains the
+milliseconds**, so every "second" was a distinct-millisecond value. It read LOWER than the line count, which made it
+look like the tighter estimator, while being structurally looser. **Before trusting a derived field, check that the
+value can actually satisfy its name** (here: 19 characters, not 23). A truncation that keeps a decimal separator
+looks exactly like a precise measurement.
+## Closing an INBOX note needs the HEADER MARKER, not a closure record
+
+`handoff_closure.py` has ZERO INBOX awareness: `closure_path()` returns `None` for
+`01-HANDOFFS/INBOX/<seat>/...` because the lane regex `^(.+)-to-(.+)$` finds no sender/receiver in a
+folder named just `treasury` — so the tool reports "no return lane derivable from path" and writes
+nothing. That is a real limitation, NOT a dead end.
+
+**Measured:** appending a prose closure block to an INBOX note left the watcher's `is_resolved()`
+returning **False** — the note kept nagging while reading, to a human, as closed. Changing the header
+from `**Status:** open` to **`**Status:** resolved`** flipped it to **True**.
+
+So: to close an INBOX note, change its header to a marker the resolver reads
+(`status: resolved` / `status: done` / `status: closed` / `## resolved` / `- [x]`). Verify with the
+resolver itself rather than by eye:
+
+```python
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("hw", "<...>/handoff-watcher.py")
+hw = importlib.util.module_from_spec(spec); sys.argv=["hw"]
+try: spec.loader.exec_module(hw)
+except SystemExit: pass
+print(hw.is_resolved("<note path>"))     # True = the nag is cleared
+```
+
+And a file COUNT of the INBOX folder is not a count of unresolved notes — resolved notes stay on
+disk. Count with the resolver, or you will report an open item that is already closed.
+

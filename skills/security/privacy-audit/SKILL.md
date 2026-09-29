@@ -77,6 +77,31 @@ Note: content search tools skip hidden/gitignored files by default and report th
 | repo | email | 3 files |
 ```
 
+## Cross-Check Tracked Files Against LIVE env Values
+
+**Always run this method after any session that touches credentials, and before pushing.** Regex
+sweeps find shapes; they cannot tell a live key from a placeholder. **The reliable method is to
+load the authoritative values and search for them.** False positives collapse to zero, and every
+hit is a credential you can prove is live.
+
+Use `references/live-secret-leak-scan.md` for the exact recipe and a reusable script. Standing
+rules below.
+
+- **Redact in the working tree; the commit is what carries it.** A leak found but not committed
+  rides out on the next push. Redaction and commit are one action.
+- **Do not print the matched value** in the report. Print the key NAME and the file path — the
+  reader can find it, and the value does not get copied into a second wrong place (the chat log,
+  the handoff, the terminal history).
+- **Rotate, don't just delete.** A key already pushed is exposed even after the file is fixed;
+  redaction closes the future, rotation closes the past. Say this plainly in the report.
+- **Backups and config dumps are where keys concentrate.** `backups/`, `*.yaml` config snapshots,
+  pre-change copies. An archive of a config is a credential dump if it is committed.
+- **Check a tracked `.env` immediately** — it is a standing leak by definition, and `git rm
+  --cached` + an ignore rule fixes it without losing the file on disk.
+- **A `.gitignore` saves you from the disk copy, not the history.** If a pattern like `*.gz`
+  excludes the payload, the tracked index can still be clean while the payload sits on disk —
+  verify which of the two actually pushed before claiming exposure.
+
 ## Live-Surface Exposure Audit
 
 When the question is "what has actually been revealed" about a deployed box — docroots, journals, caches — that is a different scan than the repo sweep. Order matters: classify what is *served* before trusting what is *on disk*.

@@ -69,6 +69,29 @@ grep -c "<known-service-name>" <candidate-file>
 A mismatch in counts, feature names, or version strings means you found a
 mirror. Go back to step 2.
 
+### Cross-check the running executable for interpreted services
+
+For Python / Node / Go services, the code that runs is often **installed**, not
+the checkout in `~/repos/` or the vault. A stale checkout can be months behind
+while `pip install -e .` or a system package runs a different copy.
+
+```bash
+# 1. PID from the live service
+PID=$(pgrep -f "<service-name>" | head -1)
+
+# 2. The actual executable the process launched from
+readlink /proc/$PID/exe
+
+# 3. The path the interpreter believes it is serving from
+python3 -c "import hermes_cli; print(hermes_cli.__file__)"
+```
+
+If `readlink /proc/<pid>/cwd` points at a checkout but the live import resolves
+to `/usr/local/lib/...` or `~/.local/lib/...`, **you are reading a mirror**.
+The version string or mtime on the installed file is the reliable signal — a
+checkout's `git log` is irrelevant if nothing reloads from it. Edit the file the
+live process is actually importing, or redeploy after editing the checkout.
+
 ## Part 2 — Verify Capability Claims Before Scoping
 
 Queue items, specs, and handoffs assert things like "config-only", "already
@@ -159,6 +182,12 @@ session and left the queue accurate.
 - **Don't fix bugs you find in the mirror.** If the mirror is stale, its bugs
   are usually already fixed upstream. Diff against the live copy before
   "fixing" anything you spot there.
+- **The repository checkout is not the installed runtime for interpreted tools.**
+  A package installed via `pip`, `npm -g`, or a system manager runs from its own
+  tree (`/usr/local/lib/...`, `~/.local/lib/...`, `/usr/lib/...`) even when a
+  newer checkout exists in the user's home directory. `git log` on the checkout
+  is therefore not evidence of what the live process does. Resolve the module
+  path from the running process before quoting source lines or applying a fix.
 - **Two live writers, one remote (verified Sep 4, 2026).** Stale data can come
   from TWO clones of the same repo both pushing successfully to `origin/main`.
   Each writer's pushes succeed, every job reports `ok`, but each clone only
