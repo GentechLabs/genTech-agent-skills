@@ -593,3 +593,38 @@ LP position monitoring applies the same fallback-chain data retrieval pattern to
 - Rate limits on free APIs (DeFi Llama) — cache results, batch requests
 - Always document when estimates are used and their confidence level — never present estimates as facts
 - **Historical price accuracy**: When citing ATH or drawdown percentages, verify the exact numbers before presenting. It's easy to confuse assets (e.g., saying "AVAX from $126" when the user meant "BTC from $126K"). If the user provides a number, trust their figure over your memory — they're looking at the chart, you're recalling from training data.
+
+## Salvaged from the retired `crypto/references/crypto-price-fetch` copy (2026-09-28)
+
+That copy described an earlier watchlist-report pipeline. It was retired because the pipeline it
+served no longer exists — **no crypto-watchlist cron job runs, and the config it called its source of
+truth (`03-Strategies/cron-watchlist-config.md`) is gone.** Two mechanisms in it were referenced
+nowhere else, so they are preserved here rather than lost:
+
+**Global market data (breadth context — no key, one call):**
+```python
+url = "https://api.coingecko.com/api/v3/global"
+# Returns: total_market_cap.usd, total_volume.usd,
+#          market_cap_percentage.btc / .eth, market_cap_change_percentage_24h_usd
+```
+
+**News headlines for a market briefing:**
+```python
+# CoinTelegraph RSS via rss2json (free, no key, rate-limited)
+url = "https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss"
+# Alternative: ...?rss_url=https://www.coindesk.com/arc/outboundfeeds/rss/
+```
+
+**Watchlist report shape**, if a briefing is ever wanted again — keep under 200 words:
+```
+📊 Crypto Watchlist — [date]
+[price table with 24h% and 7d%]
+Sentiment: F&G index | BTC Dom | 24h Vol | Total MCap
+📰 Why markets moved: [1-2 sentence macro summary]
+🎯 Action items: [support/resistance, momentum plays, rebalancing signals]
+```
+Sentiment classification: green (+2%+) bullish · red (-2%+) bearish · between = neutral ·
+outperformers while the market is red are worth marking.
+
+**Rate-limit guidance that still applies:** CoinGecko free tier is ~10-30 req/min — batch via the
+`markets` endpoint rather than individual calls, and on a 429 sleep 10s and retry.

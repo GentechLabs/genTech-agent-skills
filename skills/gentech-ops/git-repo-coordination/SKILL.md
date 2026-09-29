@@ -1011,6 +1011,191 @@ A valid token returning the login but showing 60/hr = account flag, not token is
 
 ---
 
+### Pitfall 20: Your commit sweeps a peer's staged work, with no `add -A` anywhere
+
+**Symptom:** You name two paths, commit, and the commit carries ten — another writer's staged files ride
+into it under your message, attributed to you. No `git add -A` appears anywhere in your command.
+
+**Cause:** `git add -- <paths>` then `git commit -m msg` with **no path list** commits the **entire
+index**, not what you just staged. Any writer who left files staged — a crashed `add && commit`, an
+`git add -A` before an early exit — has them swept in. This is Pitfall 18's mechanism **without** the
+`-A`, which is why nobody saw it coming: the rule "never `git add -A`, name your paths" was followed
+exactly, and the sweep happened anyway. Pitfall 19 is the *victim* side of the same tree; this is the
+*sweeper* side, and the sweeper is the one who looks like they did something wrong.
+
+**Measured (one seat's own commit):** 2 paths named, 10 carried — 4 gate scripts another writer had
+staged, 4 handoff notes never touched. The commit that *reported* those scripts as untracked was itself
+the commit that committed them.
+
+**Fix — always pass the path list through to the commit:**
+```bash
+git commit -m "msg" -- <path> [<path> ...]     # commits ONLY these, leaves a peer's staging intact
+```
+Then verify scope from the **file list, not the exit code** — a commit that exits 0 can still carry the
+wrong content:
+```bash
+git show --name-only --format= HEAD             # must list exactly what you named
+```
+A tool that stages for you should do all three: pass paths to `commit`, warn about a peer's
+already-staged files before committing, and diff the resulting file list against what was requested.
+
+**Falsify it with a NEGATIVE CONTROL:** stage a peer's file in a scratch repo, then run a bare
+`git commit -m` and assert it DOES sweep it. Without that direction the passing test could pass because
+the hazard never occurred. Test: `10-Labs/tooling/test-vault-commit-index-sweep.py` (7/7, includes the
+control).
+
+**Session source:** Sep 28, 2026 — `vault-commit.py` staged named paths then ran `git commit -m msg`
+with no path list; measured in a real commit (2 named, 10 carried).
+
+### Pitfall 21: A domain/ownership guard that matches by SUBSTRING cannot express "X except Y" — use LONGEST-MATCH
+
+**Symptom:** An ownership guard reports a gap ("seat S owns nothing, so nothing refuses anyone at
+`<dir>/`"). The obvious repair — add the broad directory prefix for that seat — is a **trap**: it starts
+refusing paths *inside* that directory that belong to someone else.
+
+**Cause:** Substring matching (`any(prefix in path for prefix in FOREIGN)`) cannot say
+"`10-Labs/**` **outside** `10-Labs/agent-kit-self-tracking/`". Adding the broad `"10-Labs/"` makes it a
+foreign hint for *every other seat*, and the money-path owner's own files live inside it:
+```
+treasury -> 10-Labs/agent-kit-self-tracking/lfj_recenter.py    REFUSED  <-- FALSE BLOCK
+treasury -> 10-Labs/agent-kit-self-tracking/steward_key.py     REFUSED  <-- FALSE BLOCK
+```
+A guard that blocks an owner from its own signing files is worse than the gap it closed, and it teaches
+the owner to pass `--force` every time — the "useless, therefore bypassed" failure that defeats the guard.
+
+**Fix — most-specific-prefix wins.** Sort all prefixes longest-first and let the first match decide:
+```python
+_SEAT_PREFIXES = tuple(sorted(((p, s) for s, ds in SEAT_DOMAINS.items() for p in ds),
+                              key=lambda t: -len(t[0])))
+def domain_owner(path):
+    for pref, seat in _SEAT_PREFIXES:
+        if pref in path:
+            return seat          # longest-first: the most specific prefix decides
+    return None
+```
+No-match means unclaimed — leave it **permissive** (registry silent ⇒ allow) rather than inventing
+ownership. Keep the conservative all-foreign answer only when the seat itself is unknown.
+
+**Two more traps, both measured:**
+1. **Lane prefixes collide.** A registry pattern like `01-HANDOFFS/gentech-*` also matches
+   `01-HANDOFFS/gentech-treasury-to-x/` as a substring, refusing a peer its **own** handoff lanes. Prose
+   lane patterns need a path-segment rule, not a substring.
+2. **A guard list is a SECOND hand-typed copy of the registry and will drift.** Measured drifted in both
+   directions — protecting dirs assigned to nobody while missing dirs that were assigned. Compare guard
+   prefixes against the registry and fail loudly on divergence; better, derive them.
+
+**Falsify both ways:** make `seat` injectable so one process can test every seat, then assert the
+carve-out case directly (`domain_owner(money_path) == <owner>`). The guard's own seat is often `""` when
+run from a shared script path, so a seat-blind test asserts the wrong seat's domain and passes while
+proving nothing. Reverting to a flat list must turn the test RED.
+
+### Pitfall 22: `git reset --hard <remote>/<branch>` on a multi-writer tree is a deletion, not a reconcile — verify the premise first
+
+**Symptom:** A handoff or command says "the divergence is purely a re-hash, so reset --hard to make
+local match remote." It looks like housekeeping. It deletes files that exist nowhere else.
+
+**Cause:** On a shared tree, local HEAD can hold both **patch-equivalent commits** (the re-hash) AND
+**unique commits/files** (real work done since the fork). A reset keeps the remote side and discards the
+local side. If the local side is non-empty, the reset is data loss — not a sync. The fact that the numbers
+match (e.g. "6654 behind / 6317 ahead") only says the branches diverged; it does not say the local side
+is empty.
+
+**Verification before any destructive reconcile:**
+
+```bash
+# 1. How much of the divergence is patch-equivalent (re-hash) vs unique?
+git cherry <remote>/<branch> HEAD~<n>..HEAD | awk '{print $1}' | sort | uniq -c
+# '+' = unique to local, no equivalent on remote
+# '-' = patch-equivalent to a remote commit
+
+# 2. Are the files in local HEAD but not on the remote actually present on disk?
+for p in $(git diff --name-status HEAD <remote>/<branch> | awk '$1=="D"{print $2}'); do
+  [ -f "$p" ] && echo "DISK-ONLY: $p"
+done
+
+# 3. Are any of those files read by a live process from this tree?
+grep -R "$(pwd)/<relative-dir>" /path/to/live/scripts/ /etc/systemd/system/ /proc/*/cwd 2>/dev/null
+```
+
+**Decision rule:**
+
+| local side | remote side | safe reconcile |
+|---|---|---|
+| empty (0 unique commits, 0 unique files) | real commits | `git reset --hard <remote>/<branch>` |
+| real commits OR real files | real commits | **merge** (merge base exists) or manual reconciliation |
+| real files referenced by live processes | anything | merge, **and** keep the live paths intact during the window |
+
+**Rule:** if `git cherry` shows any `+` commits, or `git diff --name-status HEAD <remote>/<branch>`
+shows any `D` files that exist on disk, **refuse `reset --hard`**. The correct tool is a normal merge
+(if the merge base exists) or a documented manual reconciliation. A `--keep` reset is not a safe
+substitute: it refuses when the tree is dirty, but on a clean tree it still moves the branch and strands
+the local-only files under a moved ref.
+
+**Rescue before refusing:** snapshot the at-risk state so the merge can proceed without anyone fearing
+loss:
+```bash
+git tag -f rescue-pre-reset-$(date +%Y%m%d) HEAD
+tar czf /tmp/vault-reset-backup-$(date +%Y%m%d).tar.gz $(git diff --name-status HEAD <remote>/<branch> | awk '$1=="D" && -f $2 {print $2}')
+```
+
+**Why this keeps happening:** "re-hash" is a believable story for a single-writer repo. On a
+multi-writer tree it is a half-truth — the patch-equivalent part is real, but the unique part is what
+matters. Always measure the unique part before agreeing to a destructive command.
+
+### Pitfall 23: "Rate-limited by GitHub" and "throttled by our own gate" are different outages with different unblocks
+
+**Symptom:** A push or API call fails and the diagnosis is "GitHub rate-limited us." The fix proposed is
+"wait for the bucket to reset."
+
+**Cause:** Two distinct throttles wear the same error costume. A local write gate (`github-write-gate.py`,
+max 20/hr) rejects or queues work long before GitHub's 5000/hr authenticated bucket is exhausted. Treating a
+local gate as a remote rate limit means waiting instead of spacing our own calls, and it hides the real
+constraint.
+
+**Check both before diagnosing:**
+
+```bash
+# GitHub account-level (remote)
+curl -s -H "Authorization: token $(gh auth token)" https://api.github.com/rate_limit \
+  | python3 -c "import sys,json; r=json.load(sys.stdin)['resources']['core']; print(f'GitHub core: {r[\"remaining\"]}/{r[\"limit\"]}')"
+
+# Local gate (ours)
+python3 /root/.hermes/scripts/github-write-gate.py status
+```
+
+**Rule:** Only call it a GitHub rate limit when GitHub's own `rate_limit` endpoint shows a low
+remaining count. If our gate is the bottleneck, report `remaining=<n>/20` and the next available slot —
+that is a different fix (spacing, batching, or raising the local limit), not a wait on GitHub.
+
+### Pitfall 24: Two writers converging on one canonical artifact will each DELETE THEIR OWN copy — name the survivor out loud
+
+**Symptom:** An artifact that two agents both correctly judged redundant ends up with **zero** copies. Neither
+made a mistake; both made the same reasonable one.
+
+**Measured 2026-09-28:** Labs and HQ each wrote a regression test for the same guard. Labs saw HQ's first and
+deleted its own, naming HQ's canonical. HQ ran Labs' test, judged it stronger, and deleted its own. For several
+minutes the guard had **no test at all** — and neither agent was placed to notice, because each was looking at
+the *other's* copy as the survivor.
+
+**Cause:** *"Yours is canonical, so I removed mine"* is a correct decision made on an assumption about the other
+writer's copy that the other writer is simultaneously invalidating. The remove-the-duplicate rule and the
+announce rule collide, and the losing artifact is the one nobody is watching.
+
+**Rule — name the survivor OUT LOUD, in writing, and delete only after the peer has named theirs:**
+
+1. **Deleting a duplicate is a decision about a PAIR.** State it as *"X survives; Y (mine) is deleted because X
+   is canonical"* — never "I deleted the duplicate."
+2. **Announce BEFORE the delete, not after.** The peer needs the window in which they would otherwise delete
+   theirs. A post-hoc "I deleted mine too" is a collision report, not a prevention.
+3. **Never delete your own copy on the strength of the other's EXISTENCE.** Delete on the strength of the
+   other's *survival declaration*.
+4. **After any concurrent-edit episode on a shared artifact, verify the survivor exists AND RUNS.** The shape
+   this leaves behind is a **tracked-but-missing file**: present in `git ls-files`, absent from disk, so it
+   looks alive in every listing that consults git and dead to anything that runs it. Check both.
+5. **Prefer a commit pin over a `.bak` for the survivor.** A `.bak` can be cleaned up mid-session by either
+   writer (one was, while a test was running, silently degrading a negative control); `git show <sha>:<path>`
+   is immutable and both writers can reach it.
+
 ## Verification Steps
 
 ### 1. Test Locking Mechanism

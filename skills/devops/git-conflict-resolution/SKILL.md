@@ -870,6 +870,80 @@ Also: never `git add -A` in these repos — cron writers edit data files (build_
 
 ### Pitfall 16b: Parallel Same-Purpose Repos — Verify Remote Before Push During Chaos
 
+### Pitfall 17: Measuring a Moving Tree Reports a Stale Snapshot as Current
+
+**Symptom:** An agent reports that a file is "untracked" or "missing from HEAD," and a second agent
+acts on that report — but the file was actually tracked or committed between the probe and the
+report.
+
+**Root cause:** Git state is not frozen while you inspect it. If you run `git status`, then stage
+and commit files, then write up the findings, the findings describe the state *before* your own
+commit. A probe and a write in the same session can make the report false by the time anyone else
+reads it.
+
+**Rule:** Before reporting git state as a finding, re-measure from a fresh tree and quote the
+exact command, SHA, and timestamp. If you changed the tree during the same session, say so:
+"Probed at <sha1>, then committed <sha2>; the finding describes the earlier state and is now
+resolved by that commit."
+
+**Detection:**
+```bash
+# The wrong way to prove a file is untracked:
+git status --short scripts/github-write-gate.py   # shows ?? if true at probe time
+
+# The right way to prove it AFTER you may have changed the tree:
+git ls-files scripts/github-write-gate.py        # tracked = prints path; untracked = empty
+git log --oneline -- scripts/github-write-gate.py | head -3   # shows the commit that added it
+```
+
+### Pitfall 18: `git add -- <paths>` + Bare `git commit -m` Sweeps the Whole Staged Index
+
+**Symptom:** A targeted commit intended to change one or two files silently includes other
+agents' staged work, unrelated deletions, or timestamp updates from cron jobs.
+
+**Root cause:** `git add -- <paths>` stages exactly those paths, but `git commit -m "message"`
+with NO path list commits **whatever is currently in the index** — not the paths you just added.
+If another writer's staged changes were already sitting in the index (from an interrupted session,
+a prior `git add`, or a concurrent process), your commit sweeps them in under your name.
+
+**Rule:** Always pass the same path list to `git commit` that you passed to `git add`:
+
+```bash
+# BAD: stages only these files, but commits EVERYTHING staged in the index
+git add -- file-a.md file-b.md
+git commit -m "my change"           # may also commit someone else's staged work
+
+# GOOD: the commit is bounded to the same paths
+git add -- file-a.md file-b.md
+git commit -m "my change" -- file-a.md file-b.md
+```
+
+**In scripts, be explicit at every step:** never rely on `git add -A`, `git commit -a`, or a bare
+`git commit` when the repository has multiple writers. Name paths, and verify `git diff --cached
+--stat` before the commit matches exactly what you intended.
+
+**Even safer:** use a wrapper that takes a path list once and passes it to both `add` and
+`commit`:
+
+```python
+import subprocess
+
+def commit_paths(repo_path, message, paths):
+    """Stage and commit exactly `paths`, never the whole index."""
+    subprocess.run(["git", "add", "--"] + paths, cwd=repo_path, check=True)
+    # Verify the staged set before committing
+    stat = subprocess.run(
+        ["git", "diff", "--cached", "--stat"],
+        cwd=repo_path, capture_output=True, text=True, check=True
+    ).stdout
+    expected = set(paths)
+    staged = {line.split()[0] for line in stat.splitlines() if line.strip()}
+    if staged != expected:
+        raise RuntimeError(f"Staged set mismatch: expected {expected}, got {staged}")
+    subprocess.run(["git", "commit", "-m", message, "--"] + paths, cwd=repo_path, check=True)
+```
+
+
 **Symptom:** Deep in conflict-fighting, a push quietly targets the WRONG repo — e.g. `${VAULT_DIR}` (vault) whose remote is the dead old `ProtoJay4789.github.io` mirror, while the real site repo is `/root/repos/gentechlabs.github.io`.
 
 **Root cause:** session working directory drifts between repos that share a purpose. Conflicts/rebases run in one while conclusions drawn from the other.
