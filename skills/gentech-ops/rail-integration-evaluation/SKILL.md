@@ -459,3 +459,56 @@ side — a provider, not a depositor — so the whole rail scorecard is the wron
   keyless 0.5 RPS API for agents (no signup), MCP docs server, `@jup-ag/cli` for terminal
   agents, skills via `npx skills add`. Their docs issue #832 is literally titled "Building
   the Most AI-Friendly Developer Resource." Watch `jup-ag` GitHub (202 repos, pushes daily).
+
+## Worked example — Orderly Network perps via Pangolin (Sept 29 2026) — a CLOB derivative rail
+- **Source:** Jordan shared a Pangolin Perps post and asked: *"Can we use this rail for AVAX
+  perps? If so what tokens are available to us?"* The right entity to evaluate was not
+  Pangolin's front end but **Orderly Network**, the omnichain CLOB it sits on. Orderly's own
+  docs state they have *"no official front end; builders create DEXes and trading interfaces
+  on top."*
+- **Same-chain, same-collateral verification:** Orderly Vault on Avalanche
+  `0x816f722424b49cf1275cc86da9840fbd5a6167e9` — verified on-chain as **2,429 bytes of code
+  holding 89,841.08 USDC**, byte-identical to the Base and Optimism deployments and returned
+  by Orderly's own MCP for chainId 43114. Collateral is **native USDC
+  `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E`** — the exact asset we already hold. No bridge,
+  no wrapped asset, gasless trading once a key is activated. This settled an apparent
+  contradiction: Orderly's narrative docs omitted Avalanche from the settlement list, but the
+  contract surface included it. **Settle on the contract, not the prose.**
+- **Market coverage:** 133 active markets. Buy-list assets: AVAX 20x, LINK 20x, SOL/BTC/ETH 100x,
+  TAO 10x, XAUt 10x; COQ had no perp. Plus RWA perps (NVDA, TSLA, GOOGL, XAU, XAG, WTI, EURUSD).
+- **Funding-rate correction (claim-provenance):** First instantaneous read showed AVAX funding
+  at **+53.2%/yr**; over 60 funding periods (~20 days) the sustained average was **+14.27%/yr**
+  (56/60 positive). The 53% was one reading at the top of its own range. **A snapshot is not a
+  standing property.** ETH paid better at +18.51%/yr (60/60 positive).
+- **Real mechanism and size:** Persistently positive funding ⇒ longs pay shorts ⇒ a short perp
+  against spot we already hold collects funding delta-neutrally. At $146 and 2x: ~$13.89/yr
+  gross; round-trip taker fees $0.058; $146 filled at +0.010% slippage. **Fees and depth were
+  not the blockers; liquidation risk on the short leg and thin OI ($417K) were.**
+- **Verdict: real rail, wrong size.** Worth revisiting as the weekly cadence compounds the book.
+  Filed to `references/perp-rail-evaluation.md`.
+
+## Perp / CLOB derivative rail evaluation checklist
+
+When evaluating a perpetuals or CLOB derivative rail, use this checklist in order:
+
+1. **Front end vs engine.** Identify the actual clearing/settlement engine (Orderly, dYdX,
+   Hyperliquid, GMX, etc.) and verify the front end is just one interface.
+2. **Collateral asset and chain.** Confirm the deposit token is a stablecoin or asset we
+   already hold on a chain we can reach without bridging.
+3. **Vault/contract verification.** `eth_getCode` on the deposit/position contract; compare
+   bytecode across chains if the engine claims multi-chain deployment; check the MCP/docs
+   chainId return against the contract.
+4. **Market list and leverage.** Read the active market list from the engine's API; confirm
+   leverage tiers and whether each buy-list asset is present.
+5. **Funding persistence, not snapshot.** Fetch multiple funding periods; report the sustained
+   average, the positive-ratio, and note the instantaneous high. Never quote a single funding
+   reading as the yield.
+6. **Depth and fees for the actual size.** Probe the orderbook at the capital amount we would
+   deploy, not at $1M or $10K. Report slippage and round-trip taker fees.
+7. **Risk surface.** Open interest, liquidation mechanics, isolated vs cross margin, and any
+   KYC/gating. A great rate on a $400K OI pool cannot absorb real capital.
+8. **Verdict shape.** Real mechanism + reachable + right size = deploy candidate; real
+   mechanism + reachable + wrong size = watch and revisit on book growth; no programmatic
+   surface or wrong-chain collateral = not a rail.
+
+See `references/perp-rail-evaluation.md` for the full recipe, API endpoints, and arithmetic.
