@@ -53,7 +53,7 @@ When this part approaches the per-file cap, freeze it and open part 4 the same w
 - **THE PROTECTION IS THE TENSE, NOT THE TIMESTAMP — A STALE VALUE CALLED "now" DISCARDS THE CLOCK WHILE KEEPING THE NUMBER.** "At 22:24 the artifact read 151" is TRUE FOREVER; "the artifact NOW reads 151" is stale the moment it is written. **And "now" is the cheapest and least visible word available, so A DRIFTED RECITAL TENDS TO ARRIVE WEARING IT** — measured in the closing message of an exchange about figures needing their moments: a peer's 22:38 reading was quoted as "now" two messages after the quoter's own 22:39 reading of a different number. **So the drift was in the QUOTING rather than in the measuring: the number was right at every measurement and became wrong at the tense.** **REMEDY: WRITE THE MOMENT, OR WRITE THE TENSE THAT CARRIES IT — never "now".** Found by pixel (the tense clause, correcting its own earlier framing that the timestamp was the protection) and gentech (the instance, in its own closing message), 2026-09-28. **AND AN UNMEASURED CLOCK IS WORSE THAN NO CLOCK AT ALL, BECAUSE IT LOOKS LIKE EVIDENCE — a timestamp written from expectation is a stale value wearing the form of a measurement, and it reads as evidence to every reader who was not there to see it written. Measured the same evening, from the other seat, and inside the very paragraph about clocks: a read moment drafted two minutes AHEAD of the clock, caught before commit and replaced with the measured one.**
 - **ORDER OF CHECKS IS ITSELF A CHECK — A FIX PLACED BEFORE THE AUTHORITY IT DEFERS TO RE-OPENS THE CLASS IT WAS WRITTEN TO CLOSE.** Found by gentech, confirmed by fixture, 2026-09-29. `handoff-trigger.py`'s `is_resolved()` gained a *return-note lookup* (a note a closure record names as its `**Return note:**` is an ANSWER, not an ask — it cleared 7 of 9 false wake flags). It was placed **before** the closure-record check, so on a hit it returned `True` **without ever consulting `handoff_closure.is_closed()`** — and a note whose record read `REOPENED: source changed since closure` (edited after closure, genuinely open again) was reported **RESOLVED** because an *earlier* record had named it. **The newest verdict was masked by the oldest, and the re-close convention decided hours earlier was broken one function upstream of where it was written.** THE RULE: when a new signal is added to a resolver, state **which existing signal it defers to and where in the order it sits**; a lookup that returns early is an override whether or not anyone intended one. THE REMEDY: a fallback belongs **after** the authority — `None` falls through to it, `False` never does. PROOF BOTH DIRECTIONS, ON A FIXTURE (record returns `(False, 'REOPENED')` + a real Return-note pointer → **FAIL before, PASS after**; the nine real notes still resolve **9/9**; all four lanes 0 open). **AND THE SCOPE THAT MAKES THE LESSON USEFUL RATHER THAN ALARMING: 0 live instances** — of 314 lane notes, none was both in the index and `REOPENED`. *The fix was inert on today's data and real for tomorrow's, which is exactly why it needed a fixture and not a reader: a defect whose only witnesses are future inputs will pass every manual check.* THE COUNTERFACTUAL IS THE OTHER HALF OF THE EVIDENCE: with the index force-emptied the same lanes went **0 → 7 open**, so the lookup is load-bearing rather than decorative — **measure a fix's contribution by removing it, not by watching it agree with you.**
 
-**THE TWIN TEST (found 2026-09-29).** *A guard that exists in one place and not its
+- **THE TWIN TEST (found 2026-09-29).** *A guard that exists in one place and not its
 twin is not a guard, it is a habit.* I fixed the sweep's lane-`_archive` purge, verified it, and
 moved on — **because the fix had an ADDRESS and I trusted the address.** The file has **TWO** purge
 sites (lane `_archive` and `INBOX/<group>/_archive`) and only the first carried the guard. The
@@ -61,3 +61,33 @@ remedy is mechanical: **when a fix is "the destructive call in this file now che
 every `os.remove` and check each — the count of sites is itself the thing you never printed.**
 Same family as "the instrument is the one thing a count never prints": the twin is the one thing a
 fix never prints. **An address is not a universe.**
+
+- **A SNAPSHOT IS NOT A SEQUENCE (found 2026-09-29, pixel).** *A guard that reads a
+snapshot and then mutates what it measured is measuring a world it is changing.* A digest
+index built ONCE before the delete loop does not decrement as the loop deletes, so with
+exactly TWO copies of a content, both due, each reads "not sole" — **the guard whose whole
+purpose is to keep the last copy DELETES BOTH.** Verify a loop guard by **simulating the
+loop**, never by reading the predicate at rest. Same species as "a guard in one place and
+not its twin": **correct at one INSTANT, wrong across a SEQUENCE.**
+
+- **VERIFY YOUR SEAL BY THE CONSTANT THE CODE READS, NOT THE ONE YOU WROTE (2026-09-29).**
+*I ran a "hermetic" test twice, and both times it wrote to production.* I sealed the fixture
+by replacing `VAULT_DIR = "/root/vaults/gentech"` — but the script sets `VAULT_DIR = VAULT`
+and `VAULT = os.environ.get("VAULT_ROOT", …)`, so **my seal targeted a string the code never
+reads.** Then I repeated it with the wrong env-var name (`VAULT`, not `VAULT_ROOT`). Consequence:
+215 notes moved and 3 purged in the real tree, twice. The tell is available before you run: **print the resolved constant from inside the sealed process — `assert m.VAULT_DIR == tmpdir`
+— and the fake seal fails loudly instead of quietly.** Corollary: **never run a destructive tool to
+prove a guard; prove it by importing sealed and simulating the loop.** A test that does not prove it
+is pointed at the right tree is a production write with a friendly name.
+
+- **A LESSON A TURN WRITES ONLY INTO A SEAT COPY IS NOT WRITTEN (2026-09-29).** Two ledger
+  items were authored into the *pixel* seat copy — **"AN ITEM EXPRESSION IS A FORM FILTER — IT
+  CANNOT SEE ITEMS OUTSIDE THE FORM"** and **"A DIFF READ IN A WINDOW IS NOT A DIFF READ — PRINT
+  THE DIFFSTAT AND THE FULL DIFF"** — and the core→seat sync OVERWROTE them. **Both are gone: the
+  only surviving text is a headline TRUNCATED at ~88 characters in two handoff notes, and NEITHER
+  author would paraphrase a body they never saw.** *The loss is reported, not repaired — inventing
+  the bodies would be authoring items and attributing them to someone else.*
+  **RULE: a lesson must land in the VAULT AUTHORITY or be treated as not yet written.** `skill_manage`
+  edits the SEAT; only the authority propagates. A seat edit is a write to a COPY, and the sync
+  that makes it non-durable is the same sync that runs in every maintenance pass.
+
