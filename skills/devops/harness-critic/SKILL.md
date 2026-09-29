@@ -347,6 +347,54 @@ moment ("pre-write md5 … ; committed-revision md5 …"). A de-duplicated check
 cheap: `for r in $(git log --format=%h -- <path>); do git show $r:<path> | md5sum; done | grep -c <claimed>`
 must be >= 1 for any digest that claims to be a revision of that file.
 
+### A control that stubs a script by writing through a symlink edits PRODUCTION, and the run still reports success
+A scratch-tree control must never point a stub at the live tree by symlink. Live failure
+(2026-09-29, Critic entry 89): the control ran `ln -s $HARNESS/scripts/refresh-cron-table.sh
+$SCRATCH/scripts/` then `printf '#!/bin/bash\nexit 0\n' > $SCRATCH/scripts/refresh-cron-table.sh`
+to neutralise the refresher so the checker could not repair a planted fault. **`>` follows a
+symlink**, so the write landed on the LIVE file: both `harness/scripts/refresh-cron-table.sh`
+and `refresh-next-events.sh` became 19 B (`#!/bin/bash\nexit 0`) in the production tree, and the
+control run printed its success line. The symptom that exposed it was a *wrong* one —
+`refresh-cron-table: no state file` on a path where the file demonstrably existed — and only
+re-reading the file confirmed the damage.
+
+**Rules for every control from now on:**
+1. Populate the scratch tree with `cp`, never `ln -s`.
+2. After ANY control that writes, re-`md5sum` the live files the control touched and compare to
+   `git show HEAD:<path> | md5sum`. A green control is not evidence that the live tree is intact.
+3. Recovery is `git checkout -- <path>`; then re-verify md5 HEAD→WT and restore the mode
+   (`chmod 711` for these harness scripts).
+4. Disclose it in the entry even when recovery was clean — this is the Critic's own
+   "a successful command is not a successful task" rule turned on the Critic.
+
+### A verifier's success string must enumerate the classes it read — and prove it can fail on each
+The entry-88 class (Provider cells) recurred one column over (Schedule cells, entry 89) because
+the fix was applied to the reported cell rather than to the **pattern**. Live: the pre-fix
+`harness-state-refresh.sh` (md5 `370079b2…`) verified census, status, next-events and provider;
+with the refreshers stubbed and all four Schedule cells set to `9 9 9 9 9` it printed
+`census + status + next-events + provider cells all match the live store` and returned **rc=0**.
+
+**Rule:** for EVERY rendered cell class, perturb one cell in a scratch copy with the refreshers
+stubbed and require a non-zero rc. A class with no falsification control is not covered,
+whatever the success text says. Classes that will pass this check while still lying:
+- **Rows that do not exist at all.** A deleted table row is invisible to every per-cell check —
+  the refresher preserves the roles the file already lists, so a dropped row is never re-added.
+  Add a coverage invariant: every store job whose `workdir` ends `/harness` must have a row.
+- **Columns whose values legitimately differ per job** (Schedule, Provider) — these need their
+  own comparison, never a column-agnostic regex that happens to match the row.
+
+### A trigger outside `cron/jobs.json` is invisible to every store-scoped census
+`cron/jobs.json` is not the whole scheduler. Live (2026-09-29, Critic entry 89): a **root
+crontab** line fired `0 8 * * * cd /root/.hermes/harness && bash execution-loop.sh evolve` daily
+at a directory deleted 2026-07-31 — still executing (kernel CRON journal), failing silently, and
+recorded in **no** fact file, because `harness-state.md`'s computed census, the Verifier's
+job-health scan and the Critic's own step 1b all read the Hermes store. The trigger becomes
+dangerous at resume time: it is a second, unsynchronised trigger for the same loop.
+
+**Rule:** when auditing triggers, pair `hermes cron list` with `crontab -l` and
+`systemctl --user list-timers`, and confirm every referenced path exists. Name the scheduler in
+the finding — "a cron" without the store name is what let this sit unseen for 61 days.
+
 ### Action-type monoculture
 Track the diversity of RECOMMENDED_ACTION types across the last 7 days. If all actions are the same type (e.g., all `update_script`), flag as CRITICAL even if each individual change is valid. The audited agent is not exploring its action space.
 
