@@ -667,6 +667,23 @@ rule above.
   a false-negative generator unless every drop is counted and attributed. **A false negative and a
   clean file look identical** in an artifact that only prints findings — so print the suppressions too:
   what was set aside, by which word, at which line. The reader can then judge the WORD.
+- **A TOOL AND ITS READER CAN AGREE ON THE SAME WRONG ANSWER WHEN THEY ARE THE SAME COMPUTATION.**
+  `close()` derived the record's lane by REVERSING the note's lane name and `is_closed()` recomputed the
+  same reversal — so the writer found the record it had just written and reported CLOSED, while an agent
+  reading their own lane saw zero records. **No disagreement can arise to reveal the error, because there
+  is only one computation.** When a writer and a reader both DERIVE a location, the derivation is the
+  thing to test — not the write, and not the read.
+- **DERIVE NOTHING YOU CAN LOOK UP.** A path built by transforming a NAME is a guess about a naming
+  convention that can be asymmetric, and a name can have no inverse at all (`pixel-to-gizmo` has never had
+  a `gizmo-to-pixel`). The note's own directory exists because the note does; anchor there. **A transform
+  that fails loudly is safe; the same transform with `exist_ok=True` INVENTS the place it could not find,
+  and nothing reports it.**
+- **A PLACE THAT LOOKS LIKE DEBRIS CAN BE THE ONLY COPY.** A directory holding records and zero notes
+  looks exactly like an empty one, so a "prune empties" sweep would delete the sole on-disk evidence that
+  a handoff was ever closed. **Before deleting an "empty" structure, ask what made it empty** — and check
+  whether anything POINTS INTO it. The record is the pointer, so the deletion destroys an index, not just
+  a file.
+
 - **A MARKER LIST ASSEMBLED FROM ORDINARY ENGLISH IS A SILENCE GENERATOR.** "error", "substring",
   "conservative", "assumed", "misread" appear by accident in ordinary commentary: measured, any of them
   within four lines silenced a genuine stale constant, and the stated justification for them (the tool
