@@ -383,6 +383,34 @@ whatever the success text says. Classes that will pass this check while still ly
 - **Columns whose values legitimately differ per job** (Schedule, Provider) — these need their
   own comparison, never a column-agnostic regex that happens to match the row.
 
+### A cell that echoes a store DECLARATION cannot detect a runtime divergence (entry 90)
+Every class-1..6 check in a state verifier compares the rendered file against the *store's own
+fields*. None of them can see that the runtime dialled somewhere else, because the store field
+**is** the declaration. Live (2026-09-30): `cron/jobs.json` read `provider: opencode-go` on 4/4
+harness rows, `config.yaml`'s `providers:` map held `{nous, zai, opencode-go}`, and the
+Verifier's last two cycles were posted to `https://ollama.com/v1/chat/completions` — a provider
+with **no entry in that map** — returning 429 and leaving the harness's own grading instrument
+dark for two cycles while the operator-facing table certified the declared provider as verified.
+The divergence is visible only in the runtime's own artifacts: the request dump
+(`sessions/request_dump_cron_<jobid>_*.json` → `request.url`, `reason`), and those are written
+on FAILURE only, so scope the check to jobs whose store `last_status` is an error.
+
+**Rule:** when a rendered cell names a provider, an endpoint, a model, or any other value the
+runtime *resolves*, verify the **effective** value, not the declared one, and render the
+effective value beside the declaration when they disagree. Pair it with a no-false-positive
+control (rewrite the evidence so the two agree → must return rc=0); without that control a
+falsification proves only that the checker can fail, not that it can pass. Give a divergence
+its own exit code — `rc=4` must stay "the rendered file disagrees with the store", because a
+faithful render of a bad runtime is a different defect with a different owner.
+
+**And stamp the evidence with the moment it describes.** The dump is evidence about ONE run —
+the last *failed* one — and a rail can be repaired after that failure. Live: the fleet migrated
+off `ollama-cloud` at 00:57–01:16Z on 2026-09-30, one hour AFTER the Verifier's last two failed
+cycles, so the same divergence string was simultaneously a true statement about those runs and a
+misleading one about the live rail. A computed line that stays in the operator-facing file after
+the cause is fixed is the entry-90 finding turned on the fix itself: label the evidence with its
+timestamp, and check the fix's own output for the same class before publishing it.
+
 ### A trigger outside `cron/jobs.json` is invisible to every store-scoped census
 `cron/jobs.json` is not the whole scheduler. Live (2026-09-29, Critic entry 89): a **root
 crontab** line fired `0 8 * * * cd /root/.hermes/harness && bash execution-loop.sh evolve` daily
