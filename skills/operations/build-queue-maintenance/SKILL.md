@@ -24,6 +24,36 @@ items, IDs are 1-17. Never 1, 2, 3, ... 87, 88, 91.
 - After re-prioritizing items
 - After any bulk edit
 
+## Two traps when EDITING build_queue.json
+
+**1. Match items by NAME, never by ID.** Renumbering is this skill's own golden rule, so IDs are
+*by design* unstable. An item you filed as #54 can be #41 an hour later — and `if it["id"] == 54`
+will silently hit a **completely different** item and overwrite its note. Proven 2026-09-30: an
+id-based status write landed on "OpenDexter re-settle" instead of the fx item it was meant for,
+and only a diff caught it.
+
+```python
+# WRONG — ids move
+for it in items:
+    if it.get("id") == 54: it["status"] = "shipped"
+
+# RIGHT — name is the stable key; assert exactly one match before writing
+hits = [i for i in items if "fx-tracker" in (i.get("name") or "")]
+assert len(hits) == 1, f"expected 1 match, got {len(hits)} — refusing to write blind"
+```
+
+**2. Always `ensure_ascii=True` when round-tripping through `json`.** The file stores non-ASCII as
+`\uXXXX` escapes. `json.dumps(..., ensure_ascii=False)` rewrites every escape to a literal
+character and produces a **150-line diff of pure encoding noise** on a one-field edit — burying
+the real change so nobody can review it.
+
+```python
+json.dumps(items, indent=2, ensure_ascii=True) + "\n"   # round-trips byte-identical
+```
+
+**Check before committing:** a one-field edit must show **~2 changed lines**. A huge diff means you
+re-encoded — `git checkout -- scripts/build_queue.json` and redo.
+
 ## How to Renumber
 
 1. Load `scripts/build_queue.json`

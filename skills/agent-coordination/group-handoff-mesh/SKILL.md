@@ -93,6 +93,19 @@ missing return folders. Groups list includes `gizmo` (Labs bot).
   For fire-and-forget delivery use `hermes peer run <agent> --idempotency-key <stable-key> <<'EOF' ... EOF`:
   it returns `run_<id>: started` immediately and the stable idempotency key makes a retry a no-op instead
   of a duplicate. Keep the vault return note as the durable record either way.
+- **The peer-DM path can be DARK, not just slow — measure it before you rely on it, and know the local
+  twin.** After a multiplex convergence the four per-profile gateways are gone and the default
+  multiplexer may have **no `api_server` adapter at all**: `hermes peer dm <peer>` then fails instantly
+  with `[Errno 111] Connection refused` and `ss -ltnp` shows nothing on the old ports (measured
+  `:8642`–`:8645`). **Nothing is listening — do not read that as the peer refusing.** The mesh's own
+  design is that the default's `api_server`/`webhook` adapters are served as `/p/<profile>/` mirrors, so
+  the repair is one bind on the default profile plus per-seat peer URLs
+  (`http://<host>:<port>/p/<seat>`), which is **gateway-affecting and needs checkpoint ACKs** — never
+  taken alone. **Until then: deliver with the local twin, and log the failure.**
+  `hermes -p <profile> chat --query-file <file> --oneshot` runs a real turn as that seat's agent (use
+  `--query-file`, not `-q`, so quotes and `$(…)` survive the shell); the vault handoff stays the durable
+  record; the note says the DM failed and why. **A wake that never landed must never be reported as a
+  wake** — and once the peer answers, verify its claim yourself rather than relaying it.
 - Don't assume a handoff must go back to Gentech — route peer-to-peer when the target group owns the decision/context.
 - The scanner regex `^([a-z]+)-to-([a-z]+)$` matches peer folders; `-to-gentech` is handled separately in `scan_group`, so don't double-count.
 - Group agents sometimes push only to GitHub — always `git push vault main` before reading handoffs.

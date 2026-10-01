@@ -16,6 +16,24 @@ code patterns: `references/algebra-chain-reads.md`.
 
 ## Always-on rules
 
+- **State farming rules as observations with re-check triggers, not as
+  immutable principles.** A principle ("never farm token X") forbids a good
+  trade the moment depth and turnover arrive; an observation ("no pool for
+  token X is worth entering at TVL Y and fee APR Z") carries the conditions
+  that would change it. Record the threshold explicitly: target TVL, target
+  volume, or the venue that would make it work. Re-run the measurement when any
+  of those thresholds flip.
+- **Size-to-depth is the entry gate before impermanent loss.** A token can have
+  a thesis, momentum, and real fee tiers and still be unfarmable because the
+  position is a rounding error in the pool. Always compute:
+
+      capital_needed_for_goal = (goal_USD_per_day × 365) ÷ (fee_apr_pct ÷ 100)
+      expected_share_of_pool = capital_deployed ÷ TVL
+      expected_fees_per_day  = fees_per_day × expected_share_of_pool
+
+  If expected fees per day are smaller than one transaction's gas cost across a
+  realistic hold period, the pool is too thin regardless of the fee APR or the
+  thesis. Report that number; do not hide it behind impermanent-loss warnings.
 - **Never report a number derived from one method.** Derive it, then cross-check
   with a second independent source (swap events vs fee-growth math; DefiLlama vs
   raw reserves). A plausible-looking number is not evidence.
@@ -58,17 +76,22 @@ code patterns: `references/algebra-chain-reads.md`.
    (24h / 7d / 30d on a 2s chain). Archive check: read one selector at 3+ of
    these blocks — identical values mean the node is serving latest state for
    historical calls, i.e. false history.
-3. **Volume and fee revenue (paginated swap events).** `eth_getLogs` on the
+3. **Confirm the contract you are measuring is the actual pool, not a wrapper.**
+   A `balanceOf` call against a Yield Yak vault, gauge, or other wrapper returns
+   LP tokens or reward tokens, not the underlying reserves. Verify the address
+   maps to a pool before using its balance as evidence of depth. If the response
+   contradicts prior knowledge, re-check the address type before reporting it.
+4. **Volume and fee revenue (paginated swap events).** `eth_getLogs` on the
    pool with the Swap topic, paginated in ~2000-block windows. Decode amount0 /
    amount1 as SIGNED int256; per swap take (|amount0|·price + |amount1|)/2 as
    the volume leg. Fee revenue = volume × fee tier; fee APR = fees/day × 365 ÷
    TVL.
-4. **Fee-growth cross-check (integer math only).**
+5. **Fee-growth cross-check (integer math only).**
    `fees = liquidity × (growthNow − growthBefore) / 2^128` using Algebra
    `totalFeeGrowth0/1Token` (0x6378ae44 / 0xecdecf42) and `liquidity`
    (0x1a686502). If this prints ~0 while swaps demonstrably crossed, the
    formula/ABI is wrong — report the swap-event number, never the zero.
-5. **LP-flow trend.** Compare TVL across the historical offsets; treat active-
+6. **LP-flow trend.** Compare TVL across the historical offsets; treat active-
    liquidity swings as range effects, not exits (see rule above).
 
 ## Decision frame — what LP exits do to rewards
@@ -124,6 +147,11 @@ Run this analysis on any pool right after exiting it — post-exit competitor
 analysis is a standing step of every exit (see lp-exit-liquidity), not an
 ad-hoc question. Run it BEFORE entering a new pool too; entry and re-entry
 decisions deserve the same numbers.
+
+When a user asks whether a token currently held for accumulation can also be
+farmed, run the classification in `references/coq-lp-case.md`: pool depth,
+fee core, size-to-depth, and whether the LP fights the accumulation thesis.
+Never substitute the coin's momentum or fee tier for these measurements.
 
 ## Cross-rail venue comparison — the Yield Farm Report
 

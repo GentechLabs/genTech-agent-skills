@@ -22,7 +22,9 @@
 
 **Date:** <YYYY-MM-DD HH:MM ET>
 **Re:** Fleet gateway restart — controlled window
-**Action required:** Checkpoint your work, then ACK. Do NOT start new long-running work.
+**Action required:** Checkpoint your work, verify the claims below against your own state, then ACK. Do NOT start new long-running work.
+
+**This is a PER-EVENT checkpoint.** An ACK you gave for an earlier phase of the same migration (e.g. the Hermes update) does NOT cover this restart. State at 02:00 and 11:00 may differ, and the mechanism being restarted may differ.
 
 ---
 
@@ -40,13 +42,23 @@ This handoff gives you a chance to **park your work cleanly** before we cycle.
    - What you were working on
    - What's done / what's half-done / what's next
    - Any state that must survive the restart (positions, files, config, keys)
-2. **Do NOT start any new long-running task** until the restart completes.
-3. **Reply with ACK** — a short return note confirming you've saved state and are
-   safe to restart. Format:
+2. **Verify the claims in this request against your own state.** Do not echo them as facts.
+   Typical claims to check: config migration, cron repointing, provider switch, current gateway topology.
+   Measure, then include the result in your ACK.
+3. **Record the machine state at ACK time.** Note which gateway processes are running,
+   which heartbeat files are fresh, and whether a multiplexer or per-profile gateways are up.
+   This becomes the recovery baseline if the restart is interrupted.
+4. **Do NOT start any new long-running task** until the restart completes.
+5. **Reply with ACK** — a return note confirming you've saved state, verified the claims, and are
+   safe to restart. The vault write (commit + sync) is the delivery; attempt the wake DM only after
+   the note is durable. Format:
    ```
    ✅ CHECKPOINTED — <profile> safe to restart.
    In-flight: <one line>
    State saved to: <path>
+   Verified: <config/cron/topology claims you checked>
+   Host at ACK: <gateway processes running / multiplexer or per-profile>
+   ACK note: 01-HANDOFFS/<profile>-to-gentech/<date>-<topic>.md
    ```
 
 ## Guardrail
@@ -54,6 +66,16 @@ This handoff gives you a chance to **park your work cleanly** before we cycle.
 - If you are mid-task and CANNOT checkpoint safely right now, say so explicitly
   ("NOT READY — mid-<task>") instead of ACKing. We will wait.
 - Silence is NOT treated as ACK. We wait for your explicit return note.
+- If your wake DM fails because the target gateway is already down, the vault note is still the ACK.
+  Do not hold the restart waiting for a DM confirmation that cannot arrive.
+
+## Topology note for migration checkpoints
+
+If this restart is part of a gateway topology migration (per-profile → multiplex):
+- A "half-migrated" host (one gateway down, multiplexer not yet up) is explicitly supported.
+- The migration preflight can be read without changes: `hermes gateway migrate --multiplex --dry-run`.
+- There is no rollback command, but a `gateway.standalone: true` shim exists for temporary per-profile continuity.
+- Record the running gateway processes and heartbeat times in your ACK so the post-migration state is recoverable.
 
 — Gentech HQ
 ```

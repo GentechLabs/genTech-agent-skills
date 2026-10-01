@@ -69,6 +69,8 @@ curl -s "https://openrouter.ai/api/v1/models" | jq -r '.data[].id' | grep "z-ai/
 
 **Rule:** When a model is unavailable, find the best equivalent FROM THE SAME PROVIDER before switching to a different provider. This prevents config drift, provider fragmentation, and unexpected fallthrough chains.
 
+**BUT: a fallback chain must never be the same provider+model+base_url as the primary.** A fallback that is byte-identical to the primary is a retry, not a fallback — it cannot fail over and leaves the rail with no safety net. Verify the fallback chain is a *different* provider or a *different* reset cycle by reading the raw config; do not trust the length of the fallback list. A one-entry fallback that repeats the primary is worse than no fallback at all, because it hides the missing safety net. (Measured live 2026-10-01: all four profiles carried `fallback_providers: [{provider: opencode-go, model: deepseek-v4-flash}]` against a primary of `opencode-go/deepseek-v4.1-flash` — one credential pool behind both, so a single quota event takes the worker and its "fallback" together.)
+
 **Example — OpenCode Go fallback order:**
 ```
 deepseek-v4-pro unavailable → kimi-k2.7-code (same provider) → glm-5.2 (same provider)
@@ -268,6 +270,29 @@ grep -A 4 "^custom_providers:" ~/.hermes/profiles/gentech/config.yaml || echo "N
 - **Z.AI**: Via OpenRouter (direct API returns 404)
 - **Anthropic**: Via OpenRouter
 - **OpenAI**: Via OpenRouter
+- **Ollama Cloud**: `https://ollama.com/v1/models` (then verify each model with `POST /v1/chat/completions`)
+
+## Ollama Cloud Catalog Verification
+
+Ollama Cloud publishes many models, but your subscription plan determines which ones are available. The catalog endpoint lists every model on the platform; a model appearing there does not prove your account can run it. The only reliable verification is a live chat-completion probe with a real token budget.
+
+**Pitfall — small `max_tokens` makes a working model look broken.** Reasoning models (glm-5.3-flash, glm-5.2, kimi-k3, nemotron-3-*) spend tokens on a separate `reasoning` or `reasoning_content` field before emitting content. With `max_tokens` set too low (≤64), the response returns HTTP 200 with EMPTY `content` and `finish_reason: length`. That is a flawed instrument, not a failing model. Always live-test with at least `max_tokens: 512` and inspect both `message.content` and `message.reasoning`/`reasoning_content`.
+
+**Distinguish a DEAD key from a CAPPED rail — they look alike from a single probe.** A weekly-limit response is `200` on `/api/usage` with real account data and a `429`/`api_error` on `/v1/chat/completions`; a missing/revoked key is `401` on `/api/usage`. Measured 2026-10-01: with our key, `/api/usage` → 200 (weekly usage full) while a chat completion → *"you have reached your weekly usage limit"*. A note had recorded this rail as "cancelled, key dead" — both wrong, and the wrong call would have deleted a valid credential. **Probe the key with a control (`/api/usage` with and without the Authorization header) before concluding a rail is gone.**
+
+**Recommended probe:**
+```bash
+KEY=$(grep '^OLLAMA_API_KEY=' ~/.hermes/profiles/<profile>/.env | cut -d= -f2-)
+for m in deepseek-v4.1-flash glm-5.3-flash kimi-k2.7-code glm-5.2 kimi-k3; do
+  echo -n "$m: "
+  curl -s --max-time 60 -X POST https://ollama.com/v1/chat/completions \
+    -H "Authorization: Bearer ***" -H "Content-Type: application/json" \
+    -d "{\"model\":\"$m\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply exactly: OK\"}],\"max_tokens\":512}" \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); c=(d.get('choices') or [{}])[0].get('message',{}); print(repr(c.get('content','')[:30]), 'reasoning=', bool(c.get('reasoning') or c.get('reasoning_content')))"
+done
+```
+
+For a reusable fleet-wide scanner that fetches the catalog, filters by subscription, and marks failures correctly, see `references/ollama-cloud-model-verification.md`.
 
 ## Common Pitfalls
 

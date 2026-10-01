@@ -114,7 +114,7 @@ AI agents are trapped in "human-in-the-loop" transactions. They can read data, a
 **Core Solution:** AAE Stack + x402 Payment Gateway
 
 **What we've shipped:**
-- ✅ x402 gateway live and operational (https://gentech-x402-gateway.jordanjones0902.workers.dev)
+- ✅ x402 gateway live and operational (https://api.gentechlabs.net — verified 2026-09-30, 14 services)
 - ✅ Enforces 402 Payment Required on paid APIs
 - ✅ Routes payments to Avalanche C-Chain wallets
 - ✅ Integrates with Coinbase Commerce (x402.org protocol)

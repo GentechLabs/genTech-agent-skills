@@ -28,5 +28,13 @@ Researched Aug 27, 2026 for Jordan's possible Halloween trip. Reusable for any U
 Alaska, American, United, Cathay Pacific, Philippine Airlines, Korean Air, EVA, STARLUX, China Airlines, Emirates, Japan Airlines.
 
 ## Tooling notes
+> ⚠️ **CORRECTED 2026-09-30.** The line above treated a failure of the **hosted API**
+> (`api.letsfg.co` → 403 Cloudflare, no key, registration error 1000) as a verdict on the whole
+> tool, and it was never re-tested. The **local CLI** is a different thing and **works**:
+> `/usr/local/bin/letsfg search CVG MNL 2026-11-10 --return 2026-11-20 --currency USD`
+> returned real priced offers with bookable links. It is now the DATED rung in
+> `flight-tracker.py` (`--dated`). **Lesson: a negative result about one interface is not a
+> verdict on the tool, and a stale "don't chase it" outlives the thing it was about.**
+
 - LetsFG CLI present but needs registration (`letsfg register` → error code 1000, API unreachable). Not usable without a working registration.
 - Airline deep-link search URLs (united.com/flights-search?..., delta.com/flights-search/results?...) 404 or redirect; their search widgets fight automation. Use web_search snippets for airline fares + give the user the direct booking link.

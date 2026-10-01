@@ -259,6 +259,43 @@ the genuine defect recur in the genuine source — then revert.
 - **After hardening a check, re-run the negative control.** A hermeticity fix can quietly make the
   suite unfalsifiable.
 
+## A falsification must not POINT at the real protected resource
+
+The rule above — write to a throwaway copy — covers mutating the **code**. It does not cover the test's
+**target**. A test that disables a guard to prove the guard works will, in that run, do whatever the guard
+prevented — **at whatever path the test handed it.** If that path is the live resource, the falsification
+CREATES the hazard it was written to rule out.
+
+Measured, and it cost real material: a key generator refused to write private keys into the synced vault. The
+guard **hardcoded the real vault root**, so the test exercising it passed the **live vault path**. The mutation
+itself lived in a throwaway copy, exactly as this skill prescribes — and the mutated build still wrote two real
+private keys into the vault, which a later sync carried off-box before anyone noticed. The failing SUITE
+noticed, not the author.
+
+**Parameterise the protected root and inject a scratch one in tests.** Production keeps the real default; the
+test hands the guard a temp tree that merely *stands in* for the resource.
+
+```python
+def assert_outside(path, *, vault_root=None):     # default = the real vault
+    root = (vault_root or VAULT_ROOT).rstrip("/")
+    ...
+
+# exercises the guard, and cannot reach production even when the guard is disabled
+generate("seat", str(scratch / "vault" / "keys"), vault_root=str(scratch / "vault"))
+```
+
+- **A test that must break the thing it protects in order to prove it protects is a hazard, not a test.**
+- **Check the guard DIRECTLY for the real resource** — `pytest.raises(G): assert_outside(REAL_ROOT)`. A pure
+  check has no write path, so it stays safe under mutation and still goes red when the guard is removed.
+- **Add a TRIPWIRE for the hazard itself, with a test that FIRES it** — scan the real resource for the thing
+  that must never be in it and fail loudly. A guard nobody has watched fail is a guard nobody knows works.
+- **Prove the fix by re-running the falsification, not by reading the cleanup.** After the fix, disabling the
+  guard must still turn the tests red **and leave the real resource untouched**; that is the difference between
+  a hazard fixed and a hazard merely swept.
+- **Report the incident even when the cleanup is complete.** The artifact may already be in git history or
+  off-box, and a quietly removed exposure is an unassessed one. State the severity and the evidence for it
+  (here: never published in a roster, never used, and a different key from the real one) rather than "cleaned".
+
 ## A test must not PIN the bug it exists to catch
 
 A test that asserts the **exact buggy expression** is present will happily re-introduce the bug
@@ -367,6 +404,71 @@ unchanged.
   implementation is fine and the harness is the problem.
 - **A flake is worse than a bug** — it is a bug that teaches the team to stop trusting the suite.
   Fix the harness first; only then interpret a red result as a defect in the code under test.
+
+## Prove the negative control by REVERTING the fix in a throwaway copy
+
+A negative control that you never saw fail is a claim, not a control. The strongest proof is to take the
+shipped fix out of the equation, run the suite, and watch the relevant case go RED — then restore.
+
+Measured: a verifier was parameterised so each §4 case could run with its responsible check removed.
+The harness looked good, but the real proof came from copying the module to a temp dir, mutating it back
+to the pre-fix shape, and running the tests there:
+
+```
+real code        -> 11 passed
+pre-fix mutation -> 2 failed, including the regression test
+```
+
+That showed the regression test was not just a restatement of the fix; it died when the fix was absent.
+
+**Procedure:**
+1. Keep the fix in production code.
+2. Create a temp dir and copy the module + tests there.
+3. Apply the **inverse patch** (mechanical if the fix was small, or save the original hunk before
+   patching and re-apply it).
+4. Run the suite in the temp dir.
+5. Confirm the case(s) that should fail DO fail.
+6. Delete the temp dir; do NOT leave the mutation anywhere persistent.
+
+**Do not mutate the real source to plant the defect.** A test killed between plant and restore leaves
+the defect live. A throwaway copy is the only safe way to prove the control.
+
+## A check that RECORDS while it CHECKS consumes evidence a later step still needs
+
+A check that writes state while deciding whether to refuse can burn a token that a later step then needs.
+If every step must agree before the request is accepted, then **recording the outcome must happen AFTER
+all steps have agreed**, not during an early one.
+
+Measured: a replay check inserted the `jti` into the store at the moment it verified uniqueness. A token
+that was then refused by a later step (stale roster) had already consumed its `jti`, so when the roster
+refreshed and the caller re-presented the same valid token, it was refused as a replay — for a call that
+never happened. A stale roster silently invalidated every in-flight peer call.
+
+**Rule:** separate the *read* (`is_seen`) from the *claim* (`claim`). Check early, record last. The atomic
+claim stays the real accept-once gate under concurrency; the early read is for promptness and the right
+error message.
+
+**Regression test it:** present a valid token, refuse it at a late step, then present the same token again
+and assert it is still accepted. If the check records early, this test fails.
+
+## Module names can shadow the standard library and break the import chain BEFORE your code runs
+
+A file named `token.py` looks harmless until `dataclasses → inspect → tokenize → from token import
+EXACT_TOKEN_TYPES` tries to import the real `token` module and finds yours instead. The error points at
+`dataclasses`, not at your file, and the code never executes a line.
+
+**Rule:** before naming a module, check whether it collides with a stdlib module. A quick probe:
+
+```python
+import sys, importlib.util
+name = "token"
+if importlib.util.find_spec(name) is not None and name not in sys.builtin_module_names:
+    print(f"{name!r} is a real importable module — do not shadow it")
+```
+
+**If a file must live on `sys.path` and its natural name shadows the stdlib, rename it.** The test for the
+renamed module then becomes: import it under the new name and assert it resolves to the expected path,
+not to the stdlib one.
 
 ## Pitfalls
 

@@ -673,6 +673,86 @@ rule above.
   reading their own lane saw zero records. **No disagreement can arise to reveal the error, because there
   is only one computation.** When a writer and a reader both DERIVE a location, the derivation is the
   thing to test — not the write, and not the read.
+- **"UNIT COULD NOT BE FOUND" IS A SCOPE ANSWER, NOT A STATE.** `systemctl status X` reports
+  "could not be found" for a service that is running and enabled, when X is a `--user` unit — the same
+  words a genuinely absent unit produces. Measured: a converged gateway, active for 46 minutes with
+  `Restart=always`, read as absent because the query ran in system scope; its cgroup was
+  `/user.slice/user-0.slice/user@0.service/app.slice/...` the whole time. **Ask the DIGGING question
+  before believing a negative: read the process's own cgroup (`/proc/<pid>/cgroup`), which names the
+  manager that owns it and cannot be read in the wrong scope.** A negative from one namespace is a fact
+  about the namespace.
+- **THE UNIT OF THE CHECK DECIDES WHAT THE CHECK CAN SEE — AND THE UNIT IS OFTEN A SCOPE, NOT A FILE.**
+  Tonight the same mistake appeared as a `HEAD~1` that already contained the fix, a regex that matched a
+  different lane, and a `systemctl` that asked the wrong manager. **Three different instruments, one
+  shape: the selector was wrong and the output looked like a measurement.**
+
+- **A FILTERED COUNT PUBLISHED AS A RAW COUNT IS THE SAME DEFECT AS A TOTAL WITHOUT ITS SELECTOR.** One
+  tree gave 337 tracked / 341 on the filesystem / **55 after excluding archives, backups and dated records**
+  — and the 55 was the number that got published. **The filter was deliberate and correct (it isolated live
+  references from history, which was the question); the LABEL was wrong.** State the exclusion set in the
+  same breath as the number, or the reader reconciles against a tree they were never measuring.
+
+- **A COUNT IS ONLY AS GOOD AS ITS PREDICATE — PRINT THE SELECTION, NOT THE TOTAL.** The same one
+  directory yielded **12, 9, 8 and 6** for the same question, with no disagreement about any fact, purely
+  from three incidental choices: whether the citation had to be on a `Re:` line or anywhere in the body;
+  whether the lane had to match one exact name or any name in the family; and whether the first match or
+  the first EXISTING match counted. **Publishing the total without the selector makes all four look like
+  measurements.** When two people disagree about a count, print the two file lists side by side before
+  either defends a number — the difference is usually in the loop, and it is often not yours.
+- **CHECK THE DIRECTION OF A CITATION BEFORE COUNTING IT AS EVIDENCE.** A note that quotes the reply is not
+  a reply: three of the files in an inflated count were notes citing the ANSWER to them. **A reference to
+  the answer is the opposite of evidence that a question was answered**, and both render as a path in a
+  body.
+
+- **ALIASING HALF OF A COMPOSITE KEY LEAVES THE OTHER HALF VERBATIM.** When a lookup is built from two
+  parts that EACH have synonyms, resolving the ambiguity on one side and passing the other through
+  unchanged produces a lookup that is correct for whichever part you happened to think about. Measured: a
+  lane name `receiver-to-sender` had the receiver aliased (`entertainment`≡`pixel`) and the sender
+  verbatim, so replies written to `entertainment-to-treasury` were invisible to handoffs sent from
+  `gentech-treasury` — with the reply citing the handoff by filename. **Cross BOTH sides; then the answer
+  set is a product, not a list.**
+- **WIDENING A SEARCH EXPOSES WEAK MATCHES THAT WERE ALWAYS WRONG, ONLY UNREACHABLE.** Adding locations to
+  a scan surfaces every loose predicate that never previously had anything to match in the new place. This
+  is not a side effect of the widening; it is the widening's first useful output. Measured: aliasing the
+  sender made a newly-reachable lane match a DATE-ONLY topic by substring, so `2026-09-28` "answered" a
+  daily roundup via `2026-09-28-some-other-note.md`. **Budget for a second fix whenever you widen, and
+  diff the verdicts rather than reasoning about the change.**
+- **A GUARD HOISTED OUT OF ITS LOOP SILENTLY DISABLES EVERY ITERATION BUT THE FIRST.** A `seen` set
+  declared above `for base in roots:` is fully populated after the first root, so every later root scans
+  nothing — and a scan that stops early prints exactly what a scan that finds nothing prints. **Dedupe
+  per iteration, and treat "the loop that searches everywhere" as a claim to test, not a structure to
+  read.**
+
+- **A CHECK THAT CANNOT PASS IS WORSE THAN NO CHECK, BECAUSE IT TEACHES THE READER TO SKIP IT.** A
+  verification step whose expected output can no longer occur (a vault id that has been replaced, a host
+  that has moved, a filename a tool no longer writes) is read once, fails, and thereafter is passed over.
+  **The failure mode is not the false alarm — it is the trained habit of the reader.** When an identifier
+  under a check changes, the check is part of what changed.
+- **A VERIFICATION STEP'S EXPECTED OUTPUT IS A MEASUREMENT, NOT A QUOTATION.** Copying the expected value
+  forward from the doc that documents it makes the check a restatement of its own source. Read it off the
+  live system, and record which value is dead beside the live one so the next reader does not restore it.
+
+- **A REMEDY CAN OUTLIVE THE TOOL IT WAS WRITTEN FOR — AND THEN THE SAME REMEDY IS THE DEFECT.**
+  A return filed in `_archive/` could only be found by MOVING it back into the live lane; once the reader
+  learned to read the pointer in filed dirs, moving it would have been the wrong act, and the filed
+  location became the correct one. **The identical symptom had two opposite correct remedies, and which
+  one is right depends on WHICH TOOL IS DEPLOYED.** So a remediation step is a claim about a tool version:
+  when the tool changes, re-read every workaround that exists because of it, or the fix becomes the fault.
+
+- **WIDENING WHERE YOU LOOK IS NOT THE SAME AS WIDENING WHAT COUNTS.** Extending a search to more
+  directories does nothing if the TEST applied inside them is unchanged: a return filed in `_archive/`
+  stayed invisible after `_archive/` was added to the search, because the only test that could match it —
+  a body scan — was skipped there by design. When a fix adds locations, re-check the predicate that runs
+  *in* the new location, not just the loop that reaches it.
+- **TWO CORRECT GUARDS CAN CONJOIN INTO A FALSE NEGATIVE.** Each guard was right on its own (a filename
+  test cannot see a differently-titled reply; a topic scan must not run in a filed dir, where a mere
+  mention would answer a handoff it never addressed) — and together they made a genuinely answered handoff
+  unfindable. **A conjunction of individually-justified guards is a place to look for blind spots; the
+  remedy is usually a THIRD, more precise signal, not weakening either guard.**
+- **ASK WHAT A DOCUMENT SAYS IT ANSWERS, NOT WHAT IT MENTIONS.** A `**Re:**` line naming the target by
+  filename is a deliberate claim; a topic mention is not. Substituting the precise claim for the loose one
+  closes the false negative without reopening the false positive the loose test was disabled to avoid.
+
 - **DERIVE NOTHING YOU CAN LOOK UP.** A path built by transforming a NAME is a guess about a naming
   convention that can be asymmetric, and a name can have no inverse at all (`pixel-to-gizmo` has never had
   a `gizmo-to-pixel`). The note's own directory exists because the note does; anchor there. **A transform
