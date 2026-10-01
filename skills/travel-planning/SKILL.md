@@ -57,17 +57,30 @@ Buffer = total available - trip cost
 
 ### 2. Flight Research
 
-**Primary: LetsFG (try first)**
-```python
-from letsfg.local import search_local
-result = await search_local('CVG', 'MNL', '2026-07-25', mode='fast', max_browsers=4)
+**Primary: LetsFG (try first)** — the **CLI** is the working interface:
+```bash
+letsfg search CVG MNL 2026-11-10 --return 2026-11-20 --currency USD --limit 10 --sort price
 ```
-- If offers returned → sort by price, present top 5-10
-- If zero offers or errors → fall back to web search
+- Returns real offers with prices, carriers, stops, **per-leg durations, and bookable links**
+- ⚠️ **Verified 2026-09-30:** `/usr/local/bin/letsfg` works. The Python form
+  (`from letsfg.local import search_local`) documented here previously **does not import** —
+  treat the CLI as the supported path and do not reintroduce the SDK import without testing it.
+- ⏱ **~182 seconds per query** (measured, one CVG↔MNL round trip, 5 results). Background it;
+  never run inline where someone is waiting. A two-route sweep is ~6 min of wall clock.
+- If zero offers or errors → fall back to the static/web path below
 
-**Fallback: Web Search**
+**Fallback: Web Search (price discovery only — see rule 11)**
 Search Google Flights, Skyscanner, Expedia, Kayak via `web_search`.
-Compile results into a comparison table.
+Compile results into a comparison table. **Expedia is a place to find fares, never a place to
+recommend booking** — rule 11 governs.
+
+> ⚠️ **TWO RUNGS, TWO DIFFERENT PRODUCTS.** The `letsfg` rung takes an explicit date; the
+> static Google page (`flight-tracker.py`) does **not** and reports whatever window it surfaces
+> that day. **Never diff a dated reading against an undated one** — tag every reading with the
+> rung that produced it. Measured 2026-09-30: the same route read **$1,076 (static, Oct 24
+> departure)** vs **$1,225 (letsfg, real Nov 10)** — ~14% apart, with the undated reading
+> making the trip look *cheaper* than it is.
+
 
 **Price benchmarks (save to trip doc):**
 | Route | Great Deal | Good Price | Fair | Overpaying |
@@ -275,6 +288,18 @@ web_search("cheapest flights Cincinnati to Manila summer [year]")
 - Otherwise, log silently — don't spam with "no change" reports
 - Track previous prices in vault: `00-HQ/01-Travel/[route]/price-history.md`
 
+**Date-aware `letsfg` rung for actual trip dates:**
+- When a trip file declares specific departure/return dates, prefer `letsfg search <ORIG> <DEST> <DATE> --return <DATE> --currency USD`.
+- A single round-trip `letsfg` query takes **~180 seconds measured**; run it in the background, never inline where someone is waiting.
+- Tag every reading with the rung that produced it (`letsfg-dated` vs `static-undated`). Never compare a dated reading against an undated one — they are different products, not a price trend.
+- The static Google page remains the cheap fallback for routes with no attached trip dates.
+
+**Date-aware `letsfg` rung for actual trip dates:**
+- When a trip file declares specific departure/return dates, prefer `letsfg search <ORIG> <DEST> <DATE> --return <DATE> --currency USD`.
+- A single round-trip `letsfg` query takes **~180 seconds measured**; run it in the background, never inline where someone is waiting.
+- Tag every reading with the rung that produced it (`letsfg-dated` vs `static-undated`). Never compare a dated reading against an undated one — they are different products, not a price trend.
+- The static Google page remains the cheap fallback for routes with no attached trip dates.
+
 **See:** `references/flight-monitoring.md` for full methodology.
 
 ### 7. Vault Organization
@@ -387,6 +412,32 @@ Agoda, Airbnb, Booking.com, and most booking sites use heavy JavaScript + aggres
 9. **Clarify full routing before quoting prices** — When the user says "fly from X to Y", confirm the complete itinerary (origin → destination → any intermediate legs) before researching. The user may mean CVG→CEB (direct international) not MNL→CEB (domestic). A wrong assumption wastes the whole research pass.
 10. **Philippines island geography trips up first-timers** — Cities like Lapu-Lapu are on separate islands (Mactan) connected by bridges, not remote. Cebu City is on Cebu Island proper. Clarify this early — users often think "city" = "mainland" and get confused about ferry vs bridge access.
 11. **Book DIRECT with majors, not OTAs (Jordan's standing preference, Aug 2026)** — Jordan wants to book with the major airlines (United, Air Canada, Delta, Alaska) directly for status benefits, miles, and direct support. He explicitly treats OTAs like Expedia as risky: "if something happens you might be shit out of luck." Do NOT lead with Expedia/Orbitz/Travelocity as the booking recommendation. Use OTAs only as a *price-discovery* cross-reference, then recommend booking the same fare direct on the airline's site. When a cheap OTA fare is on a major (e.g. Alaska), say so and point to booking it direct. Note: airline deep-link search URLs (united.com/flights-search?..., delta.com/flights-search/results?...) often 404 or redirect, and their search widgets fight automation — use web_search snippets for airline fares and give the user the direct booking link rather than fighting the widget.
+
+> **⚠️ SEARCH ≠ BOOK.** Rules 11 and 12 constrain *booking*. The fallback research path in §2 ("search Google Flights, Skyscanner, Expedia, Kayak") is **price discovery only** and is still allowed — Expedia is a legitimate place to *find* a fare and a disallowed place to *recommend booking it*. Read the §2 fallback line through rule 11, not against it.
+
+12. **ROUTING QUALITY — short layovers, bounded total time, majors (Jordan, 2026-09-30):**
+    > *"We want to stick with layovers that are close to an hour, hour and a half plus but not like super long
+    > layovers… the overall flight time should be around 30 hours or less — any more than that and more than
+    > likely they want a long layover and I'm trying to avoid long layovers. We also want to look at major
+    > airlines. We want to avoid the Frontiers if we can."*
+
+    Three checks, applied to **every** offer before it reaches him:
+    - **Layover: ~1h is the floor, ~1½h+ is comfortable, long is disqualifying.** A ~1h connection is
+      acceptable *if it is not the only option* — below an hour is a misconnect risk, not a saving.
+    - **Total trip time ≤ ~30h.** This is the *primary* filter, because **layover length hides inside
+      total duration**: an offer advertising "2 stops" and a seemingly fine connection is usually
+      showing a long wait somewhere the summary doesn't surface. **A total over ~30h IS the long
+      layover** — treat it as a disqualifier, not a detail to mention.
+    - **Majors preferred; budget carriers flagged and deprioritised.** Explicitly calls out **Frontier**
+      (F9). Same family: Breeze (MX), Spirit, Allegiant. A budget carrier may win on price — say so
+      plainly and name the tradeoff, but never present it as the headline recommendation.
+
+    **Applied to the 2026-09-30 CVG↔MNL reading, this reorders the results:** the cheapest offers
+    ($1,225 Frontier / $1,265 Breeze) are both disqualified on carrier, and the 51h Frontier routing
+    fails the 30h ceiling outright. **The honest recommendation was the United option at $1,314** —
+    2 stops but 21h07m total, on a major. Cheapest ≠ best, and the gap here is ~$90 to avoid a
+    budget carrier and 30 hours of extra travel.
+
 
 ## References
 

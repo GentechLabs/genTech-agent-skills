@@ -2,7 +2,7 @@
 name: defi
 description: "Unified DeFi operations umbrella: LP monitoring, rebalancing, dashboard sync, strategy design, on-chain reading, LFJ orchestration, AAE app architecture, rank/prestige engine, and security intelligence. One skill to rule them all."
 tags: [defi, lp, monitoring, rebalance, dashboard, strategy, on-chain, lfj, avalanche, solana, meteora, aae, ranks, prestige]
-trigger: "Any DeFi-related task: LP monitoring, rebalancing, dashboard sync, strategy design, on-chain reads, LFJ operations, fee milestones, AAE app architecture design, rank/prestige engine, Meteora DLMM pools, or security intel."
+trigger: "Any DeFi-related task: LP monitoring, rebalancing, dashboard sync, strategy design, on-chain reads, LFJ operations, fee milestones, AAE app architecture, rank/prestige engine, Meteora DLMM pools, security intel, or operator shape directives."
 related_skills: [market-macro-monitor, link-research-summary]
 version: 2.7.0
 author: Gentech
@@ -138,6 +138,29 @@ Stage 3: After alert fires          → SILENT until condition fully clears
 ```
 
 **Severity:** Out-of-range = HIGH | Efficiency <30% = MEDIUM | Efficiency 30-50% = informational
+
+### ⚠️ Scanner Thresholds and Config Drift
+
+**The threshold is source-of-truth in code, not in memory.** The user may recall an original
+rule as one number while the code holds another. Until the rule is written in the Constitution
+or the code constant is updated, the code wins by default.
+
+**When changing a threshold:**
+1. Read the current constant in `fee_efficiency.py` (e.g. `LOW_EFF_THRESHOLD`, `BAND_HOLD`,
+   `BAND_REDUCED`, `LOW_DUTY_MIN`).
+2. Check whether the new threshold conflicts with an intentional low-reading shape
+   (e.g. a bid-ask reads ~33% by construction when price is near centre).
+3. If it conflicts, add an **exemption rule** before changing the number, or the book will
+   churn forever.
+4. Update the code constant and the Constitution together; do not update one without the other.
+
+**Example:** raising "stay above" from 50% to 75% is correct for a curve, but **deadly** for a
+deliberate dip-gathering bid-ask unless the bid-ask is exempt. Write the exemption first.
+
+**A threshold is also not a substitute for an operator directive.** A bid-ask at 25% efficiency is
+exactly where a bid-ask often sits when price is near its junction. If the operator chose that shape
+deliberately, no efficiency threshold should trigger a rebuild. Check for an active operator shape
+directive before any efficiency-driven shape switch.
 
 ### Smart DCA Zones
 
@@ -390,6 +413,211 @@ DEPLOY → EARNING → BREAKOUT? → HOLD 2-5min → RETREAT to USDC → SENTINE
 | Strong bullish breakout | Exit → spot |
 | Crash/panic dump | Skewed curve (70% stablecoin) |
 | Consolidation after rally | Curve at new range |
+
+### ⚠️ The Real Cost Is Divergence, Not Fees
+
+A concentrated LP book **sells its upside away** as the price rises and **buys it back** as the price falls. Fees are real and durable, but they are the headline; divergence is the bill. In a measured window (30 days of real swap history, AVAX/USDC concentrated position), the curve-like shape earned **$106.82 in fees** yet lost **$88.37 to divergence** and finished behind HODL.
+
+**This flips the way you read a report:**
+- High fee efficiency / high daily fees → **good**, but not enough
+- Low divergence / high ending value vs HODL → **the real score**
+- A shape that rebalances 133 times in 30 days → **a treadmill**, not a strategy
+
+**Rule:** do not optimize for fees alone. Optimize for **net value vs the simplest alternative** (HODL, or the static range you would have held anyway).
+
+### Regime → Instrument (Updated 2026-09-30)
+
+| Regime | Primary instrument | Why |
+|---|---|---|
+| **Chop / range-bound** | **Concentrated LP** (curve or bid-ask) | Earns fees as price oscillates |
+| **Trending up** | **HODL the asset** | Concentration sells the upside; HODL keeps it |
+| **Trending down** | **Stable / hedge** | Stop paying divergence, preserve capital |
+| **Euphoria** | **Exit market making → full asset** | The most expensive thing to do at the top is keep selling rallies |
+| **Bullish consolidation / accumulation** | **BID_ONLY** | Hold spot + bid ladder: keeps all upside, collects fees above the bids, DCA's every fill |
+
+**Perpetuals are available for both directions, not only shorts.** Funding rates determine whether
+a long pays or earns: when funding is positive, longs pay shorts, so a **short earns** and a **long
+pays** a carrying cost. That makes a cash-and-carry (hold spot + short the perp) a delta-neutral
+funding-yield strategy — a genuine bank-account-shaped return that the LP farm cannot provide. Do
+not describe perps as "only for shorting"; describe them by their cost and their directional fit.
+
+**This makes the treasury a cycle instrument, not a perpetual fee machine:** farm the chop, hold the euphoria, accumulate the dips.
+
+### The BID_ONLY hybrid — spot upside + fee capture + DCA
+
+When the operator says "accumulating and loading the spring," the correct instrument is not a
+two-sided spread. A bid-ask or a curve **sells the upside** by construction — the ask side
+converts WAVAX to USDC as price rises. The hybrid that preserves the thesis is:
+
+- **Spot WAVAX held outright** — keeps 100% of the upside, no ask side.
+- **USDC deployed as a bid-only ladder** below spot — earns fees while price chops above it, and
+  every fill automatically buys the dip.
+
+This resolves the **bank-account vs beat-holding** conflict rather than splitting the difference:
+- It is **not** a bank account (it is long AVAX).
+- It is **not** a pure hold (it earns fees and DCA's lower).
+- It removes the exact divergence cost that made managed shapes lose to HODL: **there is no ask
+  side to sell rallies.**
+
+**When to use it:**
+- Bullish trend expected to continue.
+- Operator wants to **buy dips, not sell rips**.
+- Willing to be ~90%+ in the asset (the bid ladder only softens the entry; it is still a
+  directional position).
+
+**When NOT to use it:**
+- Range-bound chop with no trend expectation (use a curve instead).
+- Deep bear or risk-off (it is still long the asset; use stables).
+- Operator needs stable income regardless of price direction (use a balanced two-sided book).
+
+**Implementation pattern:** withdraw the two-sided book to free both legs, hold the full WAVAX
+amount as spot, then deploy the USDC leg as a `bid` with `kind=uniform` (or a decayed weight)
+reaching down to the target accumulation zone. **Do not** leave an ask leg attached.
+
+**Verification after build:** confirm the on-chain position contains only `bid` bins; there must
+be zero ask-side ownership. The wallet balance will show WAVAX (spot) plus the LP position. Report
+both as a combined exposure table so the operator sees the actual asset concentration.
+
+> **Full decision table and worked examples:** references/bid-only-hybrid-shape.md
+
+### Operator Shape Directive — the machine does not outrank the user
+
+When the operator explicitly chooses a shape and split, that choice is the authority. Fee efficiency,
+regime labels, and classifier outputs are inputs — they are not the decision. A machine that silently
+rebuilds the book into a "higher-efficiency" shape after the operator chose a different one has
+**overridden the operator**, not optimized the position.
+
+**This requires a persisted directive, not a conversation-state assumption.** The operator may tell
+you in chat, but the watchdog runs from files. The directive must be written where the re-centering
+loop reads it, with a clear scope and an expiry/clear condition.
+
+Minimum fields for an operator shape directive:
+- `shape` — curve / bid-ask / spot
+- `split` — token/stable ratio or explicit amounts
+- `set_at` — timestamp
+- `reason` — one-line operator rationale
+- `escalate_if` — conditions that should surface for confirmation (e.g. efficiency below X% for Y min)
+- `expires_at` or `auto_clear_on` — when the machine may resume autonomous shape selection
+
+**Behaviour:**
+- While the directive is active, the machine **holds the shape** and reports `SHAPE OVERRIDE HELD`.
+- It still monitors efficiency, divergence, and range status — and reports them.
+- It may propose a switch, but it does not execute one without operator confirmation.
+- If the directive has no expiry, the operator must clear it; never infer expiry from market movement.
+
+**When the operator's choice conflicts with the efficiency model, say so plainly and hold the choice.**
+A bid-ask near its natural trough will read 25% while a curve at the same spot reads 75%. That is not
+a bug in the model — it is the cost of the operator's thesis. Report both numbers and the override.
+
+### Directive durability — a directive that does not survive the loop is not a directive
+
+**Write the directive into the vault as DATA, not into the conversation or a running script.** The
+watchdog that acts on it reads files, not chat history. The canonical record must live in the vault
+first and be enrolled in the sync manifest so the profile copy the cron executes cannot drift back
+to a version without it. A directive that exists only in the vault copy the human sees is invisible to
+the machine; one that exists only in the profile copy is overwritten by the next sync.
+
+**A directive set as material must survive every later materiality reset.** The cascade path or an
+operator override may set `MATERIAL=1` early in the script, but if a classification block resets
+`MATERIAL=0` later in the same scope and no restoring path can see the override, the most important
+condition the script can detect is delivered as a non-material advisory. Decide materiality ONCE,
+after all action, using the output that proves it — or explicitly restore the override flag after any
+reset.
+
+**If the directive file cannot be read, the failure must be LOUD.** A missing or malformed directive
+must print `UNREADABLE OPERATOR DIRECTIVE` and refuse to act on efficiency alone. Falling back
+silently to the autonomous path means the operator's instruction was overridden by default.
+
+**A directive is not done when it is written — it is done when the running copy reads it.** After
+writing, sync, then run the watchdog once and inspect its stdout for the directive line. No line
+means the file is in the wrong path, not in the manifest, or the reader is looking elsewhere.
+
+**A fork is when two reasonable readings of the same market point to different shapes or actions and
+the choice is material.** When you detect a fork:
+1. State the fork in one sentence, with the two readings and the capital at stake.
+2. **Pause the autonomous path** so it cannot act on either reading while the operator decides.
+3. Present 2–3 explicit options with the shape, split, and expected exposure of each.
+4. Log the paused state and the reason.
+
+Do not pick the "higher-efficiency" option as the default. Do not average the options. Do not deploy
+a compromise shape (a widened curve is not a bid-ask; a 60/40 curve is a different bet). The operator
+calls the shape; the machine executes it cleanly.
+
+> **Worked example and reference implementation:** references/operator-shape-directive.md
+
+### Escalate genuine forks, do not resolve them alone
+
+A fork is when two reasonable readings of the same market point to different shapes or actions and
+the choice is material. Examples:
+- Regime says curve, price action says breakout.
+- Efficiency model says curve, operator previously said bid-ask.
+- Two messages from the operator point in opposite directions.
+
+**When you detect a fork:**
+1. State the fork in one sentence, with the two readings and the capital at stake.
+2. Pause the autonomous path so it cannot act on either reading while the operator decides.
+3. Present 2–3 explicit options with the shape, split, and expected exposure of each.
+4. Log the paused state and the reason.
+
+Do not pick the "higher-efficiency" option as the default. Do not average the options. Do not deploy
+a compromise shape (a widened curve is not a bid-ask; a 60/40 curve is a different bet). The operator
+calls the shape; the machine executes it cleanly.
+
+### Backtest Before You Decide
+
+When the user asks "which shape?" or "should I be market making?", do not answer from doctrine.
+Run `mcp__vfat__backtest_strategy` (or the equivalent live rail) on a comparable pool over at
+least one full regime window, then compare against HODL and a static range.
+
+**Key inputs to hold constant across runs:**
+- Same pool / same fee tier / same deposit size
+- Same days / same swap history
+- Same auto-rebalance delay
+- Only vary the geometry (shape, width, skew)
+
+**The comparison must include:**
+- Fees earned
+- Costs (gas, swap impact)
+- **Divergence** (the shape's PnL drift from HODL)
+- **Rebalance count** (a first-class metric — high count = high churn)
+- Ending value vs HODL
+- Time in range
+
+**Then match to the regime.** A shape that wins in chop may lose in a trend; that is expected,
+not a bug. The rule is: **instrument follows regime.**
+
+> **Worked example and reproduction recipe:** references/backtesting-shape-vs-regime.md
+
+### Audit First, Then Shape
+
+A shape decision is only as good as the *state* it is built from. Before deciding, prove:
+1. **Which venue** is actually holding the money (LFJ V2.2, Blackhole, Meteora, etc.).
+2. **Which pool** within that venue (contract address, binStep/tickSpacing, fee tier).
+3. **Whether the position is empty, partial, or whole** — scan the actual bin ranges and owned NFTs.
+4. **What shape is on-chain** vs what the user says — both can be wrong if a stale run raced a redeploy.
+5. **Whether any operator directive** is active; if so, it outranks the efficiency model.
+
+Failure to do this produces the worst kind of error: a correctly executed trade into the wrong
+premise. Verify the venue and position before every deploy/withdraw/rebalance.
+
+> **Consolidation/audit scope traps:** references/audit-consolidation-scope-traps.md
+
+### Levels retire when the market clears them
+
+A price level is only a reference while the market respects it. Once price moves cleanly through it
+and holds on the other side, the old level stops being a meaningful entry target. A machine that
+keeps waiting for a retest of a cleared level will miss the move and may deploy capital into air.
+
+When a key level is cleared:
+1. Record the level, the direction, and the closing confirmation in the position log.
+2. Mark the level as **retired** in the strategy context; do not use it as the primary reference for
+   new entries.
+3. Replace it with the next structural level in that direction (next support above, next resistance
+   below) or a regime-based range.
+4. State the retirement out loud when reporting the next shape decision.
+
+This applies to any level the operator has been anchoring on: prior swing low, DCA target, range
+boundary, or macro line. A level does not retire on a wick — it retires on a confirmed break.
 
 > **Full strategy design:** references/strategy-design.md
 
@@ -690,7 +918,8 @@ protocol_handlers = {
 **Jordan's Strategy Example**:
 - Core Allocation: 60% BTC / 40% ETH  
 - AVAX Trigger: Heavy accumulation below $6, light accumulation above
-- Weekly DCA: $15-25 range
+- Yield-farm cadence: $20–$150 every TWO WEEKS into AVAX/SOL yield (the farm doubles as an entry-timing signal — a pullback there is a good buy)
+- Normal accumulation: add on good entries outside the scheduled cadence
 - Rebalance Threshold: 5%
 - Time Horizon: 3 months bearish outlook
 
@@ -809,6 +1038,7 @@ mcp_servers:
 32. **Bid-ask = 0% real fees when price is between edges** — The efficiency formula shows 50-100% across the range, but in practice, NO bins are crossed when price sits between bid and ask edges. This means $0/day earnings. Don't tell the user "93% efficiency" with bid-ask in chop unless the price is actually at an edge. Be honest about 0% fee earnings.
 33. **Python hashlib.sha3_256 is NOT Ethereum keccak256** — NIST SHA-3 and the original Keccak are different hash functions. Using hashlib.sha3_256 produces wrong selectors. Install pycryptodome and use Crypto.Hash.keccak. Correct LFJ V2.2 selectors: getActiveId()=0xdbe65edc, getBinStep()=0x17f11ecc, balanceOf(address,uint256)=0x00fdd58e, getBin(uint24)=0x0abe9688.
 34. **On-chain reader now works — use it instead of guessing range from screenshots** — After fixing the keccak256 bug, the Python reader at ${VAULT_DIR}/scripts/onchain-reader.py can pull live bin data. Price formula: (1 + bin_step/10000) ** (bin_id - 2^23) * 10^12. Still needs shape and entry price from user config.
+35. **A threshold that lives in more than one file is not fixed until every copy matches** — A rule such as "stay above X% fee efficiency" has at least three versions: what the user remembers, what the Constitution says, and what the code constant holds. In this session, the same rule was 60% in memory, 50% in code, and 75% in intent — and the code's 50% appeared in TWO independent files (`fee_efficiency.py` and `lp-monitor-v2.py`). **Before acting, read the code constant, grep the scripts tree for every assignment of the same symbol, and reconcile all three in writing.** Raising the threshold in only the authority file leaves the monitor firing on the old number, which is worse than leaving it alone because the two systems now disagree. And if the threshold change would harm a deliberate shape (e.g. a bid-ask reads ~33% by construction), write the exemption before you move the number, not after.
 
 ---
 
