@@ -686,6 +686,46 @@ rule above.
   different lane, and a `systemctl` that asked the wrong manager. **Three different instruments, one
   shape: the selector was wrong and the output looked like a measurement.**
 
+- **A REGENERATED ARTIFACT MUST BE FILED BY ITS GENERATOR, NOT BY ITS CONTENT.** A produced reading
+  (a map, a report, a census) changes on every run — three runs gave three hashes — so a record that
+  cites the reading is stale the moment it is written, while a record that cites the RULE and the
+  COMMAND stays true. **Cite the rule and the generator, plus the `as_of` of whatever reading you saw —
+  never the reading alone. An artifact named for a thing that is true only for a second is the same
+  defect class as a file whose name implies a state it does not have.**
+- **VERIFYING AT THE ARTIFACT IS NOT ENOUGH IF THE ARTIFACT WAS REPLACED AFTER THE VERIFICATION.** A
+  spot-check that parses correctly, hashes plausibly and cites the right bytes can still be a revision
+  that has since been corrected — and the tell is the `as_of`, not the size. **Compare the reader's
+  as-of against the file's, before the number enters a record.**
+- **A GREP SEEKS THE REASON IN THE FILE THAT COMMITS THE ACT; THE REASON IS OFTEN IN A SIBLING.**
+  A hardcoded path looked like an accident in the script that used it and was a documented decision —
+  the comment lived in a *different* script that shared the constant. Searching above the resolving line
+  found nothing and the tool still said UNDOCUMENTED. **Search the CORPUS for the rationale before
+  filing a defect verdict, and split the class: DOCUMENTED (a decision) vs UNDOCUMENTED (a candidate
+  defect) — they are opposite findings and only one is a bug.**
+- **RIGHT FACT, WRONG NAMESPACE, COMMITTED WHILE FIXING THIS VERY CLASS.** The instrument error below
+  was being written up as a lesson in the same hour it was repeated: a check of MY OWN seat's job list
+  was reported as "neither script is scheduled" — a fleet-level claim from a seat-level query. **The rule
+  holds for the person holding the rule: state the namespace you queried, every time, including when you
+  are certain.**
+- **AN INSTRUMENT PRESENT ONLY IN `--json` IS AVAILABLE TO THOSE WHO ALREADY SUSPECT THEY NEED IT.**
+  The reader that most needs the provenance is the one reading the DEFAULT line and publishing the
+  number; a machine-readable field it never opens does not reach it. Measured: source attribution and
+  a 6.26% spread were added to the JSON while the text line still printed a bare `($10.97)` — so the
+  human-facing output, the one most likely to be quoted, carried no sign that two sources disagreed.
+  **When you add provenance to a structured output, add it to the human output in the same change:
+  `($10.92 · coingecko · spread 6.51% ⚠)`. Ask which surface PUBLISHES the number and put it there,
+  not only where it is easiest to store.**
+- **TWO READERS OF ONE OUTPUT CAN AGREE ON A DEFECT THAT IS IN NEITHER OF THE FIELDS THEY READ.**
+  Two agents spent a round comparing a market price with a spot price, agreeing that a valuation was
+  unstable, when the valuation was stable in both and the wobble was in a THIRD field. **Name the
+  field, not the feeling: "the number that moved" is not a measurement until it is a keypath.**
+- **NAME A FILE BY THE READER'S SELECTOR, NOT BY YOUR OWN DESCRIPTION OF IT.** A handoff ACK named
+  `ack-safe-to-restart-measured-1705z.md` was invisible to three separate readers who globbed for the
+  convention (`*peer-mesh-shadow-window-ack*`) — **the file existed, was correct, and read as ABSENT,
+  and the fault was the NAME.** The person who names a file already knows what it says, so the name
+  describes the CONTENT; the reader who greps knows only the convention, so they need the CATEGORY.
+  **Before saving a file another agent must find, check what THEY will search for — a distinctive
+  self-description is a private label on a shared shelf.**
 - **A FILTERED COUNT PUBLISHED AS A RAW COUNT IS THE SAME DEFECT AS A TOTAL WITHOUT ITS SELECTOR.** One
   tree gave 337 tracked / 341 on the filesystem / **55 after excluding archives, backups and dated records**
   — and the 55 was the number that got published. **The filter was deliberate and correct (it isolated live

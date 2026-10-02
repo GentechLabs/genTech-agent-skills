@@ -3,13 +3,13 @@
 Split into parts **2026-09-28** when the single file reached 93,842 chars against the platform's **100,000-char
 per-file** cap. **Items were MOVED WHOLE, never rewritten**, so every item still carries its own provenance line.
 
-## Parts — counts and digests read at 01:04:36Z
+## Parts — counts and digests read at 10:28:58Z
 
 | part | items | chars | md5 |
 |---|---|---|---|
 | `references/pitfalls-1.md` | 60 | 32,298 | `68ac26e76875b784d757a50bebe2162d` |
 | `references/pitfalls-2.md` | 52 | 31,686 | `cd09593a676bb3b32faf4e5073f7951f` |
-| `references/pitfalls-3.md` | 50 | 49,902 | `c1d761c3e6e845f7ab6485c247bb82b1` |
+| `references/pitfalls-3.md` | 54 | 54,763 | `774aed42b3c81d97ca11761928e988a7` |
 
 **`references/pitfalls-3.md` is the LIVE part** — new lessons append there. When it approaches the cap, freeze it and
 open part 4 the same way (whole items, never a rewrite). The single pre-split file is kept at
@@ -28,7 +28,7 @@ BASELINE (the single file, read 2026-09-28, md5 6ef72284d4ca9c6689125569f05a2e99
 AT THE SPLIT (22:03:19Z) — the same rule over pitfalls-1/2/3 reproduced the baseline EXACTLY:
     pixel 18 · gentech 18 · labs 3 · treasury 2 · gizmo 1      <- the equality test, and it PASSED
 SINCE THE SPLIT lessons have been appended to the LIVE part, so totals GROW — that is growth, not a rewrite:
-    pixel 31 · gentech 28 · labs 4 · treasury 3 · gizmo 2      (read 01:04:36Z)
+    pixel 35 · gentech 29 · labs 4 · treasury 3 · gizmo 2      (read 10:28:58Z)
 ```
 
 **HOW TO USE THIS: the equality to check is the one measured AT THE MOMENT OF AN EXTRACTION — recount every item before and after the

@@ -61,3 +61,8 @@ Entertainment group "not replying" was a **combination**: the bot that owned the
 - Don't restart gateways before confirming which bot owns the group — you may restart the wrong profile.
 - A profile with `channel_prompts` for a group in config.yaml does NOT mean its bot is in that group.
 - Bot username/handle is cosmetic; chat IDs + membership are what matter.
+
+## Related
+- **A member who was removed cannot rejoin, links "don't work", or a new collaborator's messages
+  never arrive** → `agent-kit/telegram-member-recovery` (removal bans; `can_invite_users` mints links
+  but only `can_restrict_members` lifts a ban; the allowlist is the other half of the fix).
