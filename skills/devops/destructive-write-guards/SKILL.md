@@ -171,6 +171,28 @@ local content with something else. On a multi-writer tree they are subject to th
 A reset is correct only when the local side holds nothing unique. Treat every other case as data loss
 until proven otherwise.
 
+**17. Before refusing an all-or-nothing write, check whether the tool can be SCOPED — "apply versus
+decline" is often a false binary.** A refusal to run a fleet-wide replace is usually the right instinct and
+the wrong conclusion, because the decision has three outcomes, not two: apply, decline, or **apply scoped to
+the carrier**. Refusing without looking for a scope flag hands the operator a choice between two bad options
+when a third was on the command line the whole time. Measured 2026-10-01: a fleet skills sync was declined on
+solid grounds — its seat-only-content guard WARNS rather than BLOCKS, so an apply would destroy seat-only
+files in every lane — and *the same tool* offered `--only <relpath>` and printed its own advice to "apply in
+review-sized slices with `--only`". Run scoped, it delivered one corrected skill to all four seats with a
+blast radius of ONE skill, and the 79 seat-only files in the neighbouring seat were untouched.
+
+```bash
+<tool> --check                                        # what it WOULD do, and to what
+<tool> --help | grep -iE "only|scope|path|filter"     # is the blast radius injectable?
+```
+
+- **The refusal and the scope are not in tension.** Declining an unscoped replace is correct; declining to
+  LOOK for the scope is what turns it into a false binary.
+- **A tool that advises "apply in slices" is telling you it expects to be scoped.** Read its own output
+  before concluding it has no safe mode.
+- **Small blast radius is not small verification.** Re-check every destination afterwards: the scoped run
+  touched four, and the count of changes it reported was the number of DESTINATIONS, not of edits.
+
 ## References
 
 - `references/seat-sync-clobber.md` — the multi-target sync case in depth: why three audits all read

@@ -139,3 +139,9 @@ Teach the collaborator how to request changes to their hub by **prompting Gentec
 ### Stage 3: Orchestrator Training (long-term)
 - Basic tool fluency → agent interactions → orchestrator delegation
 - Track at `00-HQ/collaborators/{name}-progress.md`
+
+## Removing someone (the inverse operation)
+Removing a member from a Telegram supergroup does not merely eject them — it **bans** them, and
+an invite link cannot bring them back. Before removing anyone, read
+`agent-kit/telegram-member-recovery`: lift the ban first, then re-invite, and check every seat's
+`TELEGRAM_ALLOWED_USERS` so their messages are not dropped silently.

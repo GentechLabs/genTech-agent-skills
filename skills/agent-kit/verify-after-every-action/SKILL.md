@@ -58,6 +58,27 @@ The #1 failure: the agent reports what it *intended* to happen, not what *actual
 
 **Rule:** a successful tool call is NOT a successful task. The tool may have written to the wrong place, been overridden, or the running process may not have picked it up. Always read back the target.
 
+## Name the thing before you read it (the wrong-identifier class)
+
+**A verification can be a correct observation of the WRONG NAME, and that failure is indistinguishable from a
+finding.** Five in one day (2026-10-01), each producing a confident wrong answer from intact data:
+
+| asserted on | actually true | it read as |
+|---|---|---|
+| a marker field `shadow` | the field is `mode` | "the proxy would ENFORCE" — while it said shadow |
+| record keys `verdict` / `status` | they are `event` / `reason_code` | "verdict=None" — the record was correct |
+| `API_SERVER_KEY` from the shared `.env` | the key is **per profile** | a 401 read as "the path is broken" |
+| `hermes-gateway-<seat>.service` | those are the RETIRED units; the live one has no suffix | a stale script read as "already fixed" |
+| `claim(..., expires_at=)` | the signature is `claim(jti, exp)` | a crash read as "the store is broken" |
+| a "session id" from `ls sessions/` | that was a request-dump filename | a plausible string passed off as fact |
+
+**THE RULE: before asserting on an identifier, READ it — the signature, the record's keys, or the variable's
+source.** One line each. **When a check surprises you, suspect the name you used before you suspect the system.**
+
+**Why this deserves its own section:** every other trap in this skill is about a system that lies. This one is
+about *you* lying to yourself with a tool that is working perfectly — and it is worse, because the evidence
+looks real. A wrong finding costs a peer a teardown and costs you their trust in your next one.
+
 ## The Fleet-Model-Change Worked Example (the trigger for this skill)
 
 **The problem:** Jordan changes HQ's model/provider, expects the fleet to follow, but treasury/gizmo/pixel stay on the old provider. The config on disk is correct but the running gateways serve stale config, or cron jobs keep their baked-in pins.
