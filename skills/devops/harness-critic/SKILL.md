@@ -698,6 +698,24 @@ bash scripts/refresh-next-events.sh /tmp/dry/harness-state.md  # same contract
 md5sum facts/harness-state.md   # must be unchanged vs. before
 ```
 
+The WRAPPER takes the same optional argument as of 2026-10-03, so the same form is safe on it:
+
+```bash
+bash scripts/harness-state-refresh.sh /tmp/dry/harness-state.md   # writes the COPY, verifies the COPY
+md5sum facts/harness-state.md   # must be unchanged vs. before
+```
+
+Before 2026-10-03 `harness-state-refresh.sh:53` read `STATE="$HARNESS/facts/harness-state.md"`
+with no `${1:-…}` — a positional argument was **silently discarded**, so that command wrote the
+LIVE file, verified the LIVE file, and returned rc=0 while the copy on the command line was never
+touched. Measured live (Critic entry 93, 2026-10-03): live md5 moved `10f6f46e -> 7a3a49cc` and
+the copy stayed at `10f6f46e`. The wrapper is the one refresher the Critic runs every cycle, so
+this made every wrapper-level falsification control impossible without a full `cp -r` scratch
+tree. Fixed (`STATE="${1:-$HARNESS/facts/harness-state.md}"`, installed md5
+`3a4723cfaade173f1ce0e1e54bf097a8`, 3/3 copies) and control-tested both ways: arg-1 → live md5
+unchanged + copy re-rendered rc=0; no-arg → live rc=0. **Before running any refresher on a path,
+grep its source for `${1` — a script that has no `$1` ignores yours and writes its default.**
+
 **`HARNESS_DIR=<tmp> bash scripts/<refresher>.sh` IS NOT A DRY RUN — it writes the LIVE
 file** (measured 2026-09-25, Critic entry 85). `refresh-cron-table.sh:38-47` and
 `refresh-next-events.sh:15-23` never read `HARNESS_DIR`; they read `${HERMES_HOME}` (set

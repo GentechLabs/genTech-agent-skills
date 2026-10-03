@@ -113,6 +113,38 @@ Do **not** scope the task off the claim and mark it shipped. That produces a
 queue that lies about what exists, which compounds — the next task scopes off
 *your* note.
 
+## Part 3 — State Files: Liveness Is Not In The Name
+
+State files are the same problem from the opposite side. A filename that *sounds*
+authoritative — `.steward-fee-ledger.json`, `.fee-ledger-jordan.json`,
+`lp-monitor-v2.py` — tells you nothing about whether anything currently writes or
+reads it. Two files with the same basename in different trees can disagree by
+orders of magnitude, and the tree gives no hint which copy is canonical.
+
+**The three liveness classes:**
+
+| Verdict | Definition | Why it matters |
+|---|---|---|
+| **LIVE** | A script or cron job names the file, and it has been written recently. | The file is doing work. Do not treat it as dead. |
+| **STALE** | A script or cron job names the file, but it has not been written recently. | The producer may be stuck, retired, or mis-scheduled. Investigate the producer. |
+| **ORPHAN** | No script or job names the file, regardless of mtime. | A fresh orphan is worse than a stale live file — it has no discoverable producer. Do not delete until you know what wrote it. |
+
+**The divergent-copy hazard:** same-named state files often live in both a profile
+scripts directory and a synced vault. A cron job may write the profile copy while
+the vault copy is only touched by sync. The two copies can diverge by 400% or more
+with no record of which one is authoritative. An audit that picks the wrong member
+of the pair reaches a wrong conclusion without ever knowing it had a choice.
+
+**The fix is a liveness registry, not deletion.** Before acting on a "dead file"
+claim, run a read-only probe that reports, for every state file: who names it
+(scripts + cron job definitions), how fresh it is, and whether copies agree. Use
+that output as the input to a decision. See `references/state-file-liveness.md`
+and `scripts/state-file-liveness.py`.
+
+**A dead file is evidence, not debris.** A state file with no producer may be the
+only record that a job was once scheduled. Deleting it destroys the evidence
+before you know what retired. Archive or annotate before removal.
+
 ## Worked Example — x402 Gateway, Aug 4, 2026
 
 Both failure modes fired in a single task.
@@ -197,6 +229,30 @@ session and left the queue accurate.
   which, and check `git rev-list --left-right --count HEAD...origin/main` per
   clone. Nonzero left = stranded work; nonzero right = behind. A green cron
   status means "my push worked", not "the remote is current".
+- **A listing's shape is not a statement about content.** Directories and dotfiles
+  at a folder root say nothing about what is inside them — and a lane whose root
+  looks empty is often just **archived**. Prefer a recursive git query
+  (`git ls-tree -r HEAD --name-only | grep '<lane>/'`) over any directory listing,
+  and never generalise from one missing file to the state of a whole lane.
+- **Verify the claims in a request before you ACK it.** A checkpoint or restart
+  request often carries claims ("config already migrated", "push is done", "cron
+  repointed"). Check them against your own files, processes, and remote refs, then
+  report what you measured. Ask the remote for a push — `git ls-remote <remote> main`
+  — because a clone that never fetches cannot tell you whether a push landed, and
+  the remote does not require a pull to query. If a claim fails verification, say
+  so in the ACK; a checkpoint ACK is a safety gate, not a politeness form.
+- **When two contemporaneous messages disagree, the durable record wins unless
+  the sender explicitly supersedes it.** A commit message or vault note that says
+  "Jordan's" overrides a DM that says "yours" until the sender clarifies otherwise.
+  Prefer the committed record and say the contradiction plainly rather than
+  quietly doing nothing. This is especially true for ownership claims about
+  sensitive artifacts such as backup refs, signing keys, and credential rotation.
+- **Derive cryptographic public values from the stored private key before
+  publishing them.** A generator that prints a public hex and a store that holds
+  the private key are two separate claims; the only way to tie them is to derive
+  the public key yourself with the library. Watch for the 64-char hex vs 64-byte
+  raw confusion. If you publish a public key, publish the one-line verification
+  you ran and its result.
 - **Webroot orphans are the inverse of mirrors (Sep 4, 2026).** A webroot file
   may have NO repo source at all — deployed straight into `/var/www/` and never
   committed. Overwriting it from a repo copy that merely shares the name
@@ -211,6 +267,8 @@ session and left the queue accurate.
   generations** — `md5sum` all three before assuming any is in sync. The
   webroot being newer than the repo is normal after hand-fixes; the fix is
   back-porting to the repo, not re-deploying stale repo content over it.
+- **A destructive sync is audited in the TARGET tree, and survivors are the falsification.** A path that does `rmtree(dest)` + `copytree(src)` cannot leave seat-only files behind — it writes exactly the source's list. If seat-only files are still present after the sync was supposed to have run, they disprove that the destructive path executed on that directory. Check their mtimes against the sync window before accepting a claimed loss. Then verify WHICH path the tool actually took: a "blocked" shadow-namespace path and a "warn-then-replace" normal path are different functions, and a survivor in a blocked namespace means the alarm points at the wrong case.
+- **A count that does not move when the counted set moves is an instrument defect, not a stable measurement.** If you remove one member of a set and the reported count is unchanged, the instrument is measuring a different quantity than its name implies — commonly "present or differing" rather than "present only." Report the observation rather than a false confirmation of no change, and fix the instrument to print the names it counts.
 
 ## Support Files
 
@@ -219,6 +277,16 @@ session and left the queue accurate.
   against the systemd unit's `WorkingDirectory`, lists other copies on disk as
   potential mirrors, and exits 2 if the candidate file you're about to edit sits
   outside the live directory. Run this instead of hand-typing the sequence.
+- `scripts/state-file-liveness.py` — measure which `.json` state files are live,
+  stale, or orphaned, and flag same-named copies that diverge in size. Exits 1
+  when orphans or divergent copies are found, so it can be used as a guard. See
+  `references/state-file-liveness.md` for usage and interpretation.
+- `references/negative-findings-and-ref-absence.md` — how to prove something is missing without
+  overclaiming, and how to distinguish a diverged git ref from an unresolvable one. Use before
+  reporting "this ref/object/capability does not exist" to another seat.
+- `references/destructive-sync-audit.md` — how to audit a destructive sync tool: distinguish the
+  block path from the replace path, use survivors to falsify claimed data loss, and recognise an
+  instrument whose count stops tracking the set it claims to measure.
 
 ## Rule
 
@@ -227,6 +295,8 @@ Before the first edit to any running service:
 1. `readlink /proc/<pid>/cwd` — find the real source
 2. `curl` a live introspection endpoint — confirm the file matches reality
 3. `grep` any capability the task assumes already exists
+4. For state files, run `scripts/state-file-liveness.py` — confirm the file has a
+   producer and that no divergent copy is the real source
 
-Three commands. They cost about thirty seconds and routinely save an entire
-session's work from being written to a file nobody reads.
+Four checks. They cost about a minute and routinely save an entire session's work
+from being written to a file nobody reads.

@@ -1,15 +1,15 @@
 ---
 name: travel-research
-description: Systematic travel research for solo trips — flight routing, multi-country options, budget breakdowns, visa requirements, and timing considerations. Focus on solo traveler flexibility and cost optimization.
+description: Systematic travel research — flight routing, multi-country options, budget breakdowns, visa requirements, employment constraints, and timing considerations. Covers solo, couple, and group travel.
 category: travel-planning
-version: 1.0.0
+version: 1.1.0
 author: GenTech
-tags: [travel, solo-trip, flight-research, budget, multi-country, visa, timing]
+tags: [travel, flight-research, budget, multi-country, visa, timing, employment-constraints, peak-season]
 ---
 
-# Travel Research — Solo Trip Planning
+# Travel Research — Trip Planning
 
-**Purpose:** Systematic research for solo travel, including flight routing, multi-country options, budget breakdowns, visa requirements, and timing considerations.
+**Purpose:** Systematic research for travel, including flight routing, multi-country options, budget breakdowns, visa requirements, employment constraints, and timing considerations.
 
 ---
 
@@ -23,33 +23,55 @@ tags: [travel, solo-trip, flight-research, budget, multi-country, visa, timing]
 
 ---
 
-## Core Philosophy: Solo Traveler Flexibility
+## Core Philosophy: Traveler-First Constraints
 
-**Solo travel is different:**
-- More flexible (can change plans mid-trip)
-- Less coordination needed
-- Lower costs (one person, not two)
-- Can optimize for personal preferences (not compromise)
+**The first question is who is traveling, not where.** Solo, couple, and group trips optimize differently:
+- **Solo:** most flexible, lowest per-person cost, can decide mid-trip
+- **Couple/group:** coordination cost, shared lodging economy, companion constraints (PTO alignment, interests, relationship to travelers already in records)
+- **Employment-constrained:** a job's peak season, blackout dates, or conversion timeline can override price and weather
 
-**Research priorities:**
-1. **Flexibility:** Routes that allow mid-trip changes
-2. **Cost optimization:** Base trip + optional add-ons
-3. **Safety:** Solo-friendly destinations and routes
-4. **Logistics:** Visas, transport, weather
+**Research priorities, in order:**
+1. **Hard constraints:** employment blackouts, visa windows, companion availability
+2. **Cost optimization:** day-of-week, seasonality, base trip vs add-ons
+3. **Usable time:** travel duration, jet lag, time-zone flip, calendar days vs on-the-ground days
+4. **Flexibility:** routes that allow mid-trip changes
+5. **Safety and logistics:** visas, transport, weather, health
 
 ---
 
 ## Trip Research Workflow
 
+### Step 0: Audit Existing Trip Data and Its Data Path
+
+Before changing any trip record, find where the **live source** is and what surfaces are generated from it.
+
+```bash
+# 1. Find the source file in the vault
+grep -R "<destination>" ${VAULT_DIR}/Travel/ --include="*.json" -l
+
+# 2. Find any generator / cron that rebuilds the public feed
+grep -R "travel.*\.json\|build-travel" ${PROFILE_DIR}/cron/ ${PROFILE_DIR}/scripts/ -l
+
+# 3. Check whether repo / webroot copies are stale mirrors
+md5sum ${VAULT_DIR}/Travel/travel-*.json \
+      /root/repos/gentechlabs.github.io/Travel/travel-*.json \
+      /var/www/gentechlabs/Travel/travel-*.json 2>/dev/null
+```
+
+**Rule:** edit the source the generator reads, then re-run the generator. Hand-editing a generated file (e.g. `travel-live.json`) is silently erased at the next cron run.
+
+**Rule:** verify the public surface by reading the **served bytes**, not the local file. `curl` the live URL and check the value there.
+
 ### Step 1: Define Trip Parameters
 
 **What to ask:**
 - Origin (e.g., CVG, SFO, LAX)
-- Primary destination (e.g., Angeles City, Philippines)
-- Duration (e.g., 8 days primary, 4 days add-on)
-- Traveler status (solo vs couple vs group)
+- Primary destination (e.g., Manila, Philippines)
+- Duration (calendar days, not "trip length" marketing)
+- Traveler status (solo vs couple vs group; if couple, name the companion and update records)
 - Budget range
 - Timing (season, weather preferences)
+- **Employment constraints:** PTO blackout dates, peak season, conversion timelines, mandatory overtime
 
 **Example:**
 ```
@@ -58,13 +80,14 @@ Jordan: Solo trip, CVG → Angeles City (8 days) + Cambodia (4 days), Aug/Sep 20
 
 ---
 
-### Step 2: Research Flight Routing
+### Step 2: Research Flight Routing and Day-of-Week Fare
 
 **What to research:**
 - Direct vs connecting flights
 - Open-jaw vs round-trip options
-- Airport proximity to destination
+- Airport proximity to destination (e.g. Clark/CRK is 2–3 hours from Manila by road; traffic can stretch it)
 - Multi-country routing (if applicable)
+- **Day-of-week effect on international fares**
 
 **Sources:**
 - LetsFG (preferred, if available)
@@ -72,12 +95,19 @@ Jordan: Solo trip, CVG → Angeles City (8 days) + Cambodia (4 days), Aug/Sep 20
 - Airline websites
 - Travel forums (Reddit r/solotravel, TripAdvisor)
 
+**Day-of-week guidance for international departures (verified 2026 sources):**
+- **Thursday** is typically the cheapest international departure day (up to ~15% below Sunday)
+- **Tuesday / Wednesday** are close behind
+- **Friday** can also be favorable
+- **Sunday and Monday** are usually the most expensive
+- Savings are smaller than for domestic flights but still meaningful on long-haul tickets
+
 **What to document:**
 | Route | Duration | Stops | Cost | Airlines | Notes |
 |-------|----------|-------|------|----------|-------|
-| CVG → CRK | 25-31h | 1-2 | $800-1,100 | Alaska/PAL, American/Etihad | Direct to Angeles City |
-| CRK → MNL | 45min | 0 | $20-40 | Cebu Pacific | Connects to Cambodia |
-| MNL → PNH | 3h | 0 | $80-150 | Cebu Pacific, AirAsia | Daily flights |
+| CVG → MNL | 19–21h | 1–2 | $1,225–1,314 | United, etc. | Add MNL → CRK road time if going to Angeles City |
+| MNL → CRK | 2–3h road | 0 | $20–60 | Bus/van/Grab | Traffic-sensitive |
+| MNL → PNH | 3h | 0 | $80–150 | Cebu Pacific, AirAsia | Daily flights |
 
 ---
 
@@ -126,6 +156,31 @@ Jordan: Solo trip, CVG → Angeles City (8 days) + Cambodia (4 days), Aug/Sep 20
 
 ---
 
+### Step 3: Research Employment and Calendar Constraints
+
+**Employment constraints can override price and weather.** Ask explicitly:
+- Are there PTO blackout dates?
+- Is there a peak season with mandatory overtime?
+- Are there conversion, review, or training windows that must be cleared?
+- Does "already approved PTO survives blackout" apply?
+
+**How to treat conflicting sources:** record every claim rather than picking one. If operators say "Nov 15 – Dec 31" and a 2026 alert says "Nov 28 – Dec 24," state both and flag the risk window as the union (earliest start to latest end).
+
+**Key distinction:** "I don't care about holiday pay" ≠ "I can be absent during peak." Pay is a money choice; attendance policy is a job-risk choice. Keep them separate in the recommendation.
+
+### Step 4: Compute Usable Days, Not Calendar Days
+
+Long-haul travel consumes days on both ends. Report usable time honestly.
+
+| Calendar days | CVG ↔ Manila round trip (~50h door-to-door) | Jet lag (~2 days inverted) | Approx usable days |
+|---------------|-----------------------------------------------|----------------------------|--------------------|
+| 7             | 2 days lost                                   | 2 days slow                | ~3                 |
+| 8             | 2 days lost                                   | 2 days slow                | ~4                 |
+| 10            | 2 days lost                                   | 2 days slow                | ~6                 |
+| 14            | 2 days lost                                   | 2 days slow                | ~10                |
+
+**Rule:** state the usable-days estimate before booking, so the traveler chooses the duration with the right expectation.
+
 ### Step 5: Research Visas and Logistics
 
 **Visa research:**
@@ -145,7 +200,8 @@ Jordan: Solo trip, CVG → Angeles City (8 days) + Cambodia (4 days), Aug/Sep 20
 **Logistics:**
 - Airport to city transport (taxi, train, bus)
 - Local transportation (Grab, tuk-tuk, transit)
-- Safety considerations for solo travelers
+- Safety considerations for the traveler profile
+- **Time-zone flip:** note the direction and duration of inversion
 
 ---
 
@@ -163,14 +219,13 @@ Jordan: Solo trip, CVG → Angeles City (8 days) + Cambodia (4 days), Aug/Sep 20
 | July | Heavy | 26-31°C | Moderate | Moderate-High | High |
 | August | Heavy | 26-31°C | Moderate-High | Moderate | Medium |
 | **September** | Moderate-Heavy | 26-31°C | Moderate | Low | **Low** ⭐ |
+| **November** | Low-Moderate | 26-31°C | Low | Moderate | Medium-High |
 
-**Recommendation:** September is cheapest (30-45% less than June/July) but rainy. Solo travelers can work around rain (indoor activities, museums, malls).
+**Recommendation:** September is cheapest (30-45% less than June/July) but rainy. Travelers can work around rain (indoor activities, museums, malls). November begins the dry season but sits near peak-season pricing and employment blackout windows in US retail/logistics.
 
 ---
 
 ### Step 7: Create Decision Framework
-
-**Help traveler choose:**
 
 **Option A: Base only**
 - ✅ Lower cost ($1,040-1,480)
@@ -189,6 +244,13 @@ Jordan: Solo trip, CVG → Angeles City (8 days) + Cambodia (4 days), Aug/Sep 20
 - ✅ Iconic experience
 - ❌ Higher cost ($1,480-2,140)
 - ❌ More travel time
+
+**Option D: Shorter window before peak**
+- ✅ Avoids employment blackout / MET risk
+- ✅ Still visits the destination
+- ❌ Less time on the ground
+
+When the trip is employment-constrained, **Option D may be the best Option A**. Lead with the calendar constraint, then optimize price within the safe window.
 
 ---
 
@@ -488,6 +550,19 @@ The "from $X" price shown on search results and product pages is the cheapest po
 - **vault-research-protocol** — Always search vault before external research
 - **context-loading** — Load prior travel research from vault
 - **auto-logging** — Auto-log trip details to vault
+- **public-artifact-verification** — Verify outward-facing artifacts as the consumer sees them
+- **source-of-truth-verification** — Find the file/code that actually runs
+
+## Support Files
+
+- `references/trip-data-path-and-privacy-check.md` — data-path audit for travel hubs and the companion-photo boundary
+
+## Tools
+
+- **LetsFG** — Flight search (preferred, if available)
+- **Google Flights** — Flight search
+- **Airline websites** — Direct booking, seat selection
+- **Travel forums** — Reddit r/solotravel, TripAdvisor for real experiences
 
 ---
 
@@ -500,28 +575,8 @@ The "from $X" price shown on search results and product pages is the cheapest po
 
 ---
 
-## Session History
-
-**July 7, 2026 — Angeles City → Cambodia Solo Trip:**
-
-- User: "Kristell is no longer in the group. Solo trip. How much for Angeles City → Cambodia?"
-- Research completed:
-  - Flight routing: CVG → CRK → MNL → Cambodia
-  - Budget: Base ($1,040-1,480) + Cambodia ($372-660)
-  - Visa: Cambodia visa on arrival ($30 USD)
-  - Weather: September cheapest (30-45% less) but rainy
-  - Decision: Phnom Penh (cheaper) vs Siem Reap (Angkor Wat)
-- Files created:
-  - HQ/01-Travel/Philippines/2026-Solo-Trip-Angeles-City-Cambodia.md
-  - HQ/01-Travel/Philippines/2026-Birthday-Trip-Pampanga.md (updated)
-- Key learnings:
-  - Solo = more flexibility (can decide mid-trip)
-  - Multi-country routing requires research (no direct flights)
-  - Base vs add-on budget structure helps traveler choose
-  - Always confirm traveler status before starting research
-
 ---
 
-*Created: July 7, 2026*
+*Created: July 7, 2026 | Updated: October 1, 2026*
 *Status: Active*
-*Applies to: Solo travel, multi-country trips, budget optimization*
+*Applies to: Solo, couple, and group travel; multi-country trips; budget optimization; employment-constrained trips*

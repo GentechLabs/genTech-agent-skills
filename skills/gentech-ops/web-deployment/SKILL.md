@@ -97,6 +97,15 @@ bind `127.0.0.1` for `python3 -m http.server` test servers, and confirm the serv
 actually started (its own `OSError: [Errno 98] Address already in use` traceback
 tells you the port was taken).
 
+**Pitfall — headless Chrome has a viewport floor; sub-500px screenshots may be crops, not true renders.**
+When doing responsive visual QA with `google-chrome --headless --screenshot`, a requested
+window width below ~500px can still produce a screenshot whose content was laid out at
+~500px and then cropped to the requested width. This makes the page look like it has
+right-edge overflow when it does not. Always add a control test (a tiny page that reports
+its own `window.innerWidth`) to confirm the instrument is honest before chasing clipping
+bugs. If the control shows `innerWidth = 500` for a 390px screenshot, the render floor is
+cropping the image — the page itself is fine.
+
 **Pitfall — verify CONTENT, not just HTTP 200 (Cloudflare stale cache).**
 Aug 2, 2026: a replaced PDF kept serving the OLD file through Cloudflare
 (`cf-cache-status: HIT`) even after the file on disk was correct. curl showed
@@ -214,6 +223,31 @@ Connect MetaMask, sign, done.
    skill for the full char-limit discipline; this is the deployment-specific
    delivery rule.)
 
+## Professional Dashboard Preview Pattern
+
+When Jordan says "make the front end look professional" (e.g., DeFi treasury hub), the goal
+is a *product* interface, not a read-only data dashboard. Build the preview as if a real
+user will manage money through it. See `references/professional-dashboard-preview-pattern.md`
+for the full recipe, cost model, and surface-distinction rule.
+
+At minimum the preview should include:
+- Sticky header with nav, tenant/user toggle, wallet chip, and live status dot.
+- Capital hero: large balance, deployed/idle split, efficiency/badge row, and a progress bar.
+- An **action row** with the buttons a user expects (Add funds, Rebalance, Withdraw, Pause)
+  — marked clearly as "preview · actions are not wired" if the wiring isn't done yet.
+- A 2×2 or 4-column metric grid with subtle dividers.
+- Earnings card that compares the book's yield to a benchmark (e.g., "same capital as an
+  X% staker").
+- "What the machine is doing" panel: regime, resolved shape, transition state, lean, next
+  check, and a one-sentence explanation.
+- Chart as *data*: max-bin label, price bounds, spot-position ruler, and a legend.
+- A data-trust strip: last-read timestamp, source, and ledger-vs-shape delta.
+
+**Pitfall — don't conflate the chat surface with the management surface.** Telegram is where
+a user *talks* to an agent; the hub is where they *manage* a treasury. If other people will
+use the product, the hub is the product face and Telegram is the support channel. Build and
+preview them as separate surfaces with separate jobs.
+
 ## Demo Suite Structure
 
 The demo hub at `gentechlabs.net/demo.html` is organized into sections:
@@ -327,5 +361,6 @@ find /var/log -name '*.1' -mtime +7 -delete
 - `references/github-pages-workflow-pitfalls.md` — Pages deploy workflow pitfalls + the Aug 30 repo-rename provision-limbo and VPS-mirror fix.
 - `references/resume-hosting-pattern.md` — Always-current résumé/CV: vault source-of-truth → self-hosted URL → portfolio repo → Pages mirror, plus the 6-hour Resume Sync cron and content QA rules.
 - `references/market-analysis-pattern.md` — Dynamic market analysis section for data dashboards. Three-state oversold/neutral/overbought analysis with recovery signals, user advice, 4-year cycle timing context, and dry powder (USDC/USDT market cap) tracking pattern.
+- `references/professional-dashboard-preview-pattern.md` — Product-shaped preview for management surfaces (treasury hub, portfolio, agent ops): layout checklist, cost model, surface distinction, and headless-Chrome viewport-floor QA trap.
 - `references/game-loadout-tracker-pattern.md` — Reusable per-game build/loadout tracker (POE2, Helldivers 2): JSON schema, themed page, hub wiring, growth loop, verify checklist.
 - `scripts/backup-webroot-push.sh` — Chunked webroot backup pusher (≤250MB commits, SHA-verified per push) for the backup pitfall above.
