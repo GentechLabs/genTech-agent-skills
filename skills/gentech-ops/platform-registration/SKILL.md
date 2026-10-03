@@ -67,40 +67,34 @@ Glama (`glama.ai`) is an MCP server quality scoring and discovery platform. Publ
 
 **Status:** genTech-shop live since Jul 25, 2026.
 
-## CDP Bazaar / PayAI indexing — CRAWL-DRIVEN, not settle-driven (corrected Sep 15, 2026)
+## x402 catalog indexing — settle-driven for CDP, verify-driven for PayAI GET resources
 
-**⚠️ THE SETTLE-TRIGGER MODEL WAS WRONG. Do not pay to be indexed. Re-measure first.**
+**Current understanding (Oct 2026).** CDP Bazaar indexing is triggered by a **settled payment**
+processed by the CDP facilitator for that exact resource URL. PayAI GET resources can be listed by a
+**verified (not settled)** x402 payload. The earlier "crawl-driven" reading was wrong: crawler visits
+correlated with index timestamps, but a resource can pass the free CDP validator for weeks and remain
+absent from the index until a payment settles on it. Eligibility (`/validate` returns `valid=true`) is
+not presence.
 
-An earlier version of this section said indexing fires on a settled payment and that N services need N
-settles. **That was a misreading of Coinbase's docs, disproved by our own access logs.**
+**Correct procedure when a service is absent from CDP Bazaar:**
+1. Confirm the endpoint returns a proper x402 v2 402 and passes the free validator:
+   `POST https://api.cdp.coinbase.com/platform/v2/x402/validate` → `valid=true`.
+2. Measure actual presence with a **complete** index walk. See
+   `references/indexing-measurement-recipe.md` for the script pattern. Essentials:
+   - Walk every page using explicit `offset=` until the count equals the server's declared
+     `pagination.total`.
+   - Assert each page advances; a repeated first row means paging is broken.
+   - Match your catalog to indexed URLs by **literal path segments**, not service names or paths with
+     `{placeholders}`.
+3. If the resource is genuinely absent after a correct 402, trigger one settled payment on that
+   resource through the CDP facilitator.
+4. Wait a cycle and re-run the complete measurement. Do not mark the item done until the re-read
+   shows the resource.
 
-**What actually happens:** the catalogs are filled by **crawlers that read our 402 challenges.**
-```
-PayAI-Bazaar/1.0 (+https://docs.payai.network/x402/facilitators/bazaar)
-CoinbaseBazaarDiscovery/1.0 (+https://docs.cdp.coinbase.com/x402)
-```
-**Evidence:** on Sep 15 both catalogs grew with **zero USDC leaving any wallet** (verified on-chain). The
-index entries matched crawler hits **to the second, one-for-one** — e.g. a crawl of `/v1/gas/gas/` at
-23:33:21 → that resource indexed at 23:33:21. And `market/price/ETH` was indexed **with no settle at all**.
-
-**Why the earlier "proof" looked convincing:** Treasury's settles and the crawler's **first-ever visit**
-happened in the same minute. The crawler's real trigger was the **Sep 11 `paid_endpoint_root` fix** —
-before it, endpoints returned **307 instead of 402**, so a crawler could not see a challenge. Verify with:
-`grep -c CoinbaseBazaarDiscovery /var/log/nginx/access.log*` across day-files.
-
-**The doc line "eligible for indexing AFTER A SUCCESSFUL SETTLED PAYMENT" describes ELIGIBILITY, not
-TRIGGER.** Taking eligibility as trigger is the same class as asserting the gate instead of the outcome —
-with a doc sentence as the gate.
-
-**Correct procedure when a service is absent from a catalog:**
-1. Confirm the endpoint returns a **proper 402** (not a redirect) — that is the real precondition.
-   `POST https://api.cdp.coinbase.com/platform/v2/x402/validate` (free, keyless) → `valid=true`.
-2. **Check whether the crawler has visited**, not whether we've paid:
-   `grep PayAI-Bazaar /var/log/nginx/access.log` · `grep CoinbaseBazaarDiscovery /var/log/nginx/access.log`
-3. **Wait a crawl cycle and re-measure presence** before spending anything:
-   `curl "https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=<ours>"` (pagination.total)
-   `curl "https://facilitator.payai.network/discovery/resources?payTo=<ours>"` (same filter)
-4. Only if a correct 402 endpoint stays uncrawled across cycles is there a real defect to chase.
+**Money-movement gate:** triggering a CDP settlement costs real money, even if small. Money movement is
+a Jordan-owned decision by standing rule. If a build-queue row says "not waiting on Jordan" but the
+action requires a spend, flag the contradiction and wait for explicit approval rather than choosing the
+reading that lets you act.
 
 ### ⚡ BETTER STILL — you can list it YOURSELF, for $0.00 (verified Sep 16, 2026)
 

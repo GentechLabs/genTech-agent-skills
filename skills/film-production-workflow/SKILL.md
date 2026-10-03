@@ -53,6 +53,14 @@ NO real band names or logos anywhere. Dark moody atmosphere, high-contrast, shal
 3. `https://vanito.gentechlabs.net/characters/muffin-character-sheet.png` (if Muffin appears)
 4. `https://vanito.gentechlabs.net/characters/papa-tanaka-v3.png` (if Papa appears)
 
+### 3D CGI keyframes must be action/impact frames, not posed stand-offs
+
+When the user wants a **3D CGI anime** look — volumetric cloth folds, ray-traced wet ground, real debris physics, dimensional bodies — a posed stand-off of two characters planted and facing each other will read as a **2D illustration** no matter how many "3D CGI" or "high detail" keywords are in the prompt. The 3D-ness lives in **action**: contact shadows, motion-blurred limbs, kicked-up spray, splintering objects, a low or tracking camera, and the visible transfer of force between bodies.
+
+**Fix:** generate the keyframe at a moment of impact or mid-motion — a block connecting, a kick landing, a body recoiling, debris exploding, cloth and hair in motion — so the frame already contains depth cues. The same characters, outfits, and lighting rendered in a static face-off look flat; rendered at the instant of impact they look dimensional. This is especially important when adapting a 2D anime reference to a 3D CGI output: do not reproduce the reference's still framing; translate the observed moves into a dynamic action frame.
+
+**Pitfall:** adding "3D CGI, volumetric lighting, hyper-detailed" to a static posed frame and expecting it to stop reading as 2D.
+
 ## Seedance 2.0 Animation
 
 Use `blockrun_video` with `model="bytedance/seedance-2.0"` and the keyframe URL as `image_url`.
@@ -137,6 +145,70 @@ animated combat, and offer the Seedance pipeline as the animated upgrade.
 - Note: some boss themes share a track (e.g. Champion Gundyr = "Iudex Gundyr").
   Search the album for the boss name; the shared track is correct.
 
+## Loop / Trailer Assembly from Returned Clips
+
+When a collaborator sends back short clips one at a time to set the final order, **the clips they send ARE the cut** — everything else is out.
+
+### Identify each returned clip against the library
+The collaborator may not name the scene, may trim it, and Telegram may re-encode it. Identify by **minimum per-frame greyscale difference** against the masters, not by eye or filename:
+
+```bash
+ffmpeg -y -v error -i "his_clip.mp4" -vf "fps=6,scale=64:36" -f rawvideo -pix_fmt gray his.rgb
+ffmpeg -y -v error -i "master_scene_XX.mp4" -vf "fps=4,scale=64:36" -f rawvideo -pix_fmt gray cand_XX.rgb
+```
+
+In Python: for every frame in the returned clip, find the nearest frame in each candidate, average the distance, and pick the lowest. A tight match is <15; >25 means review manually. Report the numbers so the match is visible, not guessed.
+
+### Build the concat in the exact order they named
+Use the matched master for each scene unless they explicitly say *"use the one I trimmed"*.
+
+```bash
+cat > order.txt << EOF
+file 'scene_02_master.mp4'
+file 'scene_01_master.mp4'
+file 'scene_02b_master.mp4'
+file 'scene_03_master.mp4'
+file 'scene_05_master.mp4'
+EOF
+ffmpeg -y -v error -f concat -safe 0 -i order.txt -vf "fps=24,scale=1280:720" -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p -an sequence.mp4
+```
+
+### If they send a trimmed clip, normalise and swap it in
+Do not drop the trim into the concat raw — re-encode it to the project spec first:
+
+```bash
+ffmpeg -y -v error -i "his_trim.mp4" -vf "fps=24,scale=1280:720" -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p -an his_trim_normalised.mp4
+```
+
+Then replace the master in the concat list. Verify the swap by frame-matching the output against his trim at 1s and at the loop point (sequence_duration + 0.25s should match his trim at 0.25s).
+
+### Loop to the song length
+Once the sequence is approved, loop it to fill the master track:
+
+```bash
+ffmpeg -y -v error -stream_loop -1 -i sequence.mp4 -i master.mp3 \
+  -map 0:v:0 -map 1:a:0 -t <master_duration> \
+  -c:v libx264 -preset slow -crf 29 -maxrate 1500k -bufsize 3000k \
+  -g 48 -keyint_min 48 -pix_fmt yuv420p \
+  -c:a aac -b:a 96k -movflags +faststart output.mp4
+```
+
+**Verify the loop point actually cycles back** — decode frames at `1.0s` and at `sequence_duration + 0.25s` and diff them against the opening frame. A near-zero diff at the loop point proves it closes cleanly.
+
+### Audio ceiling / de-peak rule
+**If the master track carries true peaks above 0 dBFS, the first mux will hit 0.0 dBFS exactly and sit on the ceiling.** Re-mux with the audio pulled down before delivering:
+
+```bash
+ffmpeg -y -v error -i looped_video.mp4 -i master.mp3 -map 0:v:0 -map 1:a:0 \
+  -c:v copy -af "volume=-1.5dB" -c:a aac -b:a 96k -t <master_duration> output.mp4
+```
+
+Then run `volumedetect`: peak should be around −0.9 dB, not 0.0 dB. **This is the default for every build from a mastered rap track, not a fix you apply after the fact.**
+
+### Size gates
+- Telegram bot uploads cap around **50 MB** — if the loop lands above that, raise CRF or drop bitrate before sending.
+- Obsidian vault sync silently drops files over **5 MB** — full films never go in the vault. Keep the vault note as the archive of record and deliver the file via chat/hosted link.
+
 ## Concat Merge & Deployment
 
 **Always re-encode the final merge** — do NOT use `-c copy`:
@@ -173,6 +245,27 @@ When Vanito says "fill in the gap between X to Y seconds":
 3. Do NOT guess placement — Vanito specifies exact second ranges
 4. Verify by summing durations of clips before the insertion point
 
+## Deriving choreography from a reference clip
+
+When the user says *"make them fight like they do in this clip"* or *"they use their legs — I want to see that here,"* **do not describe the moves from memory.** Sample the reference and read the frames:
+
+1. Download the reference with `web_extract` / curl / browser, or pull it from Telegram's cache path.
+2. Sample frames across the action (e.g. every 0.6s or at the beats the user named):
+   ```bash
+   for t in 3.2 3.8 4.4 5.0 5.6 7.2; do
+     ffmpeg -y -v error -ss $t -i ref.mp4 -frames:v 1 -vf scale=620:-1 lg_$t.png
+   done
+   ```
+3. Run `vision_analyze` on the frame set and ask specifically for **leg, foot, and aerial work** — who is airborne, who is upside-down, what kind of kick/sweep/recovery each fighter uses.
+4. Map the reference's left/right fighters to your characters **by role, not by color**. If the user said *"Kage on the left, Kiri on the right,"* map the reference's left fighter's moves to Kage and the right fighter's moves to Kiri.
+5. Translate the observed moves into the Seedance prompt as a **timeline of beats** (approach → contact → transfer of force → recovery), preserving the physics of each move.
+
+See `references/reference-to-choreography-recipe.md` for the full frame-matching, prompt-source, and 2D→3D adaptation recipe.
+
+## Verifying the user's description of a reference clip
+
+When the user says they "saw" a reference character use a particular technique ("he used his legs," "she did a backflip off the dragon's face," "they use their arms and legs in combos"), do not assume you know which move they mean. Sample the reference at the timestamps they are reacting to and use `vision_analyze` to **confirm the move before building it into the prompt**. This prevents two specific failures: (1) inventing a move the user did not actually see; and (2) missing the leg/aerial/limb work the user is reacting to because you only asked vision about the overall scene.
+
 ## Pitfalls
 
 - **Wallet at $0.00 blocks all production** — check before starting
@@ -181,6 +274,9 @@ When Vanito says "fill in the gap between X to Y seconds":
 - **Fixed bitrate changes quality** — use `-crf 23`, not `-b:v`
 - **Seedance actual cost exceeds listed rate** — communicate as estimates with `~`
 - **Vanito specifies exact timestamp gaps** — calculate placement from clip durations
+- **A returned clip that differs in length from the master usually means the collaborator trimmed it** — do not silently use the full master; ask, or swap in the trimmed version and verify with frame match
+- **Guessing choreography from a reference clip produces wrong moves** — always sample frames and vision-analyze the leg/aerial work before writing the prompt
+- **A 3D CGI keyframe must be an action/impact frame** — posed two-character stand-offs read as 2D illustration regardless of rendering keywords; the volumetric read comes from contact, debris, motion blur, and a dynamic camera
 
 ## Operational Pitfalls (added Jul 31, 2026 — from Sakura v14 session)
 
@@ -258,3 +354,4 @@ frame 0 hashes (`ffmpeg -ss 0 -i clip -frames:v 1` + `md5sum`).
 Full session detail: see `references/sakura-no-chikai-production-2026-07-31.md`.
 Boss-fight video recipe (Seedance animated fight, keyframe + 10s clip + theme):
 see `references/boss-fight-video-recipe.md`.
+Loop assembly from returned clips: see `references/loop-assembly-from-returns.md`.
