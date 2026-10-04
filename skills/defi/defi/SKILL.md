@@ -4,7 +4,7 @@ description: "Unified DeFi operations umbrella: LP monitoring, rebalancing, dash
 tags: [defi, lp, monitoring, rebalance, dashboard, strategy, on-chain, lfj, avalanche, solana, meteora, aae, ranks, prestige]
 trigger: "Any DeFi-related task: LP monitoring, rebalancing, dashboard sync, strategy design, on-chain reads, LFJ operations, fee milestones, AAE app architecture, rank/prestige engine, Meteora DLMM pools, security intel, or operator shape directives."
 related_skills: [market-macro-monitor, link-research-summary]
-version: 2.7.0
+version: 2.7.1
 author: Gentech
 ---
 
@@ -139,6 +139,28 @@ Stage 3: After alert fires          → SILENT until condition fully clears
 
 **Severity:** Out-of-range = HIGH | Efficiency <30% = MEDIUM | Efficiency 30-50% = informational
 
+### 🚩 "Not earning" is a red flag, not an advisory
+
+Jordan: *"Yes not earning is a red flag, should get immediate attention."*
+
+A book can be **deployed, in-range, and structurally healthy** — every visible check passes — while its fee rate has collapsed. This is the hardest failure mode to see from outside: there is no empty capital, no escaped price, no broken config, only money that is not being made.
+
+**Classification rule:** a sustained "not earning" condition is **MATERIAL**, not advisory. It bypasses quiet-hour and overnight gates, and it alerts immediately.
+
+**What "not earning" means here:**
+- The measured fee efficiency has fallen below the active threshold (e.g. below the shape's Hold band) and stayed there through the confirmation window.
+- The position is still deployed and still in range — if it were idle or out of range, those conditions would already fire their own alerts.
+
+**What it is NOT:**
+- A transient dip. One bad sample is noise; the alert fires only after the sustained rule is satisfied.
+- A geometry score on a correctly-built shape. A bid-ask at its junction reads low by design; that is the shape working, not the position failing. "Not earning" is a measured fee-rate condition, not a shape-geometry complaint.
+
+**Alert behavior:**
+- Fire once, then dedupe on a **stable signature** (e.g. `NOT EARNING`). A signature that includes tx hashes, counts, or timestamps changes every run and can never suppress itself — so the same condition would wake the user every cycle.
+- Re-arm only when the condition clears.
+
+**Attention is not the same as automatic rebuild.** The alert raises immediately; the capital action still follows the budget, churn cap, and operator directive. A red flag tells the operator the book has stopped earning. Spending gas to chase a number that is green on a different shape is a separate decision and must not be hidden inside the alert.
+
 ### ⚠️ Scanner Thresholds and Config Drift
 
 **The threshold is source-of-truth in code, not in memory.** The user may recall an original
@@ -157,10 +179,37 @@ or the code constant is updated, the code wins by default.
 **Example:** raising "stay above" from 50% to 75% is correct for a curve, but **deadly** for a
 deliberate dip-gathering bid-ask unless the bid-ask is exempt. Write the exemption first.
 
+**When the user asks "what did you see when you rebuilt?", the answer must come from a JOURNAL,
+not memory.** A churn ledger that records only a timestamp and a zone cannot answer whether the
+book was green, yellow, or red at the moment of action. Build a rebuild journal at the single
+confirmed-action site and record: efficiency, zone, in-range, margin in bins, spot, band, trigger,
+and shape. A missing reading is `null` — never a guess, because the journal is what justifies
+future threshold changes.
+
 **A threshold is also not a substitute for an operator directive.** A bid-ask at 25% efficiency is
 exactly where a bid-ask often sits when price is near its junction. If the operator chose that shape
 deliberately, no efficiency threshold should trigger a rebuild. Check for an active operator shape
 directive before any efficiency-driven shape switch.
+
+### Rebuild Journal — what the book looked like when we acted
+
+Every real rebuild must write one record at the confirmed-action site (after on-chain verification
+shows the position re-opened). Store both JSONL beside the state file and a markdown table in the
+vault. Required fields:
+
+- `tenant`, `trigger`, `efficiency`, `zone`, `in_range`, `margin_bins`, `spot`, `band_lo`, `band_hi`,
+  `shape`
+- `ts` and `iso` — use the true event timestamp, not the time the row was written. A journal whose
+  rows carry write-time cannot answer "what did you see when".
+
+**Backfill from logs only what can be recovered honestly.** If the cron log carries the zone but
+not the efficiency, backfill zone and leave efficiency null. A fabricated number in a journal is
+worse than a blank, because it will be used to justify changing a threshold.
+
+**Use the journal to answer three questions the user will ask:**
+1. How often did we rebuild while still green (≥75%)?
+2. How often was the book legitimately below the threshold?
+3. How often can we not tell because the reading was never recorded?
 
 ### Smart DCA Zones
 
@@ -1039,6 +1088,17 @@ mcp_servers:
 33. **Python hashlib.sha3_256 is NOT Ethereum keccak256** — NIST SHA-3 and the original Keccak are different hash functions. Using hashlib.sha3_256 produces wrong selectors. Install pycryptodome and use Crypto.Hash.keccak. Correct LFJ V2.2 selectors: getActiveId()=0xdbe65edc, getBinStep()=0x17f11ecc, balanceOf(address,uint256)=0x00fdd58e, getBin(uint24)=0x0abe9688.
 34. **On-chain reader now works — use it instead of guessing range from screenshots** — After fixing the keccak256 bug, the Python reader at ${VAULT_DIR}/scripts/onchain-reader.py can pull live bin data. Price formula: (1 + bin_step/10000) ** (bin_id - 2^23) * 10^12. Still needs shape and entry price from user config.
 35. **A threshold that lives in more than one file is not fixed until every copy matches** — A rule such as "stay above X% fee efficiency" has at least three versions: what the user remembers, what the Constitution says, and what the code constant holds. In this session, the same rule was 60% in memory, 50% in code, and 75% in intent — and the code's 50% appeared in TWO independent files (`fee_efficiency.py` and `lp-monitor-v2.py`). **Before acting, read the code constant, grep the scripts tree for every assignment of the same symbol, and reconcile all three in writing.** Raising the threshold in only the authority file leaves the monitor firing on the old number, which is worse than leaving it alone because the two systems now disagree. And if the threshold change would harm a deliberate shape (e.g. a bid-ask reads ~33% by construction), write the exemption before you move the number, not after.
+36. **"Not earning" must be a first-class MATERIAL alert, not an advisory.** A deployed, in-range book with a collapsed fee rate is the hardest condition to detect from outside. It must alert immediately (not wait for morning), use a stable dedupe signature, and remain distinct from the geometry score of a correctly-built shape. Raising the flag and spending capital to fix it are two separate decisions; the alert must not be hidden inside a rebuild.
+37. **Yield-funded buy-list legs are credit-ledgers, not allowances.** When the operator wants a recurring buy funded by the farm ("take $5 out of the LP and put it into COQ"), build a credit ledger that accrues only measured realized proceeds, fires at a threshold, debits on spend, and preserves the existing weekly-dip fallback. Unmeasurable windows (e.g. a re-center inside the fee window) must credit zero, not be deferred. Keep the weekly allowance and the yield credit as separate pots; a buy funded by one must not debit the other.
+38. **Check the perp rail before recommending leverage.** A "strong market" does not mean perps are deployable. Read the live account state on the actual rail (e.g. Hyperliquid clearinghouseState) before treating leverage as an option. If the account holds $0 and zero positions, deploying perps requires funding a new account with new capital — which changes the risk calculus entirely. Do not answer the perps question from price action alone.
+39. **Stale position records are false receipts.** A file that claims an open trade with no matching on-chain/live-account position is a liability, not history. When the account reads zero positions but a local JSON still claims a live 3x long, mark the record stale and surface it for cleanup. Do not let a dashboard or tracker report a profitable-looking position that cannot be verified.
+40. **Gas reserve target is one config value, and it must be uniform across a shared fleet.** A wallet whose `floor_usd` is set lower than its siblings will be refilled to that lower target and then drain again under normal rebuild load. Before diagnosing a "broken" refill, read `tenants.<tenant>.gas.floor_usd` for every tenant. Fix the floor, then measure whether `[4a] PROVISION GAS` actually runs.
+41. **Refill gas by unwrapping WAVAX, not by swapping USDC.** The cheapest on-chain leg is WAVAX → native AVAX (~36k gas on Avalanche). A USDC → AVAX swap costs ~147k gas and should only be used when no WAVAX is available. The refill runs between withdraw and redeploy because that is when the book is liquid as WAVAX + USDC.
+42. **A money tool's "SUCCESS" receipt is not proof of meaningful action.** Verify the post-state numerically. Flags like `--amount` may be in token units, not dollars, so a "$1" swap can move micro-dollars and still print a green line. Read balances, not receipts.
+43. **An LP exit cannot spend the native-gas reserve.** A deliberate exit returns WAVAX + USDC; the reserve lives in native AVAX. The floor check on exit is informational, never blocking — an exit is the repair path, and a floor that blocked it would strand capital.
+44. **Use an operator hold for any deliberate full withdrawal.** Set the hold before the action and clear it after. A held flat book is intentional, not IDLE CAPITAL. Require an expiry on every hold so one cannot persist by accident.
+45. **The number on the page must be the number the machine acts on.** A dashboard that calls the same efficiency function as the loop but feeds it different inputs can flat the book by 16-22 points. The published value must come from the exact source the autonomous rail uses, with its provenance attached, or the operator is reading a flattering fiction while the machine acts on a harsher truth. Divergence between display and authority is a defect, not a rounding difference.
+46. **Verify client-side rendered dashboards at the payload, not the static HTML.** A page that builds itself from a JSON payload will not contain the numbers in its raw HTML. Searching the HTML for `$268.42` or `97.0%` returns false negatives and invents a defect. The audit check must read the payload (e.g., `defi-data-<tenant>.json`) and then confirm the page's JavaScript consumes that payload, not grep the source.
 
 ---
 
@@ -1093,4 +1153,4 @@ Where `price_ratio = current_price / entry_price`.
 
 ---
 
-*Consolidated from 7 skills into 1 unified umbrella. Version 2.7.0 — Jul 20, 2026. Updated debounce to 3-tier (2x/hour normal, 10-min low-eff debounce, truly silent quiet hours). Added keccak256 vs SHA3-256 pitfall (#33) and on-chain reader fix (#34). CMC-primary for price fetching. User preference: show cron 2x/hour when things are good, not just silent.*
+*Consolidated from 7 skills into 1 unified umbrella. Version 2.7.1 — Oct 2, 2026. Added "not earning" as a first-class MATERIAL alert, distinct from shape geometry and from advisory low-efficiency. Updated the threshold-multi-file pitfall. CMC-primary for price fetching. User preference: show cron 2x/hour when things are good, not just silent.*
