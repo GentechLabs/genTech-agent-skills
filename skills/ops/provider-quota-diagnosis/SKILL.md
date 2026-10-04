@@ -112,6 +112,70 @@ for k,v in json.loads(base64.urlsafe_b64decode(p)).items():
 - **Terminology:** the Nous balance is the research-portal subscription balance — NEVER call it "the grant." User explicitly corrected this (Aug 2026). It is not grant funding and it is not "spent" in the grant sense.
 - See `hermes-auth-incident-response` for actual OAuth recovery.
 
+## Log-Based Usage Counting (when the provider has no usage endpoint)
+
+Some providers — **OpenCode Go is one** — expose no JSON usage endpoint. The dashboard is an SPA
+and `/v1/usage`, `/api/usage`, `/v1/limits` all return HTML. In that case the canonical measurement
+is the **request log**, but only if you deduplicate correctly.
+
+### A call is not a log line
+
+Hermes retries, and rotated logs keep the same call in multiple files. Counting `API call #N:`
+lines over-counts by **3–5×**. The identity of a call is the **session tag + call number + model**,
+not the line.
+
+```python
+import re, glob, gzip, os
+from collections import defaultdict
+
+LINE = re.compile(
+    r"^(\d{4}-\d{2}-\d{2}) \d{2}:\d{2}:\d{2},\d+ .*?\[([^\]]+)\].*?"
+    r"API call #(\d+): model=(\S+) provider=([a-z0-9\-]+) .*? total=(\d+)")
+
+seen = set()
+per_day = defaultdict(int)
+for seat in sorted(glob.glob('/root/.hermes/profiles/*/')):
+    for pat in ('logs/agent.log*', 'logs/errors.log*', 'logs/mcp-stderr.log*'):
+        for f in glob.glob(os.path.join(seat, pat)):
+            txt = gzip.open(f, 'rt', errors='replace').read() if f.endswith('.gz') \
+                  else open(f, encoding='utf-8', errors='replace').read()
+            for ln in txt.splitlines():
+                m = LINE.match(ln)
+                if not m or 'opencode' not in m.group(5):
+                    continue
+                key = (seat, m.group(2), m.group(3), m.group(4))  # tag + call# + model
+                if key in seen:
+                    continue
+                seen.add(key)
+                per_day[m.group(1)] += 1
+```
+
+### The session-tag regex must match every shape the logger writes
+
+Session tags have **at least two shapes** in our logs:
+
+```
+[cron_<hash>_YYYYMMDD_HHMMSS]     # cron sessions
+[YYYYMMDD_HHMMSS_<hash>]          # interactive sessions
+```
+
+A regex that matches only the interactive shape returns `None` for every cron session, so the
+dedup key becomes `(seat, "?", call#, model)`. **Every cron job's "API call #1" collides with
+every other one.** This under-counted OpenCode Go usage by **2.2×** on 2026-10-02 — making the
+plan look 55% safer than it was.
+
+Correct regex:
+
+```python
+SESSION_RE = re.compile(
+    r"\[((?:cron_[a-z0-9]+_\d{8}_\d{6})|(?:\d{8}_\d{6}_[a-z0-9]+))\]", re.I)
+```
+
+### Rotated logs are not independent observations
+
+If your dedup key includes the **filename**, `agent.log.1`, `agent.log.2`, and `agent.log.3` each
+count the same call again. The key must include the **session tag**, not the file path.
+
 ## Pitfalls
 
 | Pitfall | How to avoid |
@@ -122,6 +186,8 @@ for k,v in json.loads(base64.urlsafe_b64decode(p)).items():
 | Quoting a provider as "down" to the user without a live test | Always verify with a real request first; a live 200 changes the whole answer |
 || Reporting reset as "someday" | Convert timestamps to a concrete date (UTC + ET) so the user gets a real answer |
 | `credits_notices: true` spamming free-model responses | When Hermes is on a free tier (Nous `solar-pro4:free`, BlockRun `free/gpt-oss-120b`, etc.), the global `credits_notices` flag prepends a cost/balance notice to every response. This can produce incoherent warnings like "⚠️ Insufficient balance — send USDC to `0xebc8...`" even when no wallet is funded or no real spend is happening. To silence: set `credits_notices: false` in the profile's `display:` block (`~/.hermes/profiles/<profile>/config.yaml`). Keep it `true` only when actively spending a paid provider and the user wants per-turn cost visibility. For finer control, `show_cost: false` suppresses the cost line without the full balance preamble. Each profile has its own `display:` block — silencing it in one profile does not affect others. |
+| Counting log lines as calls | A retry and a rotated log both duplicate the same call. Identity = session tag + call number + model |
+| Deduplicating by a session-tag regex that only matches one shape | Match every shape the logger emits, or distinct sessions collapse into the same key and the count is wrong in either direction |
 
 ## Related Skills
 
@@ -131,5 +197,6 @@ for k,v in json.loads(base64.urlsafe_b64decode(p)).items():
 
 ## References
 
+- `references/opencode-go-usage-from-logs.md` — count OpenCode Go calls when the provider has no usage endpoint: correct dedup, session-tag shapes, rotated-log trap
 - `references/stale-rate-limit-diagnosis-2026-07-31.md` — full worked example: stale Z.AI status, reset-time decoding, live-test proof, companion findings
 - `references/provider-auto-switch-pattern.md` — reusable pattern for automatically failing over between Ollama Cloud (weekly reset) and OpenCode Go (monthly reset) based on live usage, with the context-save-before-restart safety step
