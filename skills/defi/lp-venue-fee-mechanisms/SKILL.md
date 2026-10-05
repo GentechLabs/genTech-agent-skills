@@ -23,6 +23,31 @@ venue's path.
 | Gas to "claim a fee" | **0, because no claim EXISTS** | real, multi-transaction; measure it, do not assume |
 | Strategy lever | **bin shapes** (curve / bid-ask / spot) | **range width + re-center timing** — no shape families |
 
+## What the ledger must record: our income, not the pool's
+
+A Liquidity Book ledger that records the position (`bins`, `our_token0`, `our_token1`, `value_usd`,
+`price`, `fee_factor`, `rebuild`) but never OUR accrued income is **geometry without earnings**. It
+can tell you the book is deployed and in range while giving no number for what that deployment
+produced. That makes every shape choice unfalsifiable: you know the efficiency score, but not whether
+the shape earned more than the one it replaced.
+
+**The rule:** every LP ledger must publish a measured income figure — **our share, in dollars, over a
+stated window** — and it must be **keyed to the shape in force**.
+
+**Three implementation requirements:**
+
+1. **Store the measured income per window, keyed to the shape.** A curve window and a bid-ask window
+   are not the same measurement; averaging them manufactures a number that belongs to neither.
+2. **Mark the window after a rebuild as `baseline_reset`, and do not compute an income delta across
+   it.** `fee_factor` is cumulative fees **per unit of liquidity**, and a rebuild changes the
+   liquidity. A naive delta across a rebuild does not measure earnings — it measures the rebuild.
+3. **Never interpolate across a shape change.** If a window contains a rebuild or a shape switch,
+   write `null` with the reason, exactly as the ledger already refuses elsewhere.
+
+**The acceptance test:** a ledger whose every snapshot carries `fees_usd: null` is an unmeasured
+position, regardless of how precise the geometry looks. A position whose income cannot be stated is
+an experiment, and it must be labelled one.
+
 ## Rules
 
 1. **A revert is a valid answer, not always a failure.** If `pendingFees` / `collectFees` reverts on
@@ -69,6 +94,23 @@ mechanism the venue has before adopting the design.
 
 - `references/fee-rate-measurement.md` — how to measure a fee RATE correctly, the instruments that
   do NOT work, and the two routes that cross-check each other.
+- `references/fee-ledger-income-recipe.md` — how to record OUR income in an LP fee ledger, keyed to
+  the shape in force and segmented around rebuilds.
+
+## Our share vs the pool's receipts
+
+Pool-level fee receipts (from Swap logs or volume × fee tier) are true for the venue but are **not
+ours**. A pool printing $4,000/day does not mean our $250 position earns a proportional $4/day,
+because trading volume concentrates in whichever bins spot is sitting in, and our liquidity share of
+the pool is **not** our share of its activity.
+
+**Do not derive our income by multiplying pool fees by our pool-share percentage** unless you can
+prove the activity is uniformly distributed — it almost never is on a concentrated book.
+
+**The honest path:** measure the fees that accrued to OUR bins over a window (using the venue's
+`fee_factor` or equivalent, with the rebuild-segmentation rules above), or report UNKNOWN. A derived
+number that looks precise is more dangerous than an absent one, because it will be quoted and acted
+on.
 
 ## An unreadable read is NOT a zero
 
@@ -136,3 +178,22 @@ and the resulting verdict cannot be checked against the instrument that produced
   **"Two routes agree" is the acceptance standard — and it is meaningless unless each route is named.**
 - **A FALSE ABSENCE is worse than a wrong number**: "no position" reads downstream as withdrawn or
   exited. A reader that can report an existing position as absent must never carry a gate.
+
+## Pool-level receipts are not our income
+
+A ledger that records only geometry is a ledger that cannot falsify a shape decision. It can show
+the book is deployed, in range, and structurally healthy while giving no number for what that
+deployment earned. When the user asks "how much income are we actually making?", the answer must be
+a measured figure for **our share**, not the pool's total receipts.
+
+**Three rules for recording it:**
+1. **Key the income to the shape in force.** A curve window and a bid-ask window are different
+   measurements; averaging them across a shape change manufactures a number that belongs to neither.
+2. **Reset the baseline after a rebuild.** `fee_factor` is cumulative fees **per unit of liquidity**,
+   and a rebuild changes the liquidity. A naive delta across a rebuild measures the rebuild, not the
+   earnings.
+3. **Never interpolate across a shape change.** If a window contains a rebuild or a shape switch,
+   write `null` with the reason; a derived number across the boundary is worse than no number.
+
+**Acceptance test:** a ledger whose every snapshot carries `fees_usd: null` is an unmeasured
+position. A position whose income cannot be stated is an experiment and must be labelled one.

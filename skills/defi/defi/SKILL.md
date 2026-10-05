@@ -4,7 +4,7 @@ description: "Unified DeFi operations umbrella: LP monitoring, rebalancing, dash
 tags: [defi, lp, monitoring, rebalance, dashboard, strategy, on-chain, lfj, avalanche, solana, meteora, aae, ranks, prestige]
 trigger: "Any DeFi-related task: LP monitoring, rebalancing, dashboard sync, strategy design, on-chain reads, LFJ operations, fee milestones, AAE app architecture, rank/prestige engine, Meteora DLMM pools, security intel, or operator shape directives."
 related_skills: [market-macro-monitor, link-research-summary]
-version: 2.7.1
+version: 2.8.0
 author: Gentech
 ---
 
@@ -207,9 +207,15 @@ not the efficiency, backfill zone and leave efficiency null. A fabricated number
 worse than a blank, because it will be used to justify changing a threshold.
 
 **Use the journal to answer three questions the user will ask:**
-1. How often did we rebuild while still green (≥75%)?
+1. How often did we rebuild while still Green (≥75%)?
 2. How often was the book legitimately below the threshold?
 3. How often can we not tell because the reading was never recorded?
+
+**Record the EVENT that drove the action, not a downstream side-effect.** A journal that logs gas-floor checks, health pings, or sample counts cannot answer "were we rebuilding while already green?" — even if every row carries a timestamp and a zone. Before designing the journal, decide which question it must answer; then confirm the row is written at the confirmed-action site with the actual decision inputs (`trigger`, `zone`, `efficiency`, `shape`, `path taken`), not at an earlier monitor step that runs whether or not an action occurred. If the classification that produces the zone does not reach the action site, fix the wiring; do not backfill a plausible zone from a different log.
+
+### When several brakes interact, measure which one binds
+
+A cadence change, a cooldown change, and a confirmation-window change are not interchangeable. After changing any of them, count the actual gap between rebuilds and compare it to each brake in isolation. If the observed median gap is shorter than the cooldown that should bind it, a bypass path exists — and widening the window or slowing the cadence will not fix the churn until the bypass is closed. Report the binding brake and the bypass separately; do not let a rule change that looks correct on paper hide a path that still walks past every gate.
 
 ### Smart DCA Zones
 
@@ -593,6 +599,81 @@ a compromise shape (a widened curve is not a bid-ask; a 60/40 curve is a differe
 calls the shape; the machine executes it cleanly.
 
 > **Worked example and reference implementation:** references/operator-shape-directive.md
+
+### Every LP ledger must record our income, not just the pool's
+
+A position ledger that records geometry (`bins`, `range`, `value_usd`, `efficiency`) but never OUR
+accrued income lets a book sit for a month at 2% while the operator assumes it is working. The
+ledger must publish a measured income figure: **our share, in dollars, over a stated window**, and
+it must be keyed to the shape in force.
+
+**Three rules:**
+1. **Key the income to the shape.** A curve window and a bid-ask window are not the same measurement;
+   averaging them across a shape change manufactures a number that belongs to neither.
+2. **Reset the baseline after a rebuild.** `fee_factor` is cumulative fees **per unit of liquidity**,
+   and a rebuild changes the liquidity. A naive delta across a rebuild measures the rebuild, not the
+   earnings.
+3. **Never interpolate across a shape change.** If a window contains a rebuild or shape switch, write
+   `null` with the reason. A derived number across the boundary is worse than no number.
+
+**A ledger whose every snapshot carries `fees_usd: null` is an unmeasured position.** A position whose
+income cannot be stated is an experiment and must be labelled one.
+
+### The same abstraction holds across all rails, but the read path differs
+
+Every DEX that uses concentrated liquidity tracks fees as a **cumulative amount per unit of our share**.
+Build the income tracker on that abstraction, with one adapter per rail. Writing it per venue means
+writing it three times and the third will disagree with the first about what "income" means.
+
+| Venue family | Where | How our fees are read |
+|---|---|---|
+| **LFJ Liquidity Book** (Avalanche) | bin-based | per-bin cumulative fee accumulator (`fee_factor`) × our share of each bin |
+| **Meteora DLMM** (Solana) | bin-based (same family) | **accrued fees exposed per position** (`feeX` / `feeY` on the position account) — directly readable, no share-denominator math |
+| **Uniswap v3/v4** (Ethereum, the TAO pools) | tick-based | `feeGrowthGlobal0/1X128` × our liquidity |
+
+**Two rules that apply everywhere:**
+- **Never compute a fee delta across a change in our share** — a rebuild, re-centre, add, or remove resets the meaningful baseline. Write `baseline_reset` and start a new window.
+- **Fees and reward emissions are separate income** and are shown separately. A venue paying mostly in emissions is a promotion, not a yield.
+
+**Why this is a precondition for Solana, not an afterthought:** a Meteora rebalance costs ~$0.001–0.01 against ~$0.19 on Avalanche. **A cheap re-centre is only a good idea if we can measure whether it earned more than it cost.** The income tracker makes the Solana test a measurement instead of a feeling.
+
+> **Worked example and reproduction recipe:** references/held-asset-yield-scan.md
+
+### Yield discovery scans held assets, not the whole market
+
+A general yield leaderboard is noise — it surfaces 4,000% APYs on tokens the treasury will never own.
+The useful question is: *is there a new venue for an asset we already hold?* Hold that search separate
+from the rail/buy-list watch; one asks whether to buy, the other asks where to put what we own.
+
+**Filters that prevent garbage results:**
+- Every token in the pair must be in the held-asset set. Matching on *any* shared symbol part (e.g.
+  every `SOMETHING-USDC` pool) produces hundreds of false positives.
+- The chain must be a rail we can reach.
+- A TVL floor and an APY sanity ceiling keep artefact pools out.
+- Fee yield (`apyBase`) and reward emissions (`apyReward`) are reported separately; sort by the
+  durable one first.
+- Stablecoin pools paying >60% get a warning, not a recommendation.
+
+**Silence doctrine applies:** alert once when a new venue appears or an old one disappears; an empty
+stdout means no message. Seed the watch state on first deployment so the cron starts quiet.
+
+> **Full scan recipe and verification checklist:** references/held-asset-yield-scan.md
+
+### Income tracking must be one abstraction across rails, not one reader per venue
+
+Concentrated-liquidity venues all track fees the same way: **cumulative fees per unit of our share**.
+Build the income tracker on that abstraction with one adapter per rail, or you will write the same
+logic three times and the third version will disagree with the first about what "income" means.
+
+- **LFJ Liquidity Book** (Avalanche, bin-based): per-bin `fee_factor` × our share of each bin.
+- **Meteora DLMM** (Solana, bin-based): `feeX`/`feeY` per position — directly readable, no share math.
+- **Uniswap v3/v4** (Ethereum, tick-based, the TAO pools): `feeGrowthGlobalX128` × our liquidity.
+
+**Rules that apply everywhere:** key the income to the active shape, reset the baseline after any
+change in our share (rebuild, re-centre, add, remove), never interpolate across a shape change, and
+keep fees separate from reward emissions.
+
+> **Implementation recipe and verification checklist:** references/cross-rail-income-tracker.md
 
 ### Escalate genuine forks, do not resolve them alone
 
@@ -1099,8 +1180,68 @@ mcp_servers:
 44. **Use an operator hold for any deliberate full withdrawal.** Set the hold before the action and clear it after. A held flat book is intentional, not IDLE CAPITAL. Require an expiry on every hold so one cannot persist by accident.
 45. **The number on the page must be the number the machine acts on.** A dashboard that calls the same efficiency function as the loop but feeds it different inputs can flat the book by 16-22 points. The published value must come from the exact source the autonomous rail uses, with its provenance attached, or the operator is reading a flattering fiction while the machine acts on a harsher truth. Divergence between display and authority is a defect, not a rounding difference.
 46. **Verify client-side rendered dashboards at the payload, not the static HTML.** A page that builds itself from a JSON payload will not contain the numbers in its raw HTML. Searching the HTML for `$268.42` or `97.0%` returns false negatives and invents a defect. The audit check must read the payload (e.g., `defi-data-<tenant>.json`) and then confirm the page's JavaScript consumes that payload, not grep the source.
+47. **A rendered block that is empty on every tenant usually means the reader is pointed at the wrong file.** When code is written for a ledger carrying `rows`/`generated_at`/`source` but the path resolves to a SNAPSHOT file carrying `snapshots`, the row list is always empty and every field the page advertises returns None. Two files, one name pattern, wrong one read — check both the schema the code expects and the schema the file at `_p` actually contains. The fix is to read the file that matches the schema, or to rename/merge the files so the reader and writer agree.
+48. **An error message can name the wrong layer.** An alert that says *"the router CANNOT pull this token"* points at the allowance, but the allowance may merely be moved and the script may fix that itself with an approve-and-retry. If the wallet lacks gas to pay for that approve, the simulation reverts with the same message and the loop retries forever. Verify the TRUE blocker by reading wallet gas, the reserve floor, and whether the next required transaction is affordable — do not treat the symptom text as the root cause.
+49. **Cross-tenant numbers must be withheld, not borrowed.** A pool-level receipt (total fees, swap count) is true for every tenant page, but a per-tenant share (`our_share`) cannot be shown against a name it was not measured for. When the source file does not record which book produced the share, render it as `withheld` with the reason printed — never show one tenant's number on another's page to make the block look full.
+50. **Size the reserve to the complete atomic operation, not to one cycle.** A curve deploy is TWO single-sided legs; when the router allowance has moved it is THREE transactions (approve + two legs). A reserve sized for one transaction leaves the wallet unable to pay for the second leg's approve, the simulation reverts, and the retry loop spins forever with the book EMPTY and capital idle. Worse, with no book there is no book WAVAX for the gas refill to draw on, so the machine cannot deploy, cannot refill, and cannot escape. The unit of reserve is the whole deploy — measure the gas of all legs plus the approve and add headroom.
+51. **A failed re-center must STOP and escalate after repeated identical failures, not retry forever.** A deterministic gas/allowance/config deadlock does not self-heal by repetition; each failed attempt may consume gas and may leave a half-built position. After two consecutive failures with the same root signature, surface the condition and require operator input before the next attempt.
+52. **A missing `--yes` from the wrapper is a missing confirmation.** A leg that requires both `--execute` and `--yes` cannot approve when the wrapper forwards only `--execute`. The symptom is a recurring `0x32e2717a` revert after a successful withdraw, which leaves the book flat and capital idle. Forward the confirmation, then verify by checking for `APPROVE SENT` in the wrapper's output.
 
 ---
+
+### Gas reserve must cover the whole atomic operation, not one cycle
+
+A curve deploy is TWO single-sided legs. When a router allowance has moved it can be THREE
+transactions (approve + two legs). A reserve sized for one transaction may leave the wallet unable
+to pay for the second leg's approve, so the simulation reverts and the retry loop spins forever with
+the book EMPTY and capital idle. Size the reserve to the whole deploy — all legs plus the approve —
+plus headroom.
+
+### A wrapper must forward the operator's confirmation to the leg
+
+`lfj_bid_deploy.py` only sends its router approve when both `--execute` and `--yes` are set. A
+wrapper that forwards only `--execute` leaves the legs in permanent dry-run: they can never approve,
+so every deploy that needs a fresh allowance reverts `0x32e2717a` ("the router CANNOT pull this
+token"), and because a rebuild withdraws first, the capital parks in the wallet while the loop
+retries forever. The wrapper is the human's confirmation gate; it must pass `--yes` down to any leg
+it invokes. Verify by running the wrapper and checking that `APPROVE SENT` appears when a leg is
+short.
+
+### A sample taken mid-rebuild is a frame, not a state
+
+A rebuild withdraws first, then redeploys. For one to two minutes the book is genuinely empty; while
+one leg has landed and the other has not, it is genuinely partial. A single scan during this window
+is correct about the instant and wrong about the state.
+
+- Confirm with two independent readers after the cycle completes, or have the reader report whether a
+  rebuild was in flight at sample time.
+- Treat "0 bins" and "13 bins" as equally transient when the preceding action was a rebuild; neither
+  is reportable until settled.
+- The wallet-side mirror is the same: a low base balance plus a withdrawn volatile leg is the
+  fingerprint of a rebuild in progress, not a loss.
+
+### Verify identity against the platform, not a display name
+
+A display name is a claim; the platform-assigned user id is the fact. The chain that maps identity
+to tenant to privilege is load-bearing: if it is wrong, no ceiling absorbs the mistake.
+
+- Call `getChatMember` for the recorded id and compare against actual group membership. A 400 means
+  the id is not in the chat — record that as evidence, not an assumption.
+- Every human in a treasury group must have a row in the speaker/identity map, and no human in the
+  group may be unmapped. An unmapped speaker resolves to UNKNOWN and gets no privilege.
+- When a privilege level or ceiling changes, update the file that enforces it AND the file that
+  labels it, and verify with a file search that no stale prose still describes the old limit.
+
+### A dollar ceiling and a capability level are different controls
+
+`capital_ceiling_usd` limits how much may be at risk. A level (`L0_OBSERVE` ... `L3_AUTONOMOUS`)
+limits what actions the tenant may trigger. Conflating them means reporting "the ceiling is removed"
+while a real restriction still binds, or reporting "the level is bounded" while the dollar limit is
+already null.
+
+- Name which control is being changed before changing it.
+- Update every file that names the control: the registry, the speaker map, and the enforcement code.
+- Verify with a file search that no stale label or prose describes the old state.
 
 ## Quick Reference
 

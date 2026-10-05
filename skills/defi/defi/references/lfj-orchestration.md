@@ -145,3 +145,17 @@ Pattern: Detect → Fix → Verify → Report
 | State file persistence, profile paths | DMOB |
 | Cron scheduling, alert routing | Gentech |
 | Vault entry updates | Gentech |
+
+## Gas Reserve & Retry Discipline (added 2026-10-03)
+
+### Reserve is per complete deploy, not per transaction
+A curve deploy is TWO single-sided legs; when the router allowance has moved it is THREE transactions (approve + two legs). Size `floor_usd` / the native-gas reserve to the whole atomic operation. A reserve sized for one cycle leaves the wallet unable to pay for the second leg's approve, the simulation reverts, and the loop may retry forever with the book empty and capital idle.
+
+### The top-up target must cover the whole deploy, not the floor
+A wrapper that calls `gas_topup.py` with no `--target` restores only the **floor** (one cycle). That funds the first leg of a multi-tx deploy but can leave the wallet short for the second leg and the approve. The result is a half-built book and idle capital — exactly the failure the top-up was meant to prevent. Pass `--target N` where N is the **cycle count of the complete operation** (e.g. 3 for a curve with an allowance refresh) so the wallet holds the floor plus the full deploy before any leg is spent.
+
+### Refill from the wallet's WAVAX when the book is empty
+With no open position there is no book WAVAX for `[4a] PROVISION GAS` to draw on. The cheapest leg is WAVAX → native AVAX (~36k gas). Only swap USDC → AVAX when no WAVAX is available.
+
+### Stop and escalate after identical failures
+A deterministic gas/allowance/config deadlock does not self-heal by repetition. After two consecutive failures with the same root signature, surface the captured cause and require operator input. Retrying forever on a gas deadlock may drain the reserve and leave a half-built book.
