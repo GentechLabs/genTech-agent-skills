@@ -468,6 +468,60 @@ work — treat empty output as unreachable and label the build unaudited.
 **The false-value family** — a mechanism reporting success while doing nothing, or reporting a
 number it cannot actually compute. **A green that cannot go red is not a signal.**
 
+## The AUDIT INTENT — what to look for
+
+**An audit without a stated intent is not an audit, it is a look around.** Before any audit, write down the
+**ONE question** it answers and **the number that answers it**. **No number, no audit.**
+
+### The ten failure classes, each with the question that finds it
+
+1. **The EXEMPTION / bypass audit — do this FIRST.** Every bypass is a hole. Ask what feeds it, and whether the
+   action it permits can **CREATE the condition that justifies the next one**. *A leak lives in an exemption.*
+2. **The TRIGGER audit** — which condition actually fired, not which rule the docs describe. **A category
+   present in 100% of runs is a HEADER, not a cause.**
+3. **The NECESSITY test** — for any "it does X too much", reconstruct **per event** whether the stated condition
+   was met.
+4. **The COST decomposition** — mechanism cost vs external change vs income, and **report the RATIO**.
+5. **The READER audit** — a sample taken mid-rewrite is a **frame, not a state**; a write is verified by its
+   **receipt**, not by a number read afterwards.
+6. **The RESERVE / limit audit** — a limit must cover the operation's **full step count**; ask whether the
+   guarantee comes from the **ORDER** (provision-then-spend) rather than the **SIZE** of the reserve.
+7. **The CONSTANT-vs-MECHANISM test** — did we move a number, or change a mechanism? *A fix that has to be
+   re-applied is evidence, not progress.*
+8. **The RECORD audit** — does the record carry the values **at the moment of decision**? Is there a writer for
+   every reader? Is the published number the number the system acts on?
+9. **The BANNER-OVER-A-NO-OP class** — a confident success line over an action that did nothing. **Read the
+   POST-STATE, never the banner.**
+10. **The FALSE-VALUE family** — a failed or unreadable read printed as a real value, **especially as ZERO**.
+    "Unknown" is valid; "zero" is not unless measured.
+
+### The two rules that make it an audit rather than a walk
+
+- **Prove the direction it should REFUSE.** A guard never tested in the direction it blocks is decoration.
+- **Re-audit after the fix — round 2 finds the regression round 1 introduced.**
+
+### The order
+
+measure first → **exemption audit** → trigger audit → necessity + cost ratio → readers/record → fix in the
+**canonical copy** (never a side copy a sync reverts) → syntax check → sync → **verify the deployed copy by
+hash** → **watch one full cycle.**
+
+### The case that produced this (Treasury, 2026-10-04)
+
+A book lost ~$7/day; the question was *"is it the rebalances or the market?"* The answer came from the checklist,
+not from opinion:
+
+- **42 re-actions in 24h against a cap of 2 — and 0 of 41 justified by price** (median move **0.19%** against a
+  **1.20%** band). The book was in range and earning the whole day.
+- **Cause: an exemption.** An idle-capital trigger written `(>25%) OR (>= $10)` fired on **change the loop's own
+  last rebuild left in the wallet** — and that trigger **bypassed the churn cap**. Rebuild → change → "idle" →
+  rebuild, forever. **The cap was never broken; it was bypassed, so the budget was never consulted.**
+- **The fix that did NOT work:** raising the gas floor $1.00 → $1.50 — *a number, not a mechanism* — and the
+  same failure returned the same day (class 7, in action).
+- **The rule broken while writing the tool meant to enforce it:** the new watcher read a state file from the
+  wrong path, failed silently, and printed **`0 re-centers`** on books that ran **31** and **42** (class 10,
+  exactly).
+
 ## Parallel Subagent Builds
 
 When the build plan has **independent module groups** (e.g., engine + UI), delegate them to parallel subagents. Each subagent gets a self-contained prompt with exact file paths, API contracts, and acceptance criteria.

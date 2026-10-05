@@ -269,6 +269,7 @@ session and left the queue accurate.
   back-porting to the repo, not re-deploying stale repo content over it.
 - **A destructive sync is audited in the TARGET tree, and survivors are the falsification.** A path that does `rmtree(dest)` + `copytree(src)` cannot leave seat-only files behind — it writes exactly the source's list. If seat-only files are still present after the sync was supposed to have run, they disprove that the destructive path executed on that directory. Check their mtimes against the sync window before accepting a claimed loss. Then verify WHICH path the tool actually took: a "blocked" shadow-namespace path and a "warn-then-replace" normal path are different functions, and a survivor in a blocked namespace means the alarm points at the wrong case.
 - **A count that does not move when the counted set moves is an instrument defect, not a stable measurement.** If you remove one member of a set and the reported count is unchanged, the instrument is measuring a different quantity than its name implies — commonly "present or differing" rather than "present only." Report the observation rather than a false confirmation of no change, and fix the instrument to print the names it counts.
+- **When a state-only artifact has no clock, derive movement from git history rather than adding timestamps to every writer.** Adding `created_at`/`updated_at` fields requires every writer to remember them; one forgotten writer corrupts the timeline, and legacy items remain undated forever. Git commits already carry immutable timestamps. Reconstruct snapshots per commit, key items by a stable identity (not the internal `id`, which renumbering changes), and emit events (`created`, `changed`, `returned`). Report unreadable snapshots and refuse to answer if the evidence base cannot be read — "could not look" must never be printed as "no movement". See `references/derive-time-from-git.md`.
 
 ## Support Files
 
@@ -281,6 +282,10 @@ session and left the queue accurate.
   stale, or orphaned, and flag same-named copies that diverge in size. Exits 1
   when orphans or divergent copies are found, so it can be used as a guard. See
   `references/state-file-liveness.md` for usage and interpretation.
+- `references/derive-time-from-git.md` — when a state file stores no timestamps,
+  derive its movement clock from git history instead of adding a `created_at` field.
+  Covers identity keying, signature design, unreadable-snapshot handling, and the
+  required refusal when the evidence base cannot be read.
 - `references/negative-findings-and-ref-absence.md` — how to prove something is missing without
   overclaiming, and how to distinguish a diverged git ref from an unresolvable one. Use before
   reporting "this ref/object/capability does not exist" to another seat.
