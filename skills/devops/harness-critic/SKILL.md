@@ -796,6 +796,27 @@ script, read `md5sum $HERMES_HOME/scripts/<name>` on the path the resolver names
 path you happened to edit.** If two copies of one script exist, gate/fix both and publish
 both digests — and treat the drift itself as a finding.
 
+### A harness INPUT writer must commit its own write — and the fix is re-measured on the LIVE path (entry 96)
+The Critic diagnosed `facts/witness-log.md` stranding for four consecutive entries (92-95):
+`$HERMES_HOME/scripts/context-weight.py` (run by the enabled job `fcca23360df2`) appended to the
+witness log and never committed, so the friction record — the very input the Evolution resume-or-halt
+decision rests on — sat as ` M facts/witness-log.md` in the working tree until the Critic committed it
+by hand. `grep -c 'git\|commit\|subprocess' <writer>` = 0 was re-measured every cycle but never fixed,
+because it was filed as an operator item and carried.
+
+**Rule:** when the audited harness consumes a file written by a *separate producer* (a profile script,
+a sibling cron), a stranding defect in that writer IS in scope for the Critic — it is a defect in the
+harness's own input pipeline, not a neighbour's backlog. Add the commit step `try/except`-wrapped so a
+VCS failure can never break the producer, and control-test it end-to-end in a `cp`-built scratch tree
+with the writer's path constants repointed at scratch — never `ln -s` (entry-89 class), never run the
+writer against its real paths as a test. Then re-measure the LIVE files the control could have touched.
+
+**Corollary — a `scripts/` fix has no revision history.** The profile `scripts/` tree is NOT under
+version control (`git -C $HERMES_HOME/scripts rev-parse --show-toplevel` -> `fatal: not a git
+repository`). Publish such a fix's digest as a **live-file** digest, labelled as such — never present
+it as a committed-revision digest (the entry-82/87 class) — and confirm it is durable against the
+nightly skills sync, which propagates `skills/` and NOT `scripts/`.
+
 ## Tone Rules
 - No padding: "great work", "going well", "looks good" — FORBIDDEN
 - Doubt → CRITICAL
