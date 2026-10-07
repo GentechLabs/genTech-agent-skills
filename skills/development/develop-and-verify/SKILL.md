@@ -547,3 +547,27 @@ When the build plan has **independent module groups** (e.g., engine + UI), deleg
 > **The ledger lives in `references/pitfalls.md` — an INDEX since 2026-09-28** — 143 accumulated silent-wrongness lessons, in three part files (`references/pitfalls-1.md`, `-2.md`, `-3.md`; **part 3 is LIVE and takes new lessons**). Read the part you need with `skill_view(name='develop-and-verify', file_path='references/pitfalls-1.md')`, or grep the three. The index carries each part's count, digest and the stated census rule.
 > Extracted from this file 2026-09-28 to restore headroom (SKILL.md had reached 103,752 chars against the 100,000-char platform cap, which makes every write refuse), then SPLIT into parts the same evening when the single ledger reached 93,842 chars against the same per-file cap. **The cap is enforced PER FILE, not per directory** — so the parts, not the directory, are what must stay under it.
 > **Nothing was deleted — the section moved.**
+## The CANDIDATE-vs-FINDING rule — time it before you name it
+
+**A list of what a thing COULD be is not a finding. If you cannot say which one it IS, the answer is `UNKNOWN`.**
+
+Measured over one investigation (peer-mesh, 2026-10-05/06), where the same finding needed **three** corrections:
+a rate that was a snapshot, a trigger hypothesised then falsified, and a cause hypothesised then falsified. **Every
+correction came from measuring again; none came from thinking harder.**
+
+The rules that would have prevented all three:
+
+1. **A count is not a rate.** Before writing `%`, check the events' TIMESTAMPS. Five calls that all land inside one
+   minute are one event, not 3% — and the count staying flat while the denominator grows is what a fixed cluster
+   looks like. *The number was one command away the whole time.*
+2. **A correlation is not a cause, and SHARED PATH is not SHARED MECHANISM.** Two anomalies on the same code path
+   looked like one bug. Timing the path showed **0.15 s against a 30 s ceiling** — two hundred times under the
+   limit the theory blamed. **A limit cannot cause a timeout on a call that finishes in a fraction of it: check the
+   LATENCY before blaming the CEILING.**
+3. **Falsify your own hypothesis before handing it over.** Adding a deliberately mis-configured input and watching
+   it reproduce the exact symptom (including the same record id) is what turned a guess into a finding — and the
+   same method is what killed the two guesses that were wrong.
+
+**Corollary for handoffs: report the DISTINCTION, not the tidier story.** *"This is a real correctness bug AND it is
+not the explanation for the failure you saw"* is worth more to the next person than a single confident cause that
+happens to fit both.

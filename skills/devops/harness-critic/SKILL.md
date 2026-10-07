@@ -817,6 +817,23 @@ repository`). Publish such a fix's digest as a **live-file** digest, labelled as
 it as a committed-revision digest (the entry-82/87 class) — and confirm it is durable against the
 nightly skills sync, which propagates `skills/` and NOT `scripts/`.
 
+### A success line keyed on an unobserved return code is a success line that cannot fail (entry 97)
+`subprocess.run(..., check=False)` returns; it does not raise. A `✅ … committed` printed after it
+with no `returncode` test reports success even when the command failed. Live (2026-10-07, entry 97):
+the witness-log writer shipped the previous cycle printed `✅ witness-log.md committed (N entry(ies))`;
+falsified in a `cp`-built scratch repo with a `pre-commit` hook exiting 1 — the message did not change,
+`git log` gained NO commit, and the record sat `M` (staged, uncommitted). The exact stranding the fix
+existed to prevent, reported as success. When a critique ships a fix, do not accept its control's
+`✅` as evidence: re-run the control with the failure INJECTED and require the success line to
+disappear.
+
+**Rule:** every success line in a script must be guarded by the OBSERVED returncode
+(`if proc.returncode == 0:`), and the failure branch must PRINT the rc and the stderr. `check=False`
+is a fine choice for best-effort work; an unconditional success print after it is not. Control both
+ways: clean → the success line; failure injected (a hook that exits 1, a stubbed binary) → a failure
+line and NO success line. `check=True` + `try/except` satisfies this too — the defect is the
+unobserved rc, not the flag.
+
 ## Tone Rules
 - No padding: "great work", "going well", "looks good" — FORBIDDEN
 - Doubt → CRITICAL
