@@ -217,6 +217,15 @@ worse than a blank, because it will be used to justify changing a threshold.
 
 A cadence change, a cooldown change, and a confirmation-window change are not interchangeable. After changing any of them, count the actual gap between rebuilds and compare it to each brake in isolation. If the observed median gap is shorter than the cooldown that should bind it, a bypass path exists — and widening the window or slowing the cadence will not fix the churn until the bypass is closed. Report the binding brake and the bypass separately; do not let a rule change that looks correct on paper hide a path that still walks past every gate.
 
+### A trigger must count the thing it claims to count
+
+Before tuning a trigger threshold, verify the **metric definition matches the human meaning** of the
+condition. A trigger that claims to fire on "idle capital" must exclude the mandatory gas reserve,
+or the loop will treat its own float as deployable cash. A trigger that claims to fire on a "low"
+reading must not include change from the last rebuild, slippage dust, or a transient post-withdraw
+wallet spike. If the number being compared is not the thing the rule describes, the threshold is the
+wrong fix. Correct the numerator first.
+
 ### Smart DCA Zones
 
 | Zone | Efficiency | DCA Amount | Action |
@@ -258,6 +267,26 @@ Fee tracking runs **inside the LP monitor script** (`lp-monitor-v2.py`) — NOT 
 **Known calibration number (verified Jul 2, 2026):** $46.43 position earns $0.44/day (345.8% effective APY for concentrated bid-ask on high-volume pool).
 
 > **Full workflow:** references/lp-monitoring-workflow.md
+
+---
+
+## 1b. Shared Treasury / Leader-Follower
+
+When two treasuries are in the **same LP**, one operator's strategy directives can follow another's.
+The leader decides shape, ratio and geometry; the follower resolves that policy locally. Capital
+actions never cross.
+
+**Followed (pool policy):** shape, ratio, geometry.  
+**Never followed (account-local):** withdraw, exit, send, churn cap, gas floor/float, bill pulls,
+reimbursements.
+
+**Always-on rules:**
+- The follower's **recorded consent** is required. Without it, the resolver refuses.
+- Inheritance is **printed on every pass** — never silent.
+- The follower's **own operator pin beats the leader**.
+- The follower's **churn cap and budget still bind**. A leader's intent is policy, not an order.
+
+> **Full design:** references/shared-treasury-leader-follower.md
 
 ---
 

@@ -2,7 +2,9 @@
 name: cron-delivery-audit
 description: Audit and fix cron job delivery targets to ensure jobs deliver to connected channels or origin, preventing silent failures when targeting disconnected Telegram groups.
 tags: [cron, hermes, telegram, delivery, audit, ops]
-related_skills: []
+related_skills:
+  - ../cron-health-standard/SKILL.md
+  - ../../agent-kit/verify-after-every-action/SKILL.md
 triggers:
   - Creating or updating cron jobs
   - Cron jobs not appearing in groups
@@ -154,6 +156,61 @@ Run this audit whenever:
 - User asks "why are these coming at the same time?"
 - **A profile split / handoff just happened** (work moved to a sibling profile) — see "Dead-Job Purge After a Profile Split" below
 - **User asks to review/improve the cron fleet** (e.g. "what would you change about our cron jobs?")
+- **A collaborator is leaving or a group is being retired** — see "Leaver / Group-Retirement Delivery Sweep" below
+
+## Leaver / Group-Retirement Delivery Sweep
+
+When a person leaves the system or a Telegram group is shut down, every cron job that
+mentions them by name or targets their channel must be re-examined. A name-scan alone is
+insufficient: some jobs mention the person in order to **exclude** them, and a job can
+send to the leaver without containing their name if its `deliver` is `origin` and the
+originator was that person.
+
+**Stop-condition definition first.** Before changing anything, decide what "involves"
+means for this sweep:
+
+- **Job belongs to the leaver** — `deliver` resolves to their DM/group, prompt data is
+  theirs, or name is in the intent.
+- **Job mentions the leaver to exclude them** — name appears in a prompt that says
+  "ignore / do not include / skip" — **DO NOT STOP** these; they belong to someone else.
+- **Job merely shares a group the leaver was in** — belongs to the group, not the person;
+  re-target the group, don't delete, unless the group itself is retired.
+
+**Procedure:**
+
+1. **Read every active job's stored `deliver` and, for `deliver=origin`, its resolved
+   `origin` field.** The `origin` record contains `chat_id`, `chat_name`, and `user_id`;
+   it is the only place that shows who the job actually wakes. Do not infer from the job
+   name alone.
+2. **Enumerate fleet-wide targets.** For each profile, list jobs grouped by `deliver` and
+   resolved origin. The leaver may have jobs in seats they do not own.
+3. **Pause jobs owned by the leaver.** Prefer `pause` over `delete` unless the work is
+   permanently migrated; pausing preserves the definition for reversal.
+4. **Re-target jobs that should continue but landed in the leaver's DM.** Pick the
+   replacement target by enumeration, not convention: look at where similar fleet-health
+   or role-equivalent jobs already deliver (usually HQ for ops, the renamed equivalent
+   group for content). Update `deliver` to an explicit `telegram:<id>`; do not leave it as
+  `origin`.
+5. **Verify every change by reading the state file back.** A `hermes cron update` success
+   message is not proof of the new `deliver` value; re-read `cron/jobs.json`.
+6. **Document the exact job IDs changed** and any job left for the founder's decision
+   (e.g. a fleet-health report whose recipient is a policy choice, not a technical fix).
+
+**After the immediate leaver cleanup, sweep the `origin` trap class:**
+
+Any enabled job with `deliver=origin` is a time bomb: its audience silently follows whoever
+originally created it. When that person leaves, the report continues to land in their DM or
+an old chat. Resolve each `origin` to its stored `chat_id` and `user_id`; if any resolves to
+a leaver or defunct group, re-target it. Then decide whether to convert **all** long-lived
+`origin` jobs to explicit targets as a hygiene pass — that is the durable fix.
+
+**Pitfall — false positives from name search:** six jobs may match the string "vanito" but
+only three involve him; the other three mention him to exclude him. A naive search-and-stop
+would pause the owner's own reports.
+
+**Pitfall — assuming a group retirement breaks nothing:** if a group is shut down, verify
+**every** job that ever delivered there, including `origin` jobs whose resolved origin is
+that group. Even `local`/no-agent jobs may chain output to the group via `context_from`.
 
 ## Dead-Job Purge After a Profile Split (Aug 11, 2026)
 
@@ -183,6 +240,8 @@ When work is handed to a sibling profile (gentech → treasury/gizmo) or a job i
 | Stale stagger | Both jobs at same time after timezone change | Re-audit after DST or schedule overhaul |
 | Overnight chat delivery | Job fires 3-7am ET into a Telegram group | `deliver=local`, or shift schedule to waking hours (see Quiet Hours Discipline) |
 | Schedule format rejected on update | `Invalid schedule 'once at 2026-09-30 13:00'` | `cronjob update` accepts one-shot timestamps only as ISO — `2026-09-30T13:00:00` — not the "once at ..." prose form some listings show |
+| `deliver=origin` on a long-lived job | Report lands in a leaver's DM or defunct chat after personnel/group changes | Convert to explicit `telegram:<id>`; see Leaver / Group-Retirement Delivery Sweep |
+| Name-only leaver search | Pausing jobs that merely mention the leaver to exclude them | Define "involves" as resolved `deliver`/`origin`, not string match |
 
 ## Quick Reference
 
@@ -201,6 +260,15 @@ hermes cron list | grep -B 5 "schedule:" | grep -E "name:|schedule:"
 - Vanito → Entertainment
 - Stagger like-jobs by 15+ min
 - Name with `[User]` prefix
+
+## Reference: Leaver Delivery Sweep Script
+
+`references/leaver-delivery-sweep-script.py` reads every profile's `cron/jobs.json`, resolves
+`deliver=origin` to its stored `origin` (chat_id, user_id), and reports enabled jobs whose
+resolved target or prompt/intent points at a leaver or retired group. It deliberately
+ignores name matches that appear inside exclusion phrases ("not", "exclude", "ignore", "skip")
+because those jobs usually belong to someone else. Run it dry-run first, then act on the
+listed job IDs explicitly. It is a reader, not a writer.
 
 ## Related Documentation
 
