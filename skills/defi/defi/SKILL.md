@@ -31,6 +31,7 @@ All DeFi LP management in one skill — monitoring, rebalancing, dashboard sync,
 | Fee milestones, tier progress | §7 Milestones | §7 (inline) |
 | Security incident monitoring | §8 Security Intel | references/security-intel.md |
 | External APIs (Arsenal, GOAT, etc.) | §9 External APIs | references/external-apis.md |
+| Regulatory rulemaking feed translation | §4a Regulatory Intelligence | references/regulatory-intelligence-translation.md |
 | Market sentiment by narrative | §10 Narrative Sentiment | references/narrative-rotation-sentiment.md |
 | Routing layer / mode decisions | §11 Routing Layer | references/routing-layer-quick-ref.md |
 | Training data schema | §12 DeFi Model | references/training-data-schema.md |
@@ -430,6 +431,15 @@ The on-chain reader (`run-reader.sh` → `reader.mjs`) accepts `--shape` as a CL
 ---
 
 ## 4. Strategy Design
+
+### The treasury thesis — the one sentence above every rule
+
+> We beat hodlers by taking the swaps. When a pullback is coming, we go 60/40 USDC-heavy with 25–30 bins so we buy the dip while getting paid for the range. The point is not to rebalance perfectly; the point is to out-earn the people who simply hold.
+
+**What this implies:**
+- **Earnings, not geometry, is the primary trigger.** A book that is still being paid can sit in yellow; a book that has stopped earning must be addressed.
+- **Churn is the enemy.** Every re-center has a gas cost. The system must do less, not more, when the book is healthy.
+- **The shape is a bet on the next regime.** 60/40 USDC-heavy on a pullback is the pullback accumulator; a balanced curve is the range accumulator.
 
 ### Regime → Shape Mapping
 

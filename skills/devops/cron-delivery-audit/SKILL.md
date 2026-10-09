@@ -32,7 +32,7 @@ Hermes cron jobs deliver through the Telegram gateway — **all groups the user 
 | `origin` | Default — delivers to the chat where the job was created. Safe choice for single-user. |
 | `local` | Internal maintenance only (vault sync, health checks). No Telegram delivery. |
 | `telegram:-1003863540828` | HQ — coordination, decisions, status reports |
-| `telegram:-1003893562036` | Entertainment — games, deals, social content, Vanito |
+| `telegram:-5289838765` | Social Media — games, deals, social content, Vanito |
 | `telegram:-1002916759037` | **Treasury** — finance, DeFi, portfolio, yield, market signals (renamed from "Strategies" Sep 7, 2026; chat ID unchanged) |
 | `telegram:-1003872552815` | Labs — code, SDKs, technical output |
 
@@ -111,7 +111,7 @@ Jobs should be self-explanatory in the group feed. Prefix with user name:
 
 **Update delivery target:**
 ```bash
-cronjob action=update job_id=<id> deliver=telegram:-1003893562036
+cronjob action=update job_id=<id> deliver=telegram:-5289838765
 ```
 
 **Stagger by changing schedule:**
@@ -132,7 +132,7 @@ cronjob action=update job_id=<id> name="[Jordan] GenTech Shop — Weekly Sales S
 | Single-user content (deals, intel) | Per-topic group or `origin` | Lands where user will see it |
 | Team-wide updates (Daily Digest) | HQ (`-1003863540828`) | Everyone sees it |
 | Internal maintenance | `local` | No delivery needed |
-| Vanito-specific content | Entertainment (`-1003893562036`) | Kept separate from Jordan's ops |
+| Vanito-specific content | Social Media (`-5289838765`) | Kept separate from Jordan's ops |
 
 ## Group Rename Propagation (Strategies → Treasury, Sep 7 2026)
 

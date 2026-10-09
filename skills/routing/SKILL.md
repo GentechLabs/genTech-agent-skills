@@ -20,7 +20,7 @@ One routing system, two dimensions:
 |-------|-------|---------|
 | Code, SDKs, smart contracts, technical dev | Labs | `-1003872552815` |
 | Finance, DeFi, portfolio, yield, market analysis | Treasury | `-1002916759037` |
-| Content, social media, hackathon submissions | Entertainment | `-1003893562036` |
+| Content, social media, hackathon submissions | Social Media | `-5289838765` |
 | Coordination, decisions, blockers, status | HQ | `-1003863540828` |
 | **Forge-domain tasks** (code builds, PRs, local git, email) | **→ Handoff via** `01-HANDOFFS/` | **Forge (Desktop) handles** |
 | **Gentech-domain tasks** (infra, cron, DeFi, research) | **→ Build on VPS** | **Gentech (VPS) handles** |
@@ -354,7 +354,7 @@ echo "Status update" | hermes send --to telegram:<chat_id>
 - Available targets: `hermes send --list` shows all configured channels
 
 ## Pitfalls
-**Channel IDs with cron routing (established Jul 17, 2026):**\n| Channel | Chat ID | Cron Deliveries |\n|---------|---------|----------------|\n| HQ | `-1003863540828` | PR Scout (8/14/20 ET), Revenue Monitor (8 AM/PM), Morning Digest, Context Snapshot, Marketplace Scout, Opportunity Scanner |\n| Labs | `-1003872552815` | x402 Compliance Scout (8:10/14:10/20:10 ET), Build Queue Snapshot (8:30/12:30/18:30 ET) |\n| Treasury | `-1002916759037` | Portfolio Health Check, CMC Watchlist, Tradesta Signal, Narrative Rotation, Fed/FOMC, LP Monitor v2 |\n| Entertainment | `-1003893562036` | GenTech Shop Sales/Releases, Social Media Engine, Game Intelligence |
+**Channel IDs with cron routing (established Jul 17, 2026):**\n| Channel | Chat ID | Cron Deliveries |\n|---------|---------|----------------|\n| HQ | `-1003863540828` | PR Scout (8/14/20 ET), Revenue Monitor (8 AM/PM), Morning Digest, Context Snapshot, Marketplace Scout, Opportunity Scanner |\n| Labs | `-1003872552815` | x402 Compliance Scout (8:10/14:10/20:10 ET), Build Queue Snapshot (8:30/12:30/18:30 ET) |\n| Treasury | `-1002916759037` | Portfolio Health Check, CMC Watchlist, Tradesta Signal, Narrative Rotation, Fed/FOMC, LP Monitor v2 |\n| Entertainment | `-5289838765` | GenTech Shop Sales/Releases, Social Media Engine, Game Intelligence |
 
 ## Rules
 1. Always announce routing decision — don't silently route

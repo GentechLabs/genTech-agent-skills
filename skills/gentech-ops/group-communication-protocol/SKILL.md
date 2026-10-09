@@ -25,7 +25,7 @@ When you need to reach a collaborator who's in a group chat, send the message to
 
 ```
 # ✅ CORRECT: Post in the group
-hermes send --to telegram:-1003893562036 "Message for Vanito..."
+hermes send --to telegram:-5289838765 "Message for Vanito..."
 
 # ❌ WRONG: Never DM a collaborator
 curl -s "https://api.telegram.org/bot${TOKEN}/sendMessage" -d chat_id=8774981477
@@ -33,7 +33,7 @@ curl -s "https://api.telegram.org/bot${TOKEN}/sendMessage" -d chat_id=8774981477
 
 ## What Happened
 
-Aug 8, 2026 — Jordan asked Gentech to pitch DeepSeek V4 Pro to Vanito. Gentech sent a DM to Vanito's private Telegram ID (8774981477) instead of posting in the Entertainment group (-1003893562036). Jordan corrected it immediately:
+Aug 8, 2026 — Jordan asked Gentech to pitch DeepSeek V4 Pro to Vanito. Gentech sent a DM to Vanito's private Telegram ID (8774981477) instead of posting in the Entertainment group (-5289838765). Jordan corrected it immediately:
 
 > "No, Jintek, Veneto is here in the group, in the entertainment group. You can just send it here. We don't want to DM anybody privately, we want to keep it here in the group."
 
