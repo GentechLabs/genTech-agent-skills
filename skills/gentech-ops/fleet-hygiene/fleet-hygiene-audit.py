@@ -387,20 +387,89 @@ STALE_CANDIDATES = [
 ]
 CACHE_DIRS = [".cache", "cache", "tmp", "_build", ".tox", ".gradle", ".m2"]
 
+# DEPENDENCY / TOOLCHAIN TREES — never descended (2026-10-09, Council Overnight).
+#
+# WHY: even after the nested-root fix, walking all of /root is ~144k directories on this
+# box and does not finish inside any sane budget (measured: a bare `find /root -type d`
+# alone runs >400s). The fan-out is almost entirely dependency and toolchain stores that
+# are LIVE BY DEFINITION — a package inside node_modules or a file inside site-packages is
+# referenced by the thing that installed it, so no artifact under them can be "unreferenced
+# build output". Descending them burns the whole budget for zero findings.
+#
+# THIS IS A BOUNDARY, NOT AN OVERSIGHT: a stale artifact nested INSIDE node_modules /
+# site-packages is deliberately NOT reported (its cache would be /.cache or /root/.npm,
+# which are still checked). Everything a project owns directly — target/, dist/, build/,
+# .next/, __pycache__/, .cache/, tmp/ — is still walked and still checked.
+DEPENDENCY_TREES = {
+    "node_modules", ".git",
+    "venv", ".venv", "virtualenv",
+    "site-packages", "dist-packages",
+    ".rustup", ".cargo", ".npm", ".yarn", ".pnpm-store", ".bun",
+    ".gradle", ".m2", ".tox", ".terraform", ".terragrunt-cache",
+}
 
-def find_stale_artifacts(age_days=30, roots=None):
+# Absolute prefixes pruned for the same reason: this box's own huge, live toolchain
+# stores under HERMES_HOME (measured 2026-10-09: installs/ 18,329 dirs, node/ 1,117,
+# blockrun-mcp/ 2,170). They are installs of live software, not project build output.
+PATH_PRUNE = (
+    "/root/.hermes/installs",
+    "/root/.hermes/node",
+    "/root/.hermes/blockrun-mcp",
+)
+
+
+def _drop_nested_roots(roots):
+    """Remove any root that is nested inside another (so a subtree is never walked twice).
+
+    Added 2026-10-09: the default roots were ["/root/.hermes", "/root"], and "/root"
+    CONTAINS "/root/.hermes" — so the single largest subtree on the box was walked twice,
+    roughly doubling an already too-slow scan.
+    """
+    out = []
+    for r in sorted({os.path.realpath(x).rstrip("/") for x in roots}, key=len):
+        if any(r == o or r.startswith(o + "/") for o in out):
+            continue
+        out.append(r)
+    return out
+
+
+def find_stale_artifacts(age_days=30, roots=None, budget=600):
     """
     Build output and caches that nothing live references and nothing has touched
     in `age_days`. Reports size; never deletes.
+
+    BUDGET (2026-10-09). On this box "/root" is large enough that walking it never
+    finished inside the nightly cron window: measured in isolation this one detector ran
+    >900s and was the SOLE cause of fleet-hygiene-overnight.sh being killed at the cron's
+    3600s limit and reported as a job FAILURE. A `budget` wall-clock cap now stops the
+    scan, and when it is hit the result carries a `scan_truncated` marker so the verdict
+    is surfaced as PARTIAL — never quietly rendered as clean (silence must be earned).
     """
     if roots is None:
         roots = [str(HERMES), "/root"]
+    roots = _drop_nested_roots(roots)
     findings = []
+    deadline = time.time() + budget
+    truncated = False
     for root in roots:
+        if truncated:
+            break
         for dirpath, dirnames, _ in os.walk(root, onerror=lambda e: None, followlinks=False):
+            if time.time() > deadline:
+                truncated = True
+                break
             if any(dirpath.startswith(x) for x in ("/var/lib", "/usr/", "/proc", "/sys")):
                 dirnames[:] = []
                 continue
+            # Prune live dependency/toolchain stores and this box's HERMES_HOME installs.
+            # ".git" is never a stale-artifact candidate (it is not in STALE_CANDIDATES or
+            # CACHE_DIRS) and is enormous; descending it only burns the budget. See
+            # DEPENDENCY_TREES / PATH_PRUNE for why the rest are pruned too.
+            dirnames[:] = [
+                d for d in dirnames
+                if d not in DEPENDENCY_TREES
+                and os.path.join(dirpath, d) not in PATH_PRUNE
+            ]
             for d in list(dirnames):
                 if d in STALE_CANDIDATES or d in CACHE_DIRS:
                     p = os.path.join(dirpath, d)
@@ -442,6 +511,13 @@ def find_stale_artifacts(age_days=30, roots=None):
             continue
         seen.add(p)
         out.append(f)
+    if truncated:
+        out.append({
+            "kind": "scan_truncated",
+            "what": "STALE-ARTIFACT SCAN TRUNCATED",
+            "note": (f"stopped at the {budget}s wall-clock cap — results are PARTIAL, "
+                     "not clean (raise the budget or narrow the roots to finish)"),
+        })
     return out
 
 
