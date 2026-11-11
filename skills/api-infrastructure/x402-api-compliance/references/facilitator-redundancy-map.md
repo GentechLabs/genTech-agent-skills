@@ -13,6 +13,7 @@ facilitator's `/supported` endpoint.
 | **GoPlausible** (facilitator.goplausible.xyz) | Base, Base Sepolia, Solana mainnet, Solana devnet, Algorand mainnet, Algorand testnet |
 | **CDP** (api.cdp.coinbase.com/platform/v2/x402) | Base, Polygon, Arbitrum, World, Solana (per x402 docs) |
 | **Naven** (facilitator.naven.network) | eip155:4663 (Robinhood Chain), eip155:46630 (testnet), Base, X Layer, eip155:2368 |
+| **Toll** (x402.t0ll.xyz) | eip155:4663 (Robinhood Chain): USDG `exact` (EIP-3009 + Permit2), `upto`, `auth-capture`, `batch-settlement`; x402 v1 `robinhood` too. Keyless, no fee, gas sponsored (checked Nov 11 2026) |
 | **Dexter** (@dexterai/x402) | Base (EVM), Solana — catalogs on OpenDexter (separate from CDP) |
 
 ## Redundancy map (network → facilitators)
@@ -28,10 +29,10 @@ facilitator's `/supported` endpoint.
 | **Algorand** | algorand:wGHE… | GoPlausible | — | 1 |
 | **Sei** | eip155:1329 | PayAI | — | 1 |
 | **SKALE** | eip155:1187947933 | PayAI | — | 1 |
-| **Robinhood Chain** | eip155:4663 | Naven | — | 1 |
+| **Robinhood Chain** | eip155:4663 | Naven | Toll | 2 |
 
 **Base and Solana are the most resilient** (4 facilitators each). Avalanche, Algorand,
-Sei, SKALE, Robinhood Chain are single-facilitator today — the redundancy gaps to close
+Sei, SKALE are single-facilitator today (Robinhood Chain: Naven + Toll since Nov 2026) — the redundancy gaps to close
 as new facilitators come online.
 
 ## Injective — NOT yet supported (Aug 19, 2026)

@@ -17,7 +17,7 @@ each facilitator's `/supported` endpoint (PayAI, GoPlausible, Naven) + x402 docs
 | Arbitrum | eip155:42161 | PayAI | CDP | — | — |
 | Sei | eip155:1329 | PayAI | — | — | — |
 | SKALE | eip155:1187947933 | PayAI | — | — | — |
-| Robinhood Chain | eip155:4663 | Naven | — | — | — |
+| Robinhood Chain | eip155:4663 | Naven | Toll | — | — |
 
 ## Verified facilitator coverage (from /supported, Aug 19 2026)
 
